@@ -1,0 +1,7 @@
+# Robots.txt for StoryVault Platform
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://storyvault.vercel.app/sitemap.xml

@@ -1,0 +1,22 @@
+{
+  "name": "StoryVault - Serialized Storytelling & Reading",
+  "short_name": "StoryVault",
+  "description": "Original serialized fiction, community reading, paragraph discussions, and author studio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#ea580c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
