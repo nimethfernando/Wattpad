@@ -19,11 +19,27 @@ import {
   User, 
   LogOut, 
   ChevronDown,
-  Settings
+  Settings,
+  BookMarked
 } from 'lucide-react';
+import AuthModal from './AuthModal';
 
 export default function Header() {
-  const { lang, setLang, theme, toggleTheme, t, user, setUser, notifications, setNotifications, stories, readingLists } = useApp();
+  const { 
+    lang, 
+    setLang, 
+    theme, 
+    toggleTheme, 
+    t, 
+    user, 
+    setUser, 
+    notifications, 
+    setNotifications, 
+    stories, 
+    readingLists,
+    library,
+    openAuthModal
+  } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +97,14 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
             <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
               <Compass className="w-4 h-4" /> {t.browse}
+            </Link>
+            <Link href="/library" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
+              <BookMarked className="w-4 h-4 text-brand-500" /> My Library
+              {library.length > 0 && (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-brand-500 text-white">
+                  {library.length}
+                </span>
+              )}
             </Link>
             <Link href="/community" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
               <Users className="w-4 h-4" /> {t.community}
@@ -252,6 +276,9 @@ export default function Header() {
                     <Link href={`/profile/${user.username}`} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                       <User className="w-3.5 h-3.5 text-slate-500" /> {t.profile}
                     </Link>
+                    <Link href="/library" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                      <BookMarked className="w-3.5 h-3.5 text-brand-500" /> My Library ({library.length})
+                    </Link>
                     <Link href="/write" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                       <PenTool className="w-3.5 h-3.5 text-brand-500" /> {t.myStories}
                     </Link>
@@ -277,12 +304,18 @@ export default function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login" className="text-xs font-semibold px-3 py-1.5 hover:text-brand-500">
+              <button 
+                onClick={() => openAuthModal('login')} 
+                className="text-xs font-semibold px-3 py-1.5 hover:text-brand-500 transition-colors cursor-pointer"
+              >
                 {t.login}
-              </Link>
-              <Link href="/register" className="text-xs font-bold px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm">
+              </button>
+              <button 
+                onClick={() => openAuthModal('register')} 
+                className="text-xs font-bold px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all cursor-pointer"
+              >
                 {t.signup}
-              </Link>
+              </button>
             </div>
           )}
 
@@ -302,14 +335,34 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 dark:border-slate-800 px-4 py-4 bg-white dark:bg-slate-900 space-y-3">
           <Link href="/browse" className="block py-2 text-sm font-semibold">{t.browse}</Link>
+          <Link href="/library" className="block py-2 text-sm font-semibold">My Library ({library.length})</Link>
           <Link href="/community" className="block py-2 text-sm font-semibold">{t.community}</Link>
           <Link href="/contests" className="block py-2 text-sm font-semibold">{t.contests}</Link>
           <Link href="/write" className="block py-2 text-sm font-semibold">{t.write}</Link>
           {user?.role === 'admin' && (
             <Link href="/admin" className="block py-2 text-sm font-semibold text-purple-600">{t.adminPanel}</Link>
           )}
+          {!user && (
+            <div className="pt-2 flex flex-col gap-2">
+              <button 
+                onClick={() => { setMobileMenuOpen(false); openAuthModal('login'); }}
+                className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold"
+              >
+                {t.login}
+              </button>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); openAuthModal('register'); }}
+                className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold"
+              >
+                {t.signup}
+              </button>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Global Auth Modal for Facebook, Google, and Email Logins */}
+      <AuthModal />
     </header>
   );
 }

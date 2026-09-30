@@ -15,11 +15,13 @@ import {
   ChevronRight, 
   SlidersHorizontal,
   Flame,
-  Check
+  Check,
+  BookMarked,
+  Plus
 } from 'lucide-react';
 
 export default function BrowsePage() {
-  const { stories, genres, t } = useApp();
+  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, t } = useApp();
 
   // Filters & Sorting state
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -317,6 +319,11 @@ export default function BrowsePage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md">
                           {story.genre}
                         </span>
+                        {story.ranking && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
+                            #{story.ranking.rank} in {story.ranking.tag}
+                          </span>
+                        )}
                         {story.isOriginal && (
                           <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-600">
                             Original
@@ -347,13 +354,27 @@ export default function BrowsePage() {
                   </div>
                 </div>
 
-                {/* Tags row */}
-                <div className="px-4 pb-3 flex items-center gap-1.5 overflow-hidden">
-                  {story.tags.slice(0, 3).map((tag, i) => (
-                    <span key={i} className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
+                {/* Tags & Quick Library Save row */}
+                <div className="px-4 pb-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    {story.tags.slice(0, 3).map((tag, i) => (
+                      <span key={i} className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                    className={`p-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                      isInLibrary(story.id)
+                        ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40'
+                        : 'text-slate-400 hover:text-brand-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title={isInLibrary(story.id) ? "Saved in Library" : "Add to Library"}
+                  >
+                    {isInLibrary(story.id) ? <Check className="w-3.5 h-3.5" /> : <BookMarked className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               </div>
             ))}

@@ -43,11 +43,39 @@ export function AppProvider({ children }) {
   // Social & Community State
   const [followingAuthors, setFollowingAuthors] = useState(['elenavance', 'astraquill']);
   const [blockedUsers, setBlockedUsers] = useState([]);
+  const [library, setLibrary] = useState([1, 2]); // Wattpad Personal Library (Scope 2 & 5)
   const [readingLists, setReadingLists] = useState([
     { id: 1, title: "Favorites of 2026", description: "Must-read serialized masterworks", storyIds: [1, 2], isPublic: true },
     { id: 2, title: "Late Night Atmosphere", description: "Mysterious and supernatural tales", storyIds: [3], isPublic: true }
   ]);
   const [readingProgress, setReadingProgress] = useState({ 1: { chapterId: 101, paragraphIndex: 3 } });
+
+  // Wattpad-style Public Conversations Wall per author profile
+  const [userConversations, setUserConversations] = useState({
+    elenavance: [
+      { 
+        id: 1, 
+        author: "BookLover99", 
+        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80", 
+        text: "Loving Chapter 2 of The Shadow Alchemist! When is Keith's backstory revealed?", 
+        time: "2 hours ago" 
+      },
+      { 
+        id: 2, 
+        author: "Elena Vance", 
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80", 
+        text: "Thank you so much! Chapter 3 drops this Friday with a huge revelation about the grimoire.", 
+        time: "1 hour ago",
+        isAuthorReply: true
+      }
+    ]
+  });
+
+  // Auth Modal State (Facebook, Google, Email)
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
+  const [authModalMessage, setAuthModalMessage] = useState('');
+  const [pendingAction, setPendingAction] = useState(null);
 
   // Moderation & Audit Log
   const [reports, setReports] = useState([
@@ -240,6 +268,157 @@ export function AppProvider({ children }) {
     setReadingLists(prev => [newList, ...prev]);
   };
 
+  // Wattpad-style Library Management
+  const addToLibrary = (storyId) => {
+    if (!user) {
+      openAuthModal('login', 'Log in to add this novel to your private Library and get new chapter updates.', () => addToLibrary(storyId));
+      return;
+    }
+    if (!library.includes(storyId)) {
+      setLibrary(prev => [...prev, storyId]);
+      const targetStory = stories.find(s => s.id === storyId);
+      setNotifications(prev => [
+        { 
+          id: Date.now(), 
+          title: "Added to Library", 
+          message: `"${targetStory?.title || 'Story'}" has been added to your Library. You'll receive alerts when new chapters drop!`, 
+          time: "Just now", 
+          read: false 
+        },
+        ...prev
+      ]);
+    }
+  };
+
+  const removeFromLibrary = (storyId) => {
+    setLibrary(prev => prev.filter(id => id !== storyId));
+  };
+
+  const isInLibrary = (storyId) => {
+    return library.includes(storyId);
+  };
+
+  // Auth Modal & OAuth methods
+  const openAuthModal = (mode = 'login', message = '', action = null) => {
+    setAuthModalMode(mode);
+    setAuthModalMessage(message);
+    setPendingAction(action ? () => action : null);
+    setAuthModalOpen(true);
+  };
+
+  const executePending = () => {
+    if (pendingAction && typeof pendingAction === 'function') {
+      try {
+        pendingAction();
+      } catch (e) {
+        console.error("Failed to execute pending action:", e);
+      }
+      setPendingAction(null);
+    }
+  };
+
+  // 1. Google Authentication
+  const loginWithGoogle = async () => {
+    // Simulated Google OAuth Flow with authentic profile
+    const googleUser = {
+      id: 88,
+      username: "jordan_reed",
+      name: "Jordan Reed",
+      email: "jordan.reed@gmail.com",
+      provider: "google",
+      role: "reader",
+      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      badges: ["Google Verified", "Avid Reader"],
+      isAgeVerified: true,
+      hideMature: false
+    };
+    setUser(googleUser);
+    setAuthModalOpen(false);
+    setNotifications(prev => [
+      { id: Date.now(), title: "Google Sign-In", message: "Welcome back, Jordan! Signed in via Google.", time: "Just now", read: false },
+      ...prev
+    ]);
+    executePending();
+  };
+
+  // 2. Facebook Authentication
+  const loginWithFacebook = async () => {
+    // Simulated Facebook OAuth Flow with authentic profile
+    const facebookUser = {
+      id: 99,
+      username: "alex_vance_fb",
+      name: "Alex Vance",
+      email: "alex.vance@facebook.com",
+      provider: "facebook",
+      role: "author",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+      badges: ["Facebook Verified", "Rising Author"],
+      isAgeVerified: true,
+      hideMature: false
+    };
+    setUser(facebookUser);
+    setAuthModalOpen(false);
+    setNotifications(prev => [
+      { id: Date.now(), title: "Facebook Sign-In", message: "Welcome back, Alex! Signed in via Facebook.", time: "Just now", read: false },
+      ...prev
+    ]);
+    executePending();
+  };
+
+  // 3. Email Authentication
+  const loginWithEmail = (email, password) => {
+    const emailUser = {
+      id: Date.now(),
+      username: email.split('@')[0],
+      name: email.split('@')[0],
+      email,
+      provider: "email",
+      role: email.includes('admin') ? 'admin' : 'author',
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      badges: ["Member"],
+      isAgeVerified: true,
+      hideMature: false
+    };
+    setUser(emailUser);
+    setAuthModalOpen(false);
+    executePending();
+  };
+
+  const registerWithEmail = ({ username, email, password, birthdate, isAgeConfirmed }) => {
+    const newUser = {
+      id: Date.now(),
+      username,
+      name: username,
+      email,
+      provider: "email",
+      birthdate,
+      role: 'author',
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      badges: ["New Creator"],
+      isAgeVerified: isAgeConfirmed,
+      hideMature: false
+    };
+    setUser(newUser);
+    setAuthModalOpen(false);
+    executePending();
+  };
+
+  // Public Conversations Wall
+  const postConversationMessage = (authorUsername, text) => {
+    const key = authorUsername.toLowerCase();
+    const newMsg = {
+      id: Date.now(),
+      author: user?.name || "Reader",
+      avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+      text,
+      time: "Just now"
+    };
+    setUserConversations(prev => ({
+      ...prev,
+      [key]: [newMsg, ...(prev[key] || [])]
+    }));
+  };
+
   return (
     <AppContext.Provider value={{
       lang,
@@ -270,6 +449,11 @@ export function AppProvider({ children }) {
       submitReport,
       auditLogs,
       addAuditLog,
+      library,
+      setLibrary,
+      addToLibrary,
+      removeFromLibrary,
+      isInLibrary,
       readingLists,
       setReadingLists,
       createReadingList,
@@ -281,7 +465,20 @@ export function AppProvider({ children }) {
       reactChapterEmoji,
       addParagraphComment,
       publishStory,
-      deleteStory
+      deleteStory,
+      authModalOpen,
+      setAuthModalOpen,
+      authModalMode,
+      setAuthModalMode,
+      authModalMessage,
+      setAuthModalMessage,
+      openAuthModal,
+      loginWithGoogle,
+      loginWithFacebook,
+      loginWithEmail,
+      registerWithEmail,
+      userConversations,
+      postConversationMessage
     }}>
       {children}
     </AppContext.Provider>

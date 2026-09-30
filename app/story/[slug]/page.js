@@ -17,19 +17,45 @@ import {
   UserPlus, 
   UserCheck, 
   Flag,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Trophy,
+  BookMarked,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 
 export default function StoryDetailPage() {
   const params = useParams();
   const { slug } = params;
-  const { stories, followingAuthors, followAuthor } = useApp();
+  const { 
+    stories, 
+    followingAuthors, 
+    followAuthor,
+    library,
+    addToLibrary,
+    removeFromLibrary,
+    isInLibrary,
+    readingLists,
+    setReadingLists,
+    readingProgress,
+    openAuthModal,
+    user
+  } = useApp();
 
   const [copiedShare, setCopiedShare] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [showListDropdown, setShowListDropdown] = useState(false);
 
   const story = stories.find(s => s.slug === slug) || stories[0];
   const isFollowing = followingAuthors.includes(story.authorUsername);
+  const inLib = isInLibrary(story.id);
+
+  // Reading progress check
+  const savedProgress = readingProgress[story.id];
+  const currentChapter = savedProgress 
+    ? story.chapters.find(c => c.id === savedProgress.chapterId) || story.chapters[0]
+    : story.chapters[0];
 
   // Related stories from same genre
   const relatedStories = stories.filter(s => s.id !== story.id && s.genre === story.genre);
@@ -42,17 +68,40 @@ export default function StoryDetailPage() {
     }
   };
 
+  const handleToggleReadingList = (listId) => {
+    if (!user) {
+      openAuthModal('login', 'Log in to curate your custom reading lists.');
+      return;
+    }
+    setReadingLists(prev => prev.map(l => {
+      if (l.id === listId) {
+        const hasStory = l.storyIds.includes(story.id);
+        return {
+          ...l,
+          storyIds: hasStory ? l.storyIds.filter(id => id !== story.id) : [...l.storyIds, story.id]
+        };
+      }
+      return l;
+    }));
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
-        {/* Story Hero Header Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-8 lg:gap-12">
+        {/* Story Hero Header Card with Ambient Blurred Backdrop (Wattpad Style) */}
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col md:flex-row gap-8 lg:gap-12">
+          
+          {/* Ambient Glow Backdrop */}
+          <div className="absolute inset-0 overflow-hidden rounded-3xl -z-10 opacity-20 dark:opacity-30 blur-3xl pointer-events-none">
+            <img src={story.cover} alt="" className="w-full h-full object-cover scale-150" />
+          </div>
+
           {/* Story Cover */}
-          <div className="w-56 sm:w-64 aspect-[3/4] shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100 dark:border-slate-800 relative">
-            <img src={story.cover} alt={story.title} className="w-full h-full object-cover" />
+          <div className="w-56 sm:w-64 aspect-[3/4] shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100 dark:border-slate-800 relative group">
+            <img src={story.cover} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             {story.isOriginal && (
               <span className="absolute top-3 left-3 bg-brand-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-md">
                 HOUSE ORIGINAL
@@ -61,8 +110,9 @@ export default function StoryDetailPage() {
           </div>
 
           {/* Story Details & CTAs */}
-          <div className="flex-1 flex flex-col justify-between space-y-6">
+          <div className="flex-1 flex flex-col justify-between space-y-5">
             <div>
+              {/* Category, Status, Maturity */}
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-lg">
                   {story.genre}
@@ -82,9 +132,19 @@ export default function StoryDetailPage() {
                 )}
               </div>
 
+              {/* Title */}
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 {story.title}
               </h1>
+
+              {/* Wattpad-style Leaderboard Ranking Badge */}
+              {story.ranking && (
+                <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-700 dark:text-amber-400">
+                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                  <span>#{story.ranking.rank} in {story.ranking.tag}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">out of {story.ranking.totalInTag}</span>
+                </div>
+              )}
 
               {/* Author Row */}
               <div className="flex items-center gap-4 mt-4 pt-2">
@@ -129,7 +189,7 @@ export default function StoryDetailPage() {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-5 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-4 leading-relaxed">
                 {story.description}
               </p>
 
@@ -147,18 +207,71 @@ export default function StoryDetailPage() {
               </div>
             </div>
 
-            {/* Read & Share CTA Buttons */}
-            <div className="flex items-center gap-3 pt-4">
+            {/* Read & Wattpad-style Library CTA Buttons */}
+            <div className="flex items-center gap-3 pt-3 flex-wrap">
+              {/* Primary Start / Continue Reading Button */}
               <Link 
                 href={`/read/${story.slug}`} 
                 className="px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] flex items-center gap-2"
               >
-                <BookOpen className="w-4 h-4" /> Start Reading Chapter 1
+                <BookOpen className="w-4 h-4" /> 
+                {savedProgress 
+                  ? `Continue Reading (Ch. ${currentChapter.number})` 
+                  : 'Start Reading Chapter 1'}
               </Link>
 
+              {/* Add to Library Toggle Button */}
+              <button
+                onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                className={`px-5 py-3 rounded-full font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                  inLib
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                    : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-500'
+                }`}
+              >
+                {inLib ? <Check className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4" />}
+                <span>{inLib ? 'In Your Library' : 'Add to Library'}</span>
+              </button>
+
+              {/* Add to Reading List Popover */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowListDropdown(!showListDropdown)}
+                  className="px-4 py-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Add to Reading List"
+                >
+                  <BookMarked className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+
+                {showListDropdown && (
+                  <div className="absolute left-0 bottom-14 sm:bottom-auto sm:top-14 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs">
+                    <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px] px-2 py-1">
+                      Save to Reading List
+                    </p>
+                    <div className="space-y-1 my-1">
+                      {readingLists.map((list) => {
+                        const isContained = list.storyIds.includes(story.id);
+                        return (
+                          <button
+                            key={list.id}
+                            onClick={() => handleToggleReadingList(list.id)}
+                            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold"
+                          >
+                            <span className="truncate">{list.title}</span>
+                            {isContained && <Check className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Share Button */}
               <button 
                 onClick={handleShare}
-                className="p-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                className="p-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                 title="Share Story"
               >
                 {copiedShare ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}

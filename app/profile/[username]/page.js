@@ -17,20 +17,49 @@ import {
   UserCheck, 
   UserPlus, 
   Activity, 
-  Share2 
+  Share2,
+  Send,
+  Trophy
 } from 'lucide-react';
 
 export default function ProfilePage() {
   const params = useParams();
   const { username } = params;
-  const { stories, followingAuthors, followAuthor, readingLists, user, t } = useApp();
-  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'lists' | 'activity'
+  const { 
+    stories, 
+    followingAuthors, 
+    followAuthor, 
+    readingLists, 
+    user, 
+    userConversations,
+    postConversationMessage,
+    openAuthModal,
+    t 
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'conversations' | 'lists' | 'activity'
+  const [msgInput, setMsgInput] = useState('');
 
   const isSelf = user?.username?.toLowerCase() === username?.toLowerCase();
   const isFollowing = followingAuthors.includes(username);
 
   // Author stories
   const userStories = stories.filter(s => s.authorUsername?.toLowerCase() === username?.toLowerCase() || s.author?.toLowerCase().includes(username?.toLowerCase()));
+
+  // Conversations on this profile
+  const profileKey = (username || "elenavance").toLowerCase();
+  const conversationsList = userConversations[profileKey] || [];
+
+  const handlePostConversation = (e) => {
+    e.preventDefault();
+    if (!user) {
+      openAuthModal('login', 'Sign in to post a public message on this author\'s wall.');
+      return;
+    }
+    if (!msgInput.trim()) return;
+    postConversationMessage(profileKey, msgInput.trim());
+    setMsgInput('');
+  };
 
   const profileData = {
     name: isSelf ? user.name : "Elena Vance",
@@ -116,7 +145,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Tabs */}
-        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
+        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 flex-wrap">
           <button 
             onClick={() => setActiveTab('stories')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -126,6 +155,16 @@ export default function ProfilePage() {
             }`}
           >
             <BookOpen className="w-4 h-4" /> Serialized Works ({userStories.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('conversations')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'conversations' 
+                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" /> Conversations ({conversationsList.length})
           </button>
           <button 
             onClick={() => setActiveTab('lists')}
@@ -153,15 +192,22 @@ export default function ProfilePage() {
         {activeTab === 'stories' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {userStories.map((story) => (
-              <div key={story.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 flex gap-4 hover:shadow-lg transition-all">
-                <img src={story.cover} alt={story.title} className="w-24 aspect-[3/4] object-cover rounded-xl shrink-0" />
+              <div key={story.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 flex gap-4 hover:shadow-lg transition-all group">
+                <img src={story.cover} alt={story.title} className="w-24 aspect-[3/4] object-cover rounded-xl shrink-0 group-hover:scale-105 transition-transform" />
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-brand-600 uppercase">{story.genre}</span>
-                    <h3 className="font-bold text-sm sm:text-base mt-1 line-clamp-1">{story.title}</h3>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-brand-600 uppercase">{story.genre}</span>
+                      {story.ranking && (
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
+                          #{story.ranking.rank} in {story.ranking.tag}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{story.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{story.description}</p>
                   </div>
-                  <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
+                  <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800 mt-2">
                     <span>{story.reads.toLocaleString()} reads</span>
                     <Link href={`/story/${story.slug}`} className="font-bold text-brand-500 hover:underline">
                       View Story →
@@ -170,6 +216,72 @@ export default function ProfilePage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* TAB 2: WATT-PAD STYLE CONVERSATIONS MESSAGE BOARD */}
+        {activeTab === 'conversations' && (
+          <div className="space-y-6 max-w-3xl">
+            {/* Post Message Box */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <h3 className="font-black text-sm mb-3">Leave a public message on {profileData.name}'s board</h3>
+              <form onSubmit={handlePostConversation} className="space-y-3">
+                <textarea
+                  rows={3}
+                  value={msgInput}
+                  onChange={(e) => setMsgInput(e.target.value)}
+                  placeholder={`Write something to @${profileData.username}...`}
+                  required
+                  className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-xs font-semibold"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/25 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Post to Board
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Messages Feed */}
+            <div className="space-y-4">
+              {conversationsList.map((msg) => (
+                <div 
+                  key={msg.id}
+                  className={`bg-white dark:bg-slate-900 rounded-2xl p-5 border transition-all ${
+                    msg.isAuthorReply 
+                      ? 'border-brand-500/40 bg-brand-50/20 dark:bg-brand-950/20 ml-4 sm:ml-8' 
+                      : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <img src={msg.avatar} alt={msg.author} className="w-8 h-8 rounded-full object-cover" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs">{msg.author}</span>
+                        {msg.isAuthorReply && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-brand-500 text-white">
+                            AUTHOR
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400">{msg.time}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pl-11">
+                    {msg.text}
+                  </p>
+                </div>
+              ))}
+              {conversationsList.length === 0 && (
+                <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6">
+                  <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400">No public messages yet. Be the first to start a conversation!</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

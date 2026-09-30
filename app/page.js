@@ -166,7 +166,14 @@ export default function HomePage() {
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{story.genre}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{story.genre}</span>
+                      {story.ranking && (
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
+                          #{story.ranking.rank} in {story.ranking.tag}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-extrabold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{story.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">By {story.author}</p>
                   </div>
@@ -283,49 +290,23 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3.5">
-            {genres.map((g) => {
-              const genreIcons = {
-                romance: "💖",
-                fanfiction: "📖",
-                lgbtq: "✨",
-                fantasy: "🔮",
-                "teen-fiction": "🎒",
-                "historical-fiction": "⏳",
-                paranormal: "👁️",
-                humor: "🎭",
-                horror: "💀",
-                contemporary: "☕",
-                "diverse-lit": "🌍",
-                mystery: "🔍",
-                thriller: "⚡",
-                "sci-fi": "🚀",
-                adventure: "🗺️",
-                "non-fiction": "📝",
-                poetry: "🪶",
-                "short-story": "🔖",
-                werewolf: "🐺",
-                "new-adult": "🎓"
-              };
-              const icon = genreIcons[g.slug] || "📚";
-
-              return (
-                <Link 
-                  key={g.id} 
-                  href={`/browse?genre=${g.slug}`}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-md transition-all group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 flex items-center justify-center text-sm group-hover:bg-brand-500 group-hover:scale-110 transition-all">
-                    {icon}
-                  </div>
-                  <div>
-                    <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500 transition-colors">
-                      {g.name}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{g.count} titles</span>
-                  </div>
-                </Link>
-              );
-            })}
+            {genres.map((g) => (
+              <Link 
+                key={g.id} 
+                href={`/browse?genre=${g.slug}`}
+                className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-md transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-xs group-hover:bg-brand-500 group-hover:text-white transition-colors">
+                  #
+                </div>
+                <div>
+                  <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500 transition-colors">
+                    {g.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400">{g.count} titles</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 

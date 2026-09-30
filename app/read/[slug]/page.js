@@ -22,16 +22,34 @@ import {
   ShieldAlert, 
   Flag, 
   ThumbsUp, 
-  CornerDownRight 
+  CornerDownRight,
+  BookMarked,
+  Check,
+  Plus
 } from 'lucide-react';
+import AuthModal from '@/components/AuthModal';
 
 export default function ReaderPage() {
   const params = useParams();
   const { slug } = params;
   const router = useRouter();
-  const { stories, user, voteChapter, reactChapterEmoji, addParagraphComment, saveReadingProgress, t } = useApp();
+  const { 
+    stories, 
+    user, 
+    voteChapter, 
+    reactChapterEmoji, 
+    addParagraphComment, 
+    saveReadingProgress, 
+    library,
+    addToLibrary,
+    removeFromLibrary,
+    isInLibrary,
+    openAuthModal,
+    t 
+  } = useApp();
 
   const story = stories.find(s => s.slug === slug) || stories[0];
+  const inLib = isInLibrary(story.id);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const chapter = story.chapters[currentChapterIndex] || story.chapters[0];
 
@@ -58,6 +76,13 @@ export default function ReaderPage() {
   }, [story.id, chapter.id]);
 
   const handleVote = () => {
+    if (!user) {
+      openAuthModal('login', `Sign in to vote on Chapter ${chapter.number} and support ${story.author}!`, () => {
+        voteChapter(story.id, chapter.id);
+        setHasVoted(true);
+      });
+      return;
+    }
     if (!hasVoted) {
       voteChapter(story.id, chapter.id);
       setHasVoted(true);
@@ -65,11 +90,21 @@ export default function ReaderPage() {
   };
 
   const handleEmojiReact = (emoji) => {
+    if (!user) {
+      openAuthModal('login', `Sign in to react with ${emoji} on Chapter ${chapter.number}!`, () => {
+        reactChapterEmoji(story.id, chapter.id, emoji);
+      });
+      return;
+    }
     reactChapterEmoji(story.id, chapter.id, emoji);
   };
 
   const handleAddComment = (e) => {
     e.preventDefault();
+    if (!user) {
+      openAuthModal('login', 'Sign in to post inline reactions and join the community discussion.');
+      return;
+    }
     if (commentInput.trim() === '' || !activeParagraph) return;
     addParagraphComment(story.id, chapter.id, activeParagraph.id, commentInput.trim());
     
@@ -175,6 +210,20 @@ export default function ReaderPage() {
           >
             <ListFilter className="w-3.5 h-3.5" /> Ch. {chapter.number} / {story.chapters.length}
           </button>
+
+          {/* Add to Library Toggle in Reader Navbar (Wattpad UX) */}
+          <button
+            onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              inLib
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 text-slate-700 dark:text-slate-200'
+            }`}
+            title="Save to Library"
+          >
+            {inLib ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <BookMarked className="w-3.5 h-3.5" />}
+            <span className="hidden md:inline">{inLib ? 'In Library' : 'Add to Library'}</span>
+          </button>
         </div>
 
         {/* Reader Customization Settings Controls */}
@@ -227,22 +276,9 @@ export default function ReaderPage() {
           <button 
             onClick={() => setFontFamily(fontFamily === 'serif' ? 'sans' : 'serif')}
             className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10"
-            title="Toggle Font Family (Serif / Sans)"
+            title="Toggle Font Family"
           >
             {fontFamily === 'serif' ? 'Serif' : 'Sans'}
-          </button>
-
-          {/* Line Spacing Toggle (Scope 2) */}
-          <button 
-            onClick={() => {
-              if (lineSpacing === 'leading-normal') setLineSpacing('leading-relaxed');
-              else if (lineSpacing === 'leading-relaxed') setLineSpacing('leading-loose');
-              else setLineSpacing('leading-normal');
-            }}
-            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10"
-            title="Toggle Line Spacing"
-          >
-            {lineSpacing === 'leading-normal' ? 'Spacing: 1.0' : lineSpacing === 'leading-relaxed' ? 'Spacing: 1.5' : 'Spacing: 2.0'}
           </button>
 
           {/* Report Button */}
@@ -401,46 +437,25 @@ export default function ReaderPage() {
                     {c.text}
                   </p>
 
-                  {/* Comment Reaction & Reply Bar (Scope 3: Emoji reactions on comments) */}
-                  <div className="pl-7 flex items-center justify-between pt-1 text-[11px] text-slate-400 flex-wrap gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Comment Reaction & Reply Bar */}
+                  <div className="pl-7 flex items-center justify-between pt-1 text-[11px] text-slate-400">
+                    <div className="flex items-center gap-3">
                       <button 
                         onClick={() => {
                           c.likes = (c.likes || 0) + 1;
                           setActiveParagraph({ ...activeParagraph });
                         }}
-                        className="flex items-center gap-1 hover:text-rose-500 font-bold px-1.5 py-0.5 rounded hover:bg-black/5"
-                        title="Like comment"
+                        className="flex items-center gap-1 hover:text-rose-500"
                       >
-                        <Heart className="w-3 h-3 text-rose-500 fill-rose-500" /> {c.likes || 0}
+                        <Heart className="w-3 h-3" /> {c.likes || 0}
                       </button>
-
-                      {['🔥', '❤️', '😭', '👏'].map(emoji => {
-                        const count = c.emojis?.[emoji] || 0;
-                        return (
-                          <button
-                            key={emoji}
-                            onClick={() => {
-                              if (!c.emojis) c.emojis = {};
-                              c.emojis[emoji] = (c.emojis[emoji] || 0) + 1;
-                              setActiveParagraph({ ...activeParagraph });
-                            }}
-                            className="px-1.5 py-0.5 rounded text-[10px] hover:bg-black/5 flex items-center gap-0.5"
-                            title={`React with ${emoji}`}
-                          >
-                            <span>{emoji}</span>
-                            {count > 0 && <span className="font-bold text-[9px] text-slate-500">{count}</span>}
-                          </button>
-                        );
-                      })}
+                      <button 
+                        onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
+                        className="hover:text-brand-500 font-semibold"
+                      >
+                        Reply
+                      </button>
                     </div>
-
-                    <button 
-                      onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
-                      className="hover:text-brand-500 font-semibold"
-                    >
-                      Reply
-                    </button>
                   </div>
 
                   {/* Nested Replies */}
@@ -536,6 +551,9 @@ export default function ReaderPage() {
         reportedUser={story.authorUsername}
         storyTitle={`${story.title} - Chapter ${chapter.number}`}
       />
+
+      {/* Global Auth Modal for Facebook & Google Logins */}
+      <AuthModal />
 
     </div>
   );
