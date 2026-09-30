@@ -9,11 +9,31 @@ import { KeyRound, CheckCircle, ArrowLeft } from 'lucide-react';
 export default function ForgotPasswordPage() {
   const { t } = useApp();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMsg(data.error || 'Failed to dispatch reset email.');
+      }
+    } catch (err) {
+      setErrorMsg('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,11 +74,18 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-900">
+                  {errorMsg}
+                </div>
+              )}
+
               <button 
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-lg shadow-brand-500/25 transition-all"
+                disabled={loading}
+                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer"
               >
-                Send Password Reset Link
+                {loading ? 'Dispatching Reset Link...' : 'Send Password Reset Link'}
               </button>
             </form>
           )}

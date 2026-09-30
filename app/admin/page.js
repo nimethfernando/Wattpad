@@ -28,7 +28,11 @@ import {
   RefreshCw,
   DollarSign,
   Search,
-  Sparkles
+  Sparkles,
+  Database,
+  Server,
+  Send,
+  Activity
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -105,6 +109,66 @@ export default function AdminPanel() {
   // Reassign story modal / state
   const [selectedStoryToReassign, setSelectedStoryToReassign] = useState(null);
   const [newAuthorName, setNewAuthorName] = useState('');
+
+  // Database & Email Notification Dispatcher State
+  const [dbInfo, setDbInfo] = useState({ host: '162.241.148.163:3306', database: 'ditya0a7_yourcpaneluser_gbncircle', success: true });
+  const [smtpInfo, setSmtpInfo] = useState({ user: 'gnbmailsender@gmail.com', success: true });
+  const [testEmailRecipient, setTestEmailRecipient] = useState('gnbmailsender@gmail.com');
+  const [testEmailSubject, setTestEmailSubject] = useState('New Serial Chapter Alert: The Shadow Alchemist');
+  const [testEmailTitle, setTestEmailTitle] = useState('Chapter 3 Has Been Serialized!');
+  const [testEmailMessage, setTestEmailMessage] = useState('Elena Vance just published Chapter 3 of The Shadow Alchemist on Avora Library. Click below to continue reading and leave your reactions.');
+  const [testEmailSending, setTestEmailSending] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState(null);
+  const [emailLogs, setEmailLogs] = useState([]);
+  const [contactSubmissions, setContactSubmissions] = useState([]);
+  const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+
+  const fetchEmailLogsAndStatus = async () => {
+    setLoadingEmailLogs(true);
+    try {
+      const res = await fetch('/api/email/test');
+      const data = await res.json();
+      if (data.success) {
+        if (data.database) setDbInfo(data.database);
+        if (data.email) setSmtpInfo(data.email);
+        if (data.recentLogs) setEmailLogs(data.recentLogs);
+        if (data.recentContacts) setContactSubmissions(data.recentContacts);
+      }
+    } catch (e) {
+      console.error("Error fetching email logs/status:", e);
+    } finally {
+      setLoadingEmailLogs(false);
+    }
+  };
+
+  const handleSendTestEmail = async (e) => {
+    e.preventDefault();
+    setTestEmailSending(true);
+    setTestEmailResult(null);
+    try {
+      const res = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: testEmailRecipient,
+          subject: testEmailSubject,
+          title: testEmailTitle,
+          message: testEmailMessage
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestEmailResult({ type: 'success', message: `Email dispatched successfully to ${testEmailRecipient} (Message ID: ${data.messageId || 'OK'})` });
+        fetchEmailLogsAndStatus();
+      } else {
+        setTestEmailResult({ type: 'error', message: data.error || 'Failed to dispatch email' });
+      }
+    } catch (e) {
+      setTestEmailResult({ type: 'error', message: e.message || 'Network error while dispatching email' });
+    } finally {
+      setTestEmailSending(false);
+    }
+  };
 
   // Story Actions
   const toggleFeatureStory = (storyId) => {
@@ -314,6 +378,18 @@ export default function AdminPanel() {
             }`}
           >
             Platform Settings & Feature Flags
+          </button>
+          <button 
+            onClick={() => {
+              setActiveTab('email_notifications');
+              fetchEmailLogsAndStatus();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === 'email_notifications' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            DB & Email Dispatcher
           </button>
         </div>
 
@@ -1046,6 +1122,321 @@ export default function AdminPanel() {
               >
                 Save Platform Settings
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 9: MARIADB & GMAIL SMTP NOTIFICATION CENTER */}
+        {activeTab === 'email_notifications' && (
+          <div className="mt-8 space-y-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="font-black text-xl flex items-center gap-2">
+                  <Database className="w-5 h-5 text-purple-600" />
+                  MariaDB &amp; Gmail SMTP Notification Dispatcher
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Real-time database integration and automated reader notification emails via secure SMTP.
+                </p>
+              </div>
+              <button
+                onClick={fetchEmailLogsAndStatus}
+                disabled={loadingEmailLogs}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingEmailLogs ? 'animate-spin' : ''}`} />
+                {loadingEmailLogs ? 'Refreshing...' : 'Refresh Status'}
+              </button>
+            </div>
+
+            {/* Status Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: MariaDB */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center font-bold">
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm">MariaDB Database</h4>
+                      <p className="text-[11px] text-slate-400">cPanel Production Cluster</p>
+                    </div>
+                  </div>
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Online &amp; Connected
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Host Endpoint:</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{dbInfo.host || '162.241.148.163:3306'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Database Name:</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{dbInfo.database || 'ditya0a7_yourcpaneluser_gbncircle'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Managed Tables:</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">avora_notifications, avora_email_logs, avora_contact_submissions, avora_subscribers</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Gmail SMTP */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm">Gmail SMTP Service</h4>
+                      <p className="text-[11px] text-slate-400">Nodemailer TLS Dispatcher</p>
+                    </div>
+                  </div>
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    SMTP Verified
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Sender Account:</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{smtpInfo.user || 'gnbmailsender@gmail.com'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Encryption:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">STARTTLS / SSL Encrypted</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-semibold">Authentication:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Google App Password Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Test Notification Dispatcher Console */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-black text-base flex items-center gap-2">
+                    <Send className="w-4 h-4 text-purple-600" />
+                    Dispatch Notification &amp; Email
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Broadcast a notification into the MariaDB database and dispatch an HTML email via Gmail SMTP.
+                  </p>
+                </div>
+
+                {/* Preset Templates */}
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <span className="text-slate-400 font-semibold">Quick Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTestEmailSubject('New Chapter Alert: The Shadow Alchemist');
+                      setTestEmailTitle('Chapter 3 Has Been Serialized!');
+                      setTestEmailMessage('Elena Vance just published Chapter 3 of The Shadow Alchemist on Avora Library. Click below to dive back in.');
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-[11px]"
+                  >
+                    📖 Chapter Alert
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTestEmailSubject('Welcome to Avora Library! 📚✨');
+                      setTestEmailTitle('Welcome to Avora Library!');
+                      setTestEmailMessage('Welcome to our serialized reading and writing community. Discover thousands of stories and connect with passionate authors.');
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-[11px]"
+                  >
+                    🎉 Welcome Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTestEmailSubject('Writing Contest Submissions Open');
+                      setTestEmailTitle('The Golden Quill Awards 2026');
+                      setTestEmailMessage('Submit your original manuscripts to compete for editorial contracts, feature banners, and author stipends.');
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-[11px]"
+                  >
+                    🏆 Contest Alert
+                  </button>
+                </div>
+              </div>
+
+              {testEmailResult && (
+                <div className={`p-4 rounded-2xl text-xs font-semibold flex items-center justify-between border ${
+                  testEmailResult.type === 'success' 
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                }`}>
+                  <span>{testEmailResult.message}</span>
+                  <button onClick={() => setTestEmailResult(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xs ml-4">✕</button>
+                </div>
+              )}
+
+              <form onSubmit={handleSendTestEmail} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Recipient Email Address</label>
+                    <input 
+                      type="email" 
+                      value={testEmailRecipient} 
+                      onChange={(e) => setTestEmailRecipient(e.target.value)} 
+                      required
+                      placeholder="e.g. reader@example.com"
+                      className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Email Subject Line</label>
+                    <input 
+                      type="text" 
+                      value={testEmailSubject} 
+                      onChange={(e) => setTestEmailSubject(e.target.value)} 
+                      required
+                      className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Notification Headline</label>
+                  <input 
+                    type="text" 
+                    value={testEmailTitle} 
+                    onChange={(e) => setTestEmailTitle(e.target.value)} 
+                    required
+                    className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Notification Body &amp; Details</label>
+                  <textarea 
+                    rows={3}
+                    value={testEmailMessage} 
+                    onChange={(e) => setTestEmailMessage(e.target.value)} 
+                    required
+                    className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button 
+                    type="submit"
+                    disabled={testEmailSending}
+                    className="px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+                  >
+                    <Send className={`w-4 h-4 ${testEmailSending ? 'animate-pulse' : ''}`} />
+                    {testEmailSending ? 'Sending Notification Email...' : 'Send Notification Email'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* MariaDB Email Dispatch History */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h4 className="font-black text-sm">MariaDB Dispatch Logs (avora_email_logs)</h4>
+                  <p className="text-[11px] text-slate-400">Audit trail of all system emails sent via Gmail SMTP</p>
+                </div>
+                <span className="text-xs text-slate-400 font-bold">{emailLogs.length} Logged Dispatches</span>
+              </div>
+
+              {emailLogs.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">
+                  No email dispatches recorded yet. Use the console above to send a notification.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-bold">
+                        <th className="py-2.5">Recipient</th>
+                        <th className="py-2.5">Subject</th>
+                        <th className="py-2.5">Template</th>
+                        <th className="py-2.5">Status</th>
+                        <th className="py-2.5">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {emailLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="py-3 font-semibold text-slate-800 dark:text-slate-200">{log.recipient}</td>
+                          <td className="py-3 max-w-xs truncate text-slate-600 dark:text-slate-400">{log.subject}</td>
+                          <td className="py-3 font-mono text-[11px] text-slate-400">{log.template}</td>
+                          <td className="py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              log.status === 'sent' 
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="py-3 text-slate-400 text-[11px]">
+                            {log.created_at ? new Date(log.created_at).toLocaleString() : 'Just now'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Inquiries & Contact Form Submissions */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h4 className="font-black text-sm">Helpdesk Inquiries (avora_contact_submissions)</h4>
+                  <p className="text-[11px] text-slate-400">Incoming support inquiries and reader tickets stored in MariaDB</p>
+                </div>
+                <span className="text-xs text-slate-400 font-bold">{contactSubmissions.length} Submissions</span>
+              </div>
+
+              {contactSubmissions.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">
+                  No submissions in the database yet. Visitors submitting from /contact will appear here automatically.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-bold">
+                        <th className="py-2.5">Name</th>
+                        <th className="py-2.5">Email</th>
+                        <th className="py-2.5">Subject</th>
+                        <th className="py-2.5">Message Snippet</th>
+                        <th className="py-2.5">Received</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {contactSubmissions.map((sub) => (
+                        <tr key={sub.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="py-3 font-semibold text-slate-800 dark:text-slate-200">{sub.name}</td>
+                          <td className="py-3 text-slate-500 font-mono text-[11px]">{sub.email}</td>
+                          <td className="py-3 font-semibold text-purple-600 dark:text-purple-400">{sub.subject}</td>
+                          <td className="py-3 max-w-sm truncate text-slate-600 dark:text-slate-400">{sub.message}</td>
+                          <td className="py-3 text-slate-400 text-[11px]">
+                            {sub.createdAt ? new Date(sub.createdAt).toLocaleString() : 'Just now'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

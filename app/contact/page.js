@@ -11,17 +11,40 @@ export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('support');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setName('');
-      setEmail('');
-      setMessage('');
-    }, 3500);
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          topic: subject,
+          subject: `Inquiry from ${name}`,
+          message
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+        setName('');
+        setEmail('');
+        setMessage('');
+      } else {
+        setErrorMsg(data.error || 'Failed to dispatch inquiry. Please try again.');
+      }
+    } catch (err) {
+      setErrorMsg('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,11 +121,18 @@ export default function ContactPage() {
                 />
               </div>
 
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-xs border border-rose-200 dark:border-rose-900">
+                  {errorMsg}
+                </div>
+              )}
+
               <button 
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-md shadow-brand-500/25 transition-all"
+                disabled={loading}
+                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-bold shadow-md shadow-brand-500/25 transition-all cursor-pointer"
               >
-                Send Support Message
+                {loading ? 'Dispatching Message...' : 'Send Support Message'}
               </button>
             </form>
           )}

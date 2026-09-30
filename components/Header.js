@@ -35,6 +35,8 @@ export default function Header() {
     setUser, 
     notifications, 
     setNotifications, 
+    markAllNotificationsRead,
+    markNotificationRead,
     stories, 
     readingLists,
     library,
@@ -65,7 +67,11 @@ export default function Header() {
   ).slice(0, 2);
 
   const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (typeof markAllNotificationsRead === 'function') {
+      markAllNotificationsRead();
+    } else {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }
   };
 
   return (
@@ -263,8 +269,19 @@ export default function Header() {
                 </div>
                 <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 my-2">
                   {notifications.map(n => (
-                    <div key={n.id} className={`py-3 text-xs ${!n.read ? 'bg-brand-50/50 dark:bg-brand-950/20 px-2 rounded-lg' : ''}`}>
-                      <p className="font-bold text-slate-900 dark:text-white">{n.title}</p>
+                    <div 
+                      key={n.id} 
+                      onClick={() => {
+                        if (!n.read && typeof markNotificationRead === 'function') {
+                          markNotificationRead(n.id);
+                        }
+                      }}
+                      className={`py-3 text-xs transition-colors cursor-pointer ${!n.read ? 'bg-brand-50/50 dark:bg-brand-950/20 px-2 rounded-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2'}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-slate-900 dark:text-white">{n.title}</p>
+                        {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0" />}
+                      </div>
                       <p className="text-slate-600 dark:text-slate-300 mt-0.5">{n.message}</p>
                       <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
                     </div>

@@ -182,6 +182,25 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // Sync Notifications from MariaDB
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchDbNotifications() {
+      try {
+        const userEmail = user?.email || 'elena@avoralibrary.com';
+        const res = await fetch(`/api/notifications?email=${encodeURIComponent(userEmail)}`);
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.notifications) && data.notifications.length > 0) {
+          setNotifications(data.notifications);
+        }
+      } catch (e) {
+        // Fallback silently if offline
+      }
+    }
+    fetchDbNotifications();
+    return () => { isMounted = false; };
+  }, [user?.email]);
+
   // Translation Dictionary
   const t = translations[lang] || translations.en;
 
@@ -190,15 +209,94 @@ export function AppProvider({ children }) {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const sendNotification = async ({ 
+    title, 
+    message, 
+    type = 'system', 
+    link = null, 
+    sendEmail = false, 
+    recipientEmail = null,
+    authorName = null,
+    storyTitle = null,
+    chapterTitle = null 
+  }) => {
+    const targetEmail = recipientEmail || user?.email || 'elena@avoralibrary.com';
+    const tempId = `notif_${Date.now()}`;
+    const newNotif = {
+      id: tempId,
+      title,
+      message,
+      type,
+      link,
+      read: false,
+      emailSent: sendEmail,
+      recipientEmail: targetEmail,
+      time: 'Just now'
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          message,
+          type,
+          link,
+          userEmail: user?.email || 'elena@avoralibrary.com',
+          sendEmail,
+          recipientEmail: targetEmail,
+          authorName,
+          storyTitle,
+          chapterTitle
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.notificationId) {
+        setNotifications(prev => prev.map(n => n.id === tempId ? { ...n, id: data.notificationId, emailSent: data.emailSent } : n));
+      }
+    } catch (e) {
+      console.error("Failed to post notification to DB:", e);
+    }
+  };
+
+  const markNotificationRead = async (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+    } catch (e) {
+      console.error("Failed to mark notification read in DB:", e);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true, userEmail: user?.email || 'elena@avoralibrary.com' })
+      });
+    } catch (e) {
+      console.error("Failed to mark all read in DB:", e);
+    }
+  };
+
   const followAuthor = (authorUsername) => {
     setFollowingAuthors(prev => {
       const isFollowing = prev.includes(authorUsername);
       const updated = isFollowing ? prev.filter(u => u !== authorUsername) : [...prev, authorUsername];
       if (!isFollowing) {
-        setNotifications(n => [
-          { id: Date.now(), title: "Follow Success", message: `You are now following @${authorUsername}. You will receive alerts when new chapters drop.`, time: "Just now", read: false },
-          ...n
-        ]);
+        sendNotification({
+          title: "Follow Success",
+          message: `You are now following @${authorUsername}. You will receive alerts when new chapters drop.`,
+          type: "system"
+        });
       }
       return updated;
     });
@@ -634,6 +732,15 @@ export function AppProvider({ children }) {
     setUser(newUser);
     setAuthModalOpen(false);
     executePending();
+
+    // Dispatch welcome notification & welcome email
+    sendNotification({
+      title: "Welcome to Avora Library!",
+      message: `Welcome @${username}! Your serialized reading and writing journey begins today. Check out trending stories or serialize your first novel.`,
+      type: "welcome",
+      sendEmail: true,
+      recipientEmail: email
+    });
   };
 
   // Public Conversations Wall
@@ -718,6 +825,9 @@ export function AppProvider({ children }) {
       openPaymentModal,
       notifications,
       setNotifications,
+      sendNotification,
+      markNotificationRead,
+      markAllNotificationsRead,
       voteChapter,
       reactChapterEmoji,
       addParagraphComment,
