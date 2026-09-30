@@ -12,7 +12,8 @@ import {
   initialTransactions,
   initialReadingStreak,
   initialReadingProgress,
-  initialFeatureFlags
+  initialFeatureFlags,
+  initialCmsConfig
 } from '@/lib/data';
 import { translations } from '@/lib/translations';
 
@@ -117,6 +118,9 @@ export function AppProvider({ children }) {
   // Notifications
   const [notifications, setNotifications] = useState([]);
 
+  // CMS Content Management (PWA, QR Code, Footer Socials, Pages)
+  const [cmsConfig, setCmsConfig] = useState(initialCmsConfig);
+
   // Theme Syncing to HTML class
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -164,6 +168,24 @@ export function AppProvider({ children }) {
         }
       } catch (e) {
         console.error("Could not load user preferences from localStorage", e);
+      }
+
+      // Sync CMS Content Configuration
+      try {
+        const savedCms = localStorage.getItem('avora_cms_config');
+        if (savedCms) {
+          const parsedCms = JSON.parse(savedCms);
+          setCmsConfig(prev => ({
+            ...prev,
+            ...parsedCms,
+            pwaSection: { ...prev.pwaSection, ...(parsedCms.pwaSection || {}) },
+            socialLinks: { ...prev.socialLinks, ...(parsedCms.socialLinks || {}) },
+            footerConfig: { ...prev.footerConfig, ...(parsedCms.footerConfig || {}) },
+            pagesContent: { ...prev.pagesContent, ...(parsedCms.pagesContent || {}) }
+          }));
+        }
+      } catch (e) {
+        console.error("Could not load CMS config from localStorage", e);
       }
 
       setIsHydrated(true);
@@ -867,6 +889,44 @@ export function AppProvider({ children }) {
     }));
   };
 
+  // CMS Content Management & Customization
+  const updateCmsConfig = (updates) => {
+    setCmsConfig(prev => {
+      const next = {
+        ...prev,
+        ...updates,
+        pwaSection: updates.pwaSection ? { ...prev.pwaSection, ...updates.pwaSection } : prev.pwaSection,
+        socialLinks: updates.socialLinks ? { ...prev.socialLinks, ...updates.socialLinks } : prev.socialLinks,
+        footerConfig: updates.footerConfig ? { ...prev.footerConfig, ...updates.footerConfig } : prev.footerConfig,
+        pagesContent: updates.pagesContent ? {
+          ...prev.pagesContent,
+          ...updates.pagesContent
+        } : prev.pagesContent
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_cms_config', JSON.stringify(next));
+        } catch (e) {
+          console.error("Could not save CMS config to localStorage", e);
+        }
+      }
+      return next;
+    });
+    addAuditLog("CMS Content Updated", "Website content, PWA banner, or social links modified");
+  };
+
+  const resetCmsConfig = () => {
+    setCmsConfig(initialCmsConfig);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('avora_cms_config');
+      } catch (e) {
+        console.error("Could not reset CMS config in localStorage", e);
+      }
+    }
+    addAuditLog("CMS Reset", "Website content restored to defaults");
+  };
+
   return (
     <AppContext.Provider value={{
       lang,
@@ -967,7 +1027,11 @@ export function AppProvider({ children }) {
       setUserPreferences,
       hiddenStoryIds,
       hideStory,
-      unhideStory
+      unhideStory,
+      cmsConfig,
+      setCmsConfig,
+      updateCmsConfig,
+      resetCmsConfig
     }}>
       {children}
     </AppContext.Provider>

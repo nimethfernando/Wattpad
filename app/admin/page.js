@@ -1,10 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
+import { initialCmsConfig } from '@/lib/data';
 import { 
   ShieldCheck, 
   BookOpen, 
@@ -32,7 +33,17 @@ import {
   Database,
   Server,
   Send,
-  Activity
+  Activity,
+  Globe,
+  Smartphone,
+  QrCode,
+  ExternalLink,
+  Save,
+  RotateCcw,
+  Share2,
+  FileText,
+  CheckCircle2,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -58,10 +69,150 @@ export default function AdminPanel() {
     announcementBanner,
     setAnnouncementBanner,
     user, 
-    t 
+    t,
+    cmsConfig,
+    updateCmsConfig,
+    resetCmsConfig
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings'
+  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications' | 'cms'
+
+  // CMS Content Management State
+  const [cmsSubTab, setCmsSubTab] = useState('pwa'); // 'pwa' | 'social' | 'pages'
+  const [cmsSelectedPage, setCmsSelectedPage] = useState('about'); // 'about' | 'terms' | 'privacy' | 'guidelines' | 'contact' | 'hero'
+  const [cmsForm, setCmsForm] = useState(cmsConfig || initialCmsConfig);
+  const [cmsSaveNotice, setCmsSaveNotice] = useState(false);
+
+  useEffect(() => {
+    if (cmsConfig) {
+      setCmsForm(cmsConfig);
+    }
+  }, [cmsConfig]);
+
+  const handleSaveCms = () => {
+    updateCmsConfig(cmsForm);
+    setCmsSaveNotice(true);
+    setTimeout(() => {
+      setCmsSaveNotice(false);
+    }, 3500);
+  };
+
+  const handleResetCms = () => {
+    if (confirm("Are you sure you want to reset all CMS content to platform factory defaults?")) {
+      resetCmsConfig();
+      setCmsForm(initialCmsConfig);
+      setCmsSaveNotice(true);
+      setTimeout(() => {
+        setCmsSaveNotice(false);
+      }, 3500);
+    }
+  };
+
+  const previewQrImageUrl = cmsForm?.pwaSection?.qrCodeType === 'custom_image' && cmsForm?.pwaSection?.qrCodeImageUrl
+    ? cmsForm.pwaSection.qrCodeImageUrl
+    : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(cmsForm?.pwaSection?.qrTargetUrl || 'https://avoralibrary.com')}&margin=10`;
+
+  const updatePwaField = (field, value) => {
+    setCmsForm(prev => ({
+      ...prev,
+      pwaSection: {
+        ...(prev?.pwaSection || initialCmsConfig.pwaSection),
+        [field]: value
+      }
+    }));
+  };
+
+  const updateSocialChannel = (channelKey, field, value) => {
+    setCmsForm(prev => ({
+      ...prev,
+      socialLinks: {
+        ...(prev?.socialLinks || initialCmsConfig.socialLinks),
+        [channelKey]: {
+          ...(prev?.socialLinks?.[channelKey] || {}),
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const updateFooterField = (field, value) => {
+    setCmsForm(prev => ({
+      ...prev,
+      footerConfig: {
+        ...(prev?.footerConfig || initialCmsConfig.footerConfig),
+        [field]: value
+      }
+    }));
+  };
+
+  const updatePageField = (pageKey, field, value) => {
+    setCmsForm(prev => ({
+      ...prev,
+      pagesContent: {
+        ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+        [pageKey]: {
+          ...(prev?.pagesContent?.[pageKey] || {}),
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const updateSectionItem = (pageKey, index, field, value) => {
+    setCmsForm(prev => {
+      const sections = [...(prev?.pagesContent?.[pageKey]?.sections || [])];
+      if (sections[index]) {
+        sections[index] = { ...sections[index], [field]: value };
+      }
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            sections
+          }
+        }
+      };
+    });
+  };
+
+  const addSectionItem = (pageKey) => {
+    setCmsForm(prev => {
+      const currentSections = prev?.pagesContent?.[pageKey]?.sections || [];
+      const newSec = {
+        heading: `${currentSections.length + 1}. New Policy Clause`,
+        content: "Details and terms regarding this policy section."
+      };
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            sections: [...currentSections, newSec]
+          }
+        }
+      };
+    });
+  };
+
+  const removeSectionItem = (pageKey, index) => {
+    setCmsForm(prev => {
+      const currentSections = prev?.pagesContent?.[pageKey]?.sections || [];
+      const updated = currentSections.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            sections: updated
+          }
+        }
+      };
+    });
+  };
 
   // Pagination States
   const [storyPage, setStoryPage] = useState(1);
@@ -378,6 +529,15 @@ export default function AdminPanel() {
             }`}
           >
             Platform Settings & Feature Flags
+          </button>
+          <button 
+            onClick={() => setActiveTab('cms')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === 'cms' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            CMS & Website Content
           </button>
           <button 
             onClick={() => {
@@ -1438,6 +1598,1172 @@ export default function AdminPanel() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* TAB: CMS & WEBSITE CONTENT MANAGEMENT */}
+        {activeTab === 'cms' && (
+          <div className="mt-8 space-y-6">
+            {/* Header & Global Actions */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xl font-black">Website Content Management System (CMS)</h3>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Manage the Progressive Web App (PWA) banner, QR code generator, footer social media links, and public website pages.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleResetCms}
+                  className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition-all"
+                  title="Reset all CMS fields to original defaults"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset Defaults
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCms}
+                  className="px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-500/25 transition-all cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Save CMS Changes
+                </button>
+              </div>
+            </div>
+
+            {/* Save Confirmation Notification */}
+            {cmsSaveNotice && (
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-2 shadow-sm animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                CMS Changes Saved & Published Live! All changes reflect immediately across the homepage, PWA banner, footer, and informational pages.
+              </div>
+            )}
+
+            {/* CMS Sub-Navigation */}
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setCmsSubTab('pwa')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  cmsSubTab === 'pwa'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                PWA Banner & QR Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setCmsSubTab('social')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  cmsSubTab === 'social'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Footer & Social Links
+              </button>
+              <button
+                type="button"
+                onClick={() => setCmsSubTab('pages')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  cmsSubTab === 'pages'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Website Pages Content
+              </button>
+            </div>
+
+            {/* SUB-TAB 1: PWA BANNER & QR CODE */}
+            {cmsSubTab === 'pwa' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column: Form Controls */}
+                  <div className="lg:col-span-7 space-y-6">
+                    {/* Card 1: Visibility & Basic Info */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">PWA Install Banner Display</h4>
+                          <p className="text-[11px] text-slate-400">Control visibility of the "Read Anywhere on Mobile" card on the homepage</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updatePwaField('enabled', !cmsForm?.pwaSection?.enabled)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              cmsForm?.pwaSection?.enabled !== false
+                                ? 'bg-emerald-500 text-white shadow-sm'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                            }`}
+                          >
+                            {cmsForm?.pwaSection?.enabled !== false ? (
+                              <>
+                                <CheckCircle className="w-3.5 h-3.5" /> Shown on Site
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" /> Removed / Hidden
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Badge Text</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pwaSection?.badgeText || ''}
+                            onChange={(e) => updatePwaField('badgeText', e.target.value)}
+                            placeholder="e.g. Progressive Web App (PWA)"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Headline Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pwaSection?.title || ''}
+                            onChange={(e) => updatePwaField('title', e.target.value)}
+                            placeholder="e.g. Read Anywhere on Mobile"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Description Paragraph</label>
+                          <textarea
+                            rows={3}
+                            value={cmsForm?.pwaSection?.description || ''}
+                            onChange={(e) => updatePwaField('description', e.target.value)}
+                            placeholder="Detailed explanation of the PWA install features..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Button Text</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pwaSection?.buttonText || ''}
+                              onChange={(e) => updatePwaField('buttonText', e.target.value)}
+                              placeholder="e.g. Install Web App"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Custom Button Redirect URL (Optional)</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pwaSection?.buttonUrl || ''}
+                              onChange={(e) => updatePwaField('buttonUrl', e.target.value)}
+                              placeholder="Leave blank for native PWA prompt"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card 2: QR Code Configuration */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                      <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <h4 className="font-black text-sm flex items-center gap-2">
+                          <QrCode className="w-4 h-4 text-purple-600" />
+                          QR Code Generator &amp; Image Settings
+                        </h4>
+                        <p className="text-[11px] text-slate-400">Choose whether to dynamically generate a QR code for your URL or upload a custom image</p>
+                      </div>
+
+                      <div className="space-y-4 text-xs">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1.5">QR Code Source Mode</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => updatePwaField('qrCodeType', 'dynamic')}
+                              className={`py-2 px-3 rounded-xl font-bold transition-all text-center ${
+                                cmsForm?.pwaSection?.qrCodeType !== 'custom_image'
+                                  ? 'bg-purple-600 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              Dynamic URL Generator
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePwaField('qrCodeType', 'custom_image')}
+                              className={`py-2 px-3 rounded-xl font-bold transition-all text-center ${
+                                cmsForm?.pwaSection?.qrCodeType === 'custom_image'
+                                  ? 'bg-purple-600 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              Custom Image URL
+                            </button>
+                          </div>
+                        </div>
+
+                        {cmsForm?.pwaSection?.qrCodeType !== 'custom_image' ? (
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Target Web URL (Encoded in QR Code)</label>
+                            <input
+                              type="url"
+                              value={cmsForm?.pwaSection?.qrTargetUrl || ''}
+                              onChange={(e) => updatePwaField('qrTargetUrl', e.target.value)}
+                              placeholder="https://avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              When readers scan with iOS or Android camera, they will immediately land on this URL.
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Custom QR Code Image URL</label>
+                            <input
+                              type="url"
+                              value={cmsForm?.pwaSection?.qrCodeImageUrl || ''}
+                              onChange={(e) => updatePwaField('qrCodeImageUrl', e.target.value)}
+                              placeholder="https://yourdomain.com/custom-qr.png"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              Provide a direct link to a hosted image of your branded or pre-generated QR code.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">QR Box Top Label</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pwaSection?.qrCodeLabel || ''}
+                              onChange={(e) => updatePwaField('qrCodeLabel', e.target.value)}
+                              placeholder="Scan QR with Phone"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">QR Box Sublabel</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pwaSection?.qrCodeSublabel || ''}
+                              onChange={(e) => updatePwaField('qrCodeSublabel', e.target.value)}
+                              placeholder="Instant mobile web app"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Live Card Preview matching user screenshot */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Homepage Preview</span>
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                        cmsForm?.pwaSection?.enabled !== false 
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      }`}>
+                        {cmsForm?.pwaSection?.enabled !== false ? '● Visible' : '○ Hidden on Site'}
+                      </span>
+                    </div>
+
+                    <div className="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md">
+                      {/* Exact PWA Card replica */}
+                      <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-brand-950 text-white p-6 sm:p-8 flex flex-col gap-6">
+                        <div className="space-y-3">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                            <Smartphone className="w-3.5 h-3.5" /> {cmsForm?.pwaSection?.badgeText || "Progressive Web App (PWA)"}
+                          </span>
+                          <h3 className="text-xl sm:text-2xl font-black leading-tight">
+                            {cmsForm?.pwaSection?.title || "Read Anywhere on Mobile"}
+                          </h3>
+                          <p className="text-slate-300 text-xs leading-relaxed">
+                            {cmsForm?.pwaSection?.description || "Install Avora Library directly to your phone screen as a lightweight web app (PWA)..."}
+                          </p>
+                          <div className="pt-2">
+                            <span className="inline-block px-5 py-2.5 rounded-full bg-brand-500 font-bold text-xs shadow-md shadow-brand-500/30">
+                              {cmsForm?.pwaSection?.buttonText || "Install Web App"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* QR Code Box */}
+                        <div className="flex flex-col items-center bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center mx-auto w-full max-w-[200px]">
+                          <div className="w-28 h-28 bg-white rounded-xl flex items-center justify-center p-2 shadow-inner overflow-hidden relative">
+                            <img
+                              src={previewQrImageUrl}
+                              alt="PWA QR Preview"
+                              className="w-24 h-24 object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.qr-fallback-admin');
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
+                            />
+                            <div className="qr-fallback-admin hidden flex items-center justify-center w-24 h-24">
+                              <QrCode className="w-20 h-20 text-slate-900" />
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-200 mt-2">{cmsForm?.pwaSection?.qrCodeLabel || "Scan QR with Phone"}</span>
+                          <span className="text-[9px] text-slate-400">{cmsForm?.pwaSection?.qrCodeSublabel || "Instant mobile web app"}</span>
+                        </div>
+                      </div>
+
+                      {/* If disabled, show watermark overlay */}
+                      {cmsForm?.pwaSection?.enabled === false && (
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center text-white">
+                          <EyeOff className="w-10 h-10 text-rose-400 mb-2" />
+                          <h5 className="font-black text-sm">Banner is Currently Removed</h5>
+                          <p className="text-xs text-slate-300 mt-1 max-w-xs">
+                            This banner is removed from the homepage. Turn on "PWA Install Banner Display" to restore it.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 space-y-1">
+                      <p className="font-bold text-slate-700 dark:text-slate-300">💡 Quick Tip</p>
+                      <p>
+                        Scanning the QR code on a real mobile device opens the site directly in Safari or Chrome, prompting the user to install Avora Library to their Home Screen.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 2: FOOTER & SOCIAL MEDIA CHANNELS */}
+            {cmsSubTab === 'social' && (
+              <div className="space-y-6">
+                {/* Global Footer Controls */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                      <h4 className="font-black text-sm">Footer Social Media Bar</h4>
+                      <p className="text-[11px] text-slate-400">Toggle individual platforms on or off, and update their destination links</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateFooterField('showSocialLinks', !cmsForm?.footerConfig?.showSocialLinks)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        cmsForm?.footerConfig?.showSocialLinks !== false
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {cmsForm?.footerConfig?.showSocialLinks !== false ? 'Social Links Bar: Active' : 'Social Links Bar: Hidden'}
+                    </button>
+                  </div>
+
+                  {/* Channel Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                    {/* Instagram */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center font-black text-xs">
+                            IG
+                          </span>
+                          <span className="font-black text-xs">Instagram</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('instagram', 'enabled', !cmsForm?.socialLinks?.instagram?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.instagram?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.instagram?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Profile URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.instagram?.url || ''}
+                          onChange={(e) => updateSocialChannel('instagram', 'url', e.target.value)}
+                          placeholder="https://instagram.com/yourprofile"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.instagram?.url && (
+                        <a
+                          href={cmsForm.socialLinks.instagram.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+
+                    {/* X (Twitter) */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-black text-xs">
+                            𝕏
+                          </span>
+                          <span className="font-black text-xs">X (Twitter)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('x', 'enabled', !cmsForm?.socialLinks?.x?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.x?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.x?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Profile URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.x?.url || ''}
+                          onChange={(e) => updateSocialChannel('x', 'url', e.target.value)}
+                          placeholder="https://x.com/yourhandle"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.x?.url && (
+                        <a
+                          href={cmsForm.socialLinks.x.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs">
+                            FB
+                          </span>
+                          <span className="font-black text-xs">Facebook</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('facebook', 'enabled', !cmsForm?.socialLinks?.facebook?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.facebook?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.facebook?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Page URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.facebook?.url || ''}
+                          onChange={(e) => updateSocialChannel('facebook', 'url', e.target.value)}
+                          placeholder="https://facebook.com/yourpage"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.facebook?.url && (
+                        <a
+                          href={cmsForm.socialLinks.facebook.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+
+                    {/* TikTok */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-black text-xs">
+                            TT
+                          </span>
+                          <span className="font-black text-xs">TikTok</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('tiktok', 'enabled', !cmsForm?.socialLinks?.tiktok?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.tiktok?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.tiktok?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Profile URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.tiktok?.url || ''}
+                          onChange={(e) => updateSocialChannel('tiktok', 'url', e.target.value)}
+                          placeholder="https://tiktok.com/@youraccount"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.tiktok?.url && (
+                        <a
+                          href={cmsForm.socialLinks.tiktok.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Discord */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-xs">
+                            DC
+                          </span>
+                          <span className="font-black text-xs">Discord</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('discord', 'enabled', !cmsForm?.socialLinks?.discord?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.discord?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.discord?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Server Invite URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.discord?.url || ''}
+                          onChange={(e) => updateSocialChannel('discord', 'url', e.target.value)}
+                          placeholder="https://discord.gg/yourinvite"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.discord?.url && (
+                        <a
+                          href={cmsForm.socialLinks.discord.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+
+                    {/* YouTube */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-xs">
+                            YT
+                          </span>
+                          <span className="font-black text-xs">YouTube</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateSocialChannel('youtube', 'enabled', !cmsForm?.socialLinks?.youtube?.enabled)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            cmsForm?.socialLinks?.youtube?.enabled
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {cmsForm?.socialLinks?.youtube?.enabled ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400">Channel URL</label>
+                        <input
+                          type="url"
+                          value={cmsForm?.socialLinks?.youtube?.url || ''}
+                          onChange={(e) => updateSocialChannel('youtube', 'url', e.target.value)}
+                          placeholder="https://youtube.com/@yourchannel"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+                      {cmsForm?.socialLinks?.youtube?.url && (
+                        <a
+                          href={cmsForm.socialLinks.youtube.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Test Link
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Tagline & Legal Information Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h4 className="font-black text-sm">Footer Branding, Tagline &amp; Copyright</h4>
+                    <p className="text-[11px] text-slate-400">Customize the statement shown below the logo and platform legal notice</p>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-slate-400 mb-1">Footer Tagline</label>
+                      <textarea
+                        rows={2}
+                        value={cmsForm?.footerConfig?.tagline || ''}
+                        onChange={(e) => updateFooterField('tagline', e.target.value)}
+                        placeholder="Platform mission tagline..."
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-400 mb-1">Copyright Notice</label>
+                      <input
+                        type="text"
+                        value={cmsForm?.footerConfig?.copyrightText || ''}
+                        onChange={(e) => updateFooterField('copyrightText', e.target.value)}
+                        placeholder="© 2026 Avora Library Platform. All original rights reserved."
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                        <div>
+                          <p className="font-bold text-slate-700 dark:text-slate-200">Language Selector in Footer</p>
+                          <p className="text-[10px] text-slate-400">English, Georgian, Hindi</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateFooterField('showLanguageSelector', !cmsForm?.footerConfig?.showLanguageSelector)}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                            cmsForm?.footerConfig?.showLanguageSelector !== false
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                          }`}
+                        >
+                          {cmsForm?.footerConfig?.showLanguageSelector !== false ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                        <div>
+                          <p className="font-bold text-slate-700 dark:text-slate-200">Legal Navigation Links</p>
+                          <p className="text-[10px] text-slate-400">Terms, Privacy, Guidelines</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateFooterField('showLegalLinks', !cmsForm?.footerConfig?.showLegalLinks)}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                            cmsForm?.footerConfig?.showLegalLinks !== false
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                          }`}
+                        >
+                          {cmsForm?.footerConfig?.showLegalLinks !== false ? 'Shown' : 'Hidden'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 3: WEBSITE PAGES CONTENT */}
+            {cmsSubTab === 'pages' && (
+              <div className="space-y-6">
+                {/* Page Selector Tabs */}
+                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+                  {[
+                    { key: 'about', label: 'About Us (/about)' },
+                    { key: 'terms', label: 'Terms of Service (/terms)' },
+                    { key: 'privacy', label: 'Privacy Policy (/privacy)' },
+                    { key: 'guidelines', label: 'Guidelines (/guidelines)' },
+                    { key: 'contact', label: 'Contact Us (/contact)' },
+                    { key: 'hero', label: 'Homepage Hero (/)' }
+                  ].map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setCmsSelectedPage(p.key)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                        cmsSelectedPage === p.key
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Selected Page Editor */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                  {/* ABOUT US */}
+                  {cmsSelectedPage === 'about' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">About Us Page Content</h4>
+                          <p className="text-[11px] text-slate-400">Live at /about</p>
+                        </div>
+                        <Link href="/about" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.about?.title || ''}
+                            onChange={(e) => updatePageField('about', 'title', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Subtitle</label>
+                          <textarea
+                            rows={2}
+                            value={cmsForm?.pagesContent?.about?.subtitle || ''}
+                            onChange={(e) => updatePageField('about', 'subtitle', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                          <label className="block font-black text-slate-700 dark:text-slate-300">Mission Section</label>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Heading</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.about?.missionTitle || ''}
+                              onChange={(e) => updatePageField('about', 'missionTitle', e.target.value)}
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Body Text</label>
+                            <textarea
+                              rows={3}
+                              value={cmsForm?.pagesContent?.about?.missionContent || ''}
+                              onChange={(e) => updatePageField('about', 'missionContent', e.target.value)}
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                          <label className="block font-black text-slate-700 dark:text-slate-300">Mobile-First PWA Section</label>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Heading</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.about?.pwaTitle || ''}
+                              onChange={(e) => updatePageField('about', 'pwaTitle', e.target.value)}
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Body Text</label>
+                            <textarea
+                              rows={3}
+                              value={cmsForm?.pagesContent?.about?.pwaContent || ''}
+                              onChange={(e) => updatePageField('about', 'pwaContent', e.target.value)}
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TERMS OF SERVICE */}
+                  {cmsSelectedPage === 'terms' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Terms of Service Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /terms</p>
+                        </div>
+                        <Link href="/terms" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.terms?.title || ''}
+                            onChange={(e) => updatePageField('terms', 'title', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.terms?.lastUpdated || ''}
+                            onChange={(e) => updatePageField('terms', 'lastUpdated', e.target.value)}
+                            placeholder="e.g. March 2026"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="font-black text-slate-700 dark:text-slate-300">Policy Clauses / Sections</label>
+                          <button
+                            type="button"
+                            onClick={() => addSectionItem('terms')}
+                            className="px-3 py-1 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold text-xs flex items-center gap-1 hover:bg-purple-200"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Clause
+                          </button>
+                        </div>
+
+                        {cmsForm?.pagesContent?.terms?.sections?.map((sec, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-400 text-[10px]">Clause {idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSectionItem('terms', idx)}
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => updateSectionItem('terms', idx, 'heading', e.target.value)}
+                              placeholder="Clause Heading (e.g. 1. Acceptance of Terms)"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                            <textarea
+                              rows={3}
+                              value={sec.content || ''}
+                              onChange={(e) => updateSectionItem('terms', idx, 'content', e.target.value)}
+                              placeholder="Clause content details..."
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PRIVACY POLICY */}
+                  {cmsSelectedPage === 'privacy' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Privacy Policy Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /privacy</p>
+                        </div>
+                        <Link href="/privacy" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.privacy?.title || ''}
+                            onChange={(e) => updatePageField('privacy', 'title', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.privacy?.lastUpdated || ''}
+                            onChange={(e) => updatePageField('privacy', 'lastUpdated', e.target.value)}
+                            placeholder="e.g. March 2026"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="font-black text-slate-700 dark:text-slate-300">Privacy Clauses / Sections</label>
+                          <button
+                            type="button"
+                            onClick={() => addSectionItem('privacy')}
+                            className="px-3 py-1 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold text-xs flex items-center gap-1 hover:bg-purple-200"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Clause
+                          </button>
+                        </div>
+
+                        {cmsForm?.pagesContent?.privacy?.sections?.map((sec, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-400 text-[10px]">Clause {idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSectionItem('privacy', idx)}
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => updateSectionItem('privacy', idx, 'heading', e.target.value)}
+                              placeholder="Clause Heading (e.g. 1. Information We Collect)"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                            <textarea
+                              rows={3}
+                              value={sec.content || ''}
+                              onChange={(e) => updateSectionItem('privacy', idx, 'content', e.target.value)}
+                              placeholder="Clause content details..."
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GUIDELINES */}
+                  {cmsSelectedPage === 'guidelines' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Author &amp; Community Guidelines</h4>
+                          <p className="text-[11px] text-slate-400">Live at /guidelines</p>
+                        </div>
+                        <Link href="/guidelines" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.guidelines?.title || ''}
+                            onChange={(e) => updatePageField('guidelines', 'title', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.guidelines?.subtitle || ''}
+                            onChange={(e) => updatePageField('guidelines', 'subtitle', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Editorial Notice &amp; Core Platform Rules</label>
+                          <textarea
+                            rows={4}
+                            value={cmsForm?.pagesContent?.guidelines?.content || ''}
+                            onChange={(e) => updatePageField('guidelines', 'content', e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CONTACT US */}
+                  {cmsSelectedPage === 'contact' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Contact Us Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /contact</p>
+                        </div>
+                        <Link href="/contact" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.contact?.title || ''}
+                              onChange={(e) => updatePageField('contact', 'title', e.target.value)}
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.contact?.subtitle || ''}
+                              onChange={(e) => updatePageField('contact', 'subtitle', e.target.value)}
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Support Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.contact?.supportEmail || ''}
+                              onChange={(e) => updatePageField('contact', 'supportEmail', e.target.value)}
+                              placeholder="support@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Press / Media Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.contact?.pressEmail || ''}
+                              onChange={(e) => updatePageField('contact', 'pressEmail', e.target.value)}
+                              placeholder="press@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Office / Mailing Address</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.contact?.officeAddress || ''}
+                            onChange={(e) => updatePageField('contact', 'officeAddress', e.target.value)}
+                            placeholder="Avora Library Inc., 100 Storyteller Way, San Francisco, CA"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* HOMEPAGE HERO */}
+                  {cmsSelectedPage === 'hero' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Homepage Hero Section</h4>
+                          <p className="text-[11px] text-slate-400">Live at / (Public Landing)</p>
+                        </div>
+                        <Link href="/" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Badge Text</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.hero?.badge || ''}
+                            onChange={(e) => updatePageField('hero', 'badge', e.target.value)}
+                            placeholder="Original Serialized Fiction & Community"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Title Prefix</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.hero?.titlePrefix || ''}
+                              onChange={(e) => updatePageField('hero', 'titlePrefix', e.target.value)}
+                              placeholder="Stories That"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Title Highlight (Gradient)</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.hero?.titleHighlight || ''}
+                              onChange={(e) => updatePageField('hero', 'titleHighlight', e.target.value)}
+                              placeholder="Capture Your Imagination."
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Hero Subtitle</label>
+                          <textarea
+                            rows={3}
+                            value={cmsForm?.pagesContent?.hero?.subtitle || ''}
+                            onChange={(e) => updatePageField('hero', 'subtitle', e.target.value)}
+                            placeholder="Platform description..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

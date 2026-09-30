@@ -6,7 +6,12 @@ import { useApp } from '@/context/AppContext';
 import { Feather, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 
 export default function GuidelinesPage() {
-  const { t } = useApp();
+  const { t, cmsConfig } = useApp();
+  const guidelinesData = cmsConfig?.pagesContent?.guidelines || {
+    title: "Author & Community Guidelines",
+    subtitle: "Rules and best practices for serialized fiction creators and readers.",
+    content: "Ensure respectful interaction across paragraph discussions. Accurately categorize mature fiction. Respect copyright and original storytelling. Support fellow authors with constructive feedback and paragraph cheers."
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -15,13 +20,18 @@ export default function GuidelinesPage() {
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-12">
         <div className="text-center space-y-2 mb-10">
           <Feather className="w-10 h-10 text-brand-500 mx-auto" />
-          <h1 className="text-3xl sm:text-4xl font-black">{t.guidelines} & Writer Resources</h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            How to craft serialized novels that build passionate audiences on Avora Library.
+          <h1 className="text-3xl sm:text-4xl font-black">{guidelinesData.title || `${t.guidelines} & Writer Resources`}</h1>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
+            {guidelinesData.subtitle || "How to craft serialized novels that build passionate audiences on Avora Library."}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+        <div className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300 shadow-sm">
+          {guidelinesData.content && (
+            <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200/50 dark:border-brand-900/30 text-brand-900 dark:text-brand-200 leading-relaxed font-medium">
+              {guidelinesData.content}
+            </div>
+          )}
           <section className="space-y-3">
             <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-brand-500" /> 1. The Power of Paragraph Hooks

@@ -6,7 +6,14 @@ import { useApp } from '@/context/AppContext';
 import { Mail, Send, CheckCircle } from 'lucide-react';
 
 export default function ContactPage() {
-  const { t } = useApp();
+  const { t, cmsConfig } = useApp();
+  const contactData = cmsConfig?.pagesContent?.contact || {
+    title: "Contact Us",
+    subtitle: "Have a question or feedback? Send a direct message to our support desk.",
+    supportEmail: "support@avoralibrary.com",
+    pressEmail: "press@avoralibrary.com",
+    officeAddress: "Avora Library Inc., 100 Storyteller Way, San Francisco, CA"
+  };
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('support');
@@ -54,10 +61,21 @@ export default function ContactPage() {
       <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 py-12">
         <div className="text-center space-y-2 mb-8">
           <Mail className="w-10 h-10 text-brand-500 mx-auto" />
-          <h1 className="text-3xl font-black">{t.contactUs}</h1>
-          <p className="text-xs text-slate-500">
-            Have a question or feedback? Send a direct message to our support desk.
+          <h1 className="text-3xl font-black">{contactData.title || t.contactUs}</h1>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {contactData.subtitle || "Have a question or feedback? Send a direct message to our support desk."}
           </p>
+
+          {(contactData.supportEmail || contactData.pressEmail) && (
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-[11px] text-slate-400">
+              {contactData.supportEmail && (
+                <span>Support: <strong className="text-brand-600 dark:text-brand-400">{contactData.supportEmail}</strong></span>
+              )}
+              {contactData.pressEmail && (
+                <span>Press: <strong className="text-slate-600 dark:text-slate-300">{contactData.pressEmail}</strong></span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
