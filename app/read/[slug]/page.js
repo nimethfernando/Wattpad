@@ -26,8 +26,10 @@ import {
   CornerDownRight,
   BookMarked,
   Check,
-  Plus
+  Plus,
+  ImageIcon
 } from 'lucide-react';
+import { canUserAccessContent } from '@/lib/agePolicy';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -47,12 +49,14 @@ export default function ReaderPage() {
     openAuthModal,
     openPaymentModal,
     featureFlags,
+    setAgeVerificationModalOpen,
     t 
   } = useApp();
 
   const story = stories.find(s => s.slug === slug);
   const inLib = story ? isInLibrary(story.id) : false;
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   const chapter = story?.chapters?.[currentChapterIndex] || story?.chapters?.[0];
 
   // Reader Customization State
@@ -180,28 +184,58 @@ export default function ReaderPage() {
     setReplyText('');
   };
 
-  // Maturity Age Gate Check
-  if (story.maturity === 'mature' && !ageConfirmed && !user?.isAgeVerified) {
+  // Core Platform-Level Rule: DOB Age Access Enforcement
+  const accessCheck = canUserAccessContent(user, story);
+  if (!accessCheck.canAccess) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-slate-800 text-center space-y-4">
+        <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-slate-800 text-center space-y-4 shadow-2xl">
           <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
-          <h2 className="text-2xl font-black">Mature Content Warning (18+)</h2>
+          <span className="text-xs font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full inline-block">
+            Rating: {story.ageRating || '18+'}
+          </span>
+          <h2 className="text-2xl font-black">Age-Restricted Content</h2>
           <p className="text-xs text-slate-300 leading-relaxed">
-            This serialized novel has been designated for mature readers by the author and contains intense themes. Please confirm your age to proceed.
+            {accessCheck.message}
           </p>
-          <div className="pt-2 flex flex-col gap-2">
-            <button 
-              onClick={() => setAgeConfirmed(true)}
-              className="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 font-bold text-xs"
+
+          <div className="w-full bg-slate-800/80 p-3.5 rounded-2xl text-left text-xs space-y-1.5 border border-slate-700">
+            <div className="flex justify-between text-slate-400">
+              <span>Required Age:</span>
+              <strong className="text-rose-400">{story.ageRating || '18+'}</strong>
+            </div>
+            {accessCheck.userAge !== null && (
+              <div className="flex justify-between text-slate-400">
+                <span>Your Account Age:</span>
+                <strong className="text-amber-400">{accessCheck.userAge} years old</strong>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-2 flex flex-col gap-2.5">
+            {accessCheck.reason === 'LOGIN_REQUIRED_FOR_MATURE' && (
+              <button
+                onClick={() => openAuthModal('login', `Log in with an age-verified account to read ${story.title}.`)}
+                className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              >
+                Log In / Create Verified Account
+              </button>
+            )}
+
+            {accessCheck.reason === 'DOB_REQUIRED' && (
+              <button
+                onClick={() => setAgeVerificationModalOpen(true)}
+                className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              >
+                Verify Your Date of Birth
+              </button>
+            )}
+
+            <Link
+              href="/browse"
+              className="w-full py-3 rounded-full border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-800 transition-all text-center"
             >
-              I am 18 or older • Continue Reading
-            </button>
-            <Link 
-              href="/browse" 
-              className="w-full py-3 rounded-xl border border-slate-700 font-bold text-xs text-slate-400 hover:bg-slate-800"
-            >
-              Return to Library
+              Browse Other Stories
             </Link>
           </div>
         </div>
@@ -330,34 +364,96 @@ export default function ReaderPage() {
           </p>
         </header>
 
-        {/* PARAGRAPH-LEVEL INLINE COMMENTS FEATURE */}
-        <div 
-          className={`space-y-6 ${lineSpacing} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {chapter.paragraphs.map((p) => (
-            <div 
-              key={p.id}
-              onClick={() => setActiveParagraph(p)}
-              className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-            >
-              <p className="leading-relaxed">{p.text}</p>
+        {/* 2A. ILLUSTRATED PICTURE BOOK / VISUAL STORY VIEWER */}
+        {chapter.pages && chapter.pages.length > 0 ? (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
+              {/* Page Image */}
+              <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
+                <img 
+                  src={chapter.pages[activePageIndex]?.image} 
+                  alt={`Page ${activePageIndex + 1}`}
+                  className="w-full h-full object-contain"
+                />
+                
+                {/* Floating Page Badge */}
+                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white font-bold text-xs">
+                  Page {activePageIndex + 1} of {chapter.pages.length}
+                </div>
+              </div>
 
-              {/* Inline Reaction Badge */}
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveParagraph(p);
-                }}
-                className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
-                title="View & Post Paragraph Comments"
-              >
-                <MessageSquare className="w-3 h-3" />
-                <span>{p.comments.length}</span>
-              </button>
+              {/* Page Text & Caption */}
+              <div className="p-6 sm:p-8 space-y-4">
+                <p className={`text-base sm:text-lg leading-relaxed ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}>
+                  {chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption}
+                </p>
+
+                {/* Page Navigation Controls */}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => setActivePageIndex(Math.max(0, activePageIndex - 1))}
+                    disabled={activePageIndex === 0}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-30 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Previous Page
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    {chapter.pages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActivePageIndex(idx)}
+                        className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
+                          activePageIndex === idx 
+                            ? 'bg-brand-500 scale-125' 
+                            : 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                        }`}
+                        title={`Go to page ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setActivePageIndex(Math.min(chapter.pages.length - 1, activePageIndex + 1))}
+                    disabled={activePageIndex === chapter.pages.length - 1}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white disabled:opacity-30 font-bold text-xs hover:bg-brand-600 transition-all cursor-pointer"
+                  >
+                    Next Page <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          /* 2B. NOVEL PARAGRAPH-LEVEL READING CANVAS */
+          <div 
+            className={`space-y-6 ${lineSpacing} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            {chapter.paragraphs?.map((p) => (
+              <div 
+                key={p.id}
+                onClick={() => setActiveParagraph(p)}
+                className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+              >
+                <p className="leading-relaxed">{p.text}</p>
+
+                {/* Inline Reaction Badge */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveParagraph(p);
+                  }}
+                  className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                  title="View & Post Paragraph Comments"
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  <span>{p.comments?.length || 0}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* CHAPTER EMOJI REACTIONS (Scope 3) */}
         <div className="mt-14 pt-8 border-t border-black/10 dark:border-white/10 flex flex-col items-center gap-4">

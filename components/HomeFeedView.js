@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import ReadingListModal from '@/components/ReadingListModal';
+import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 import { 
   Flame, 
   BookOpen, 
@@ -55,8 +56,9 @@ export default function HomeFeedView() {
 
   const [selectedStoryForList, setSelectedStoryForList] = useState(null);
 
-  // 1. Filter out hidden stories
-  const visibleStories = stories.filter(s => !hiddenStoryIds.includes(s.id));
+  // 1. Core DOB Age Policy Filter + hidden stories filter
+  const ageApprovedStories = filterStoriesForUser(stories, user);
+  const visibleStories = ageApprovedStories.filter(s => !hiddenStoryIds.includes(s.id));
 
   // 2. Find active story for Continue Reading / Jump Back In
   const activeStoryId = Object.keys(readingProgress || {})[0] || (library.length > 0 ? library[0] : visibleStories[0]?.id);
@@ -68,10 +70,16 @@ export default function HomeFeedView() {
     lastReadAt: "New"
   };
 
-  // 3. User Selected Favorite Genres
-  const favoriteGenres = userPreferences?.favoriteGenres && userPreferences.favoriteGenres.length > 0
-    ? userPreferences.favoriteGenres
+  // 3. User Selected Favorite Genres filtered by age policy
+  const defaultGenres = (user?.experienceMode === 'kids' || (user?.age !== undefined && user.age < 18))
+    ? ["Kids Books", "Educational Stories", "Fantasy"]
     : ["Romance", "Fantasy", "Werewolf"];
+
+  const rawFavoriteGenres = userPreferences?.favoriteGenres && userPreferences.favoriteGenres.length > 0
+    ? userPreferences.favoriteGenres
+    : defaultGenres;
+
+  const favoriteGenres = filterGenresForUser(rawFavoriteGenres, user);
 
   // Helper: Match story to genre keyword
   const matchesGenre = (story, targetGenre) => {
@@ -518,6 +526,26 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
               <span>#{story.ranking.rank} in {story.ranking.tag}</span>
             </div>
           )}
+
+          {/* Age Rating & Content Format Badges */}
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 z-10 flex-wrap">
+            {story.ageRating && (
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full backdrop-blur-md border ${
+                story.ageRating === '18+'
+                  ? 'bg-rose-950/80 text-rose-300 border-rose-500/40'
+                  : story.ageRating === '16+'
+                  ? 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+                  : 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
+              }`}>
+                {story.ageRating}
+              </span>
+            )}
+            {story.contentType === 'picture_book' && (
+              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md">
+                🎨 Illustrated
+              </span>
+            )}
+          </div>
 
           {/* Top Right Actions: Quick Add + 3-Dot Menu */}
           <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">

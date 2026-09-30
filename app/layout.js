@@ -2,6 +2,7 @@ import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import AuthModal from '@/components/AuthModal';
 import OnboardingModal from '@/components/OnboardingModal';
+import AgeVerificationModal from '@/components/AgeVerificationModal';
 import AuthProvider from '@/components/AuthProvider';
 
 export const metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
             {children}
             <AuthModal />
             <OnboardingModal />
+            <AgeVerificationModal />
           </AppProvider>
         </AuthProvider>
       </body>

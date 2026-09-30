@@ -21,8 +21,12 @@ import {
   Trash2,
   ArrowUpDown,
   Edit,
-  FolderOpen
+  FolderOpen,
+  Image as ImageIcon,
+  Layers,
+  FileText
 } from 'lucide-react';
+import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
 export default function AuthorStudio() {
   const router = useRouter();
@@ -33,13 +37,49 @@ export default function AuthorStudio() {
   const [storyTitle, setStoryTitle] = useState('');
   const [storyDescription, setStoryDescription] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('fantasy');
+  const [contentType, setContentType] = useState('story'); // 'story' | 'picture_book'
+  const [ageRating, setAgeRating] = useState('13+');
   const [maturity, setMaturity] = useState('everyone');
   const [language, setLanguage] = useState('en');
   const [copyright, setCopyright] = useState('All Rights Reserved');
   const [tagsInput, setTagsInput] = useState('magic, serialized, mystery');
   const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80');
 
-  // Chapter Content
+  // Picture Book Pages (One by one image uploading)
+  const [pages, setPages] = useState([
+    {
+      pageNumber: 1,
+      image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+      caption: 'The Journey Begins',
+      text: 'Deep in the heart of the enchanted forest, a tiny spark of starlight fell to the mossy ground.'
+    }
+  ]);
+
+  const addPage = () => {
+    setPages(prev => [
+      ...prev,
+      {
+        pageNumber: prev.length + 1,
+        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+        caption: `Page ${prev.length + 1}`,
+        text: ''
+      }
+    ]);
+  };
+
+  const removePage = (indexToRemove) => {
+    if (pages.length <= 1) {
+      alert('Picture books must have at least 1 page.');
+      return;
+    }
+    setPages(prev => prev.filter((_, idx) => idx !== indexToRemove).map((p, idx) => ({ ...p, pageNumber: idx + 1 })));
+  };
+
+  const updatePage = (index, field, value) => {
+    setPages(prev => prev.map((p, idx) => idx === index ? { ...p, [field]: value } : p));
+  };
+
+  // Chapter Content (For standard text novels)
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [publishStatus, setPublishStatus] = useState('published'); // 'draft' | 'published' | 'scheduled'
@@ -58,8 +98,13 @@ export default function AuthorStudio() {
 
   const handlePublish = (e) => {
     e.preventDefault();
-    if (!storyTitle.trim() || !chapterContent.trim()) {
+    if (contentType === 'story' && (!storyTitle.trim() || !chapterContent.trim())) {
       alert('Please provide a Story Title and Chapter Content.');
+      return;
+    }
+
+    if (contentType === 'picture_book' && (!storyTitle.trim() || pages.length === 0)) {
+      alert('Please provide a Story Title and at least one Illustrated Page.');
       return;
     }
 
@@ -69,6 +114,17 @@ export default function AuthorStudio() {
       text: text.trim(),
       comments: []
     }));
+
+    const minAge = AGE_THRESHOLDS[ageRating] || 13;
+    const targetAudience = ageRating === '3+' 
+      ? 'Toddlers & Early Readers' 
+      : ageRating === '7+' 
+      ? 'Children & Family' 
+      : ageRating === '13+' 
+      ? 'Young Adult' 
+      : ageRating === '16+' 
+      ? 'Older Teens & Adults' 
+      : 'Mature Adults (18+)';
 
     const newStory = {
       id: Date.now(),
@@ -83,7 +139,11 @@ export default function AuthorStudio() {
       description: storyDescription || "A thrilling serialized narrative updated weekly.",
       status: "ongoing",
       language,
-      maturity,
+      maturity: ageRating === '18+' ? 'mature' : maturity,
+      ageRating,
+      minAge,
+      contentType,
+      targetAudience,
       isOriginal: user?.role === 'admin',
       isEditorsPick: false,
       isTrending: true,
@@ -97,11 +157,12 @@ export default function AuthorStudio() {
         {
           id: Date.now() + 1,
           number: 1,
-          title: chapterTitle || "Chapter 1",
+          title: chapterTitle || (contentType === 'picture_book' ? "Illustrated Edition" : "Chapter 1"),
           publishedAt: new Date().toISOString().split('T')[0],
           reads: 1,
           votes: 1,
-          paragraphs
+          paragraphs: contentType === 'story' ? paragraphs : [],
+          pages: contentType === 'picture_book' ? pages : []
         }
       ]
     };
@@ -214,38 +275,130 @@ export default function AuthorStudio() {
                 </div>
               </div>
 
-              {/* Chapter Writing Canvas with Auto-Save */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Chapter Body (Paragraphs)
-                  </span>
-                  <div className="flex items-center gap-2 text-xs">
-                    {autoSaved ? (
-                      <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                        <CheckCircle className="w-3.5 h-3.5" /> Auto-saved draft
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" /> Auto-save active
-                      </span>
-                    )}
+              {/* Content Canvas: Picture Book vs Novel */}
+              {contentType === 'story' ? (
+                /* Text Novel Canvas with Auto-Save */
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Chapter Body (Paragraphs)
+                    </span>
+                    <div className="flex items-center gap-2 text-xs">
+                      {autoSaved ? (
+                        <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> Auto-saved draft
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" /> Auto-save active
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  <textarea 
+                    rows={16}
+                    placeholder="Begin drafting your serialized chapter here. Separate paragraphs with double newlines — each paragraph will automatically become an interactive discussion anchor for your readers!"
+                    value={chapterContent}
+                    onChange={handleContentChange}
+                    required={contentType === 'story'}
+                    className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
+                  />
+
+                  <p className="text-[11px] text-slate-400">
+                    Word count: ~{chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0} words
+                  </p>
                 </div>
+              ) : (
+                /* Picture Book / Comic Page Builder */
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                        Illustrated Pages ({pages.length})
+                      </span>
+                      <p className="text-xs text-slate-500">Upload or provide images and narration for each page in sequence.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addPage}
+                      className="px-3 py-1.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Page
+                    </button>
+                  </div>
 
-                <textarea 
-                  rows={16}
-                  placeholder="Begin drafting your serialized chapter here. Separate paragraphs with double newlines — each paragraph will automatically become an interactive discussion anchor for your readers!"
-                  value={chapterContent}
-                  onChange={handleContentChange}
-                  required
-                  className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
-                />
+                  <div className="space-y-6">
+                    {pages.map((p, idx) => (
+                      <div key={idx} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-brand-600 dark:text-brand-400">
+                            Page {idx + 1}
+                          </span>
+                          {pages.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removePage(idx)}
+                              className="text-xs text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" /> Remove Page
+                            </button>
+                          )}
+                        </div>
 
-                <p className="text-[11px] text-slate-400">
-                  Word count: ~{chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0} words
-                </p>
-              </div>
+                        <div className="grid sm:grid-cols-12 gap-3">
+                          <div className="sm:col-span-4 aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                            <img src={p.image} alt={`Page ${idx + 1}`} className="w-full h-full object-cover" />
+                          </div>
+
+                          <div className="sm:col-span-8 space-y-2">
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Page Illustration URL</label>
+                              <input
+                                type="url"
+                                value={p.image}
+                                onChange={(e) => updatePage(idx, 'image', e.target.value)}
+                                placeholder="https://..."
+                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Caption (Optional)</label>
+                              <input
+                                type="text"
+                                value={p.caption}
+                                onChange={(e) => updatePage(idx, 'caption', e.target.value)}
+                                placeholder="e.g. In the deep enchanted forest"
+                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Narration / Page Text</label>
+                              <textarea
+                                rows={2}
+                                value={p.text}
+                                onChange={(e) => updatePage(idx, 'text', e.target.value)}
+                                placeholder="Story dialogue or narrative text for this page..."
+                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addPage}
+                    className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-500 hover:text-brand-500 hover:border-brand-500 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" /> Append Another Page
+                  </button>
+                </div>
+              )}
 
               {/* Publishing Bar */}
               <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -274,6 +427,68 @@ export default function AuthorStudio() {
             <div className="lg:col-span-4 space-y-6">
               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
                 <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Story Settings</h3>
+
+                {/* Content Format Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">Story Format</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setContentType('story')}
+                      className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                        contentType === 'story'
+                          ? 'bg-brand-500 text-white border-brand-500 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>Text Novel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContentType('picture_book')}
+                      className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                        contentType === 'picture_book'
+                          ? 'bg-brand-500 text-white border-brand-500 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Picture Book</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Age Rating (DOB Protection) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">
+                    Age Rating (DOB Protection)
+                  </label>
+                  <select 
+                    value={ageRating}
+                    onChange={(e) => {
+                      const newRating = e.target.value;
+                      setAgeRating(newRating);
+                      if (newRating === '18+') {
+                        setMaturity('mature');
+                      } else {
+                        setMaturity('everyone');
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-brand-600 dark:text-brand-400 outline-none"
+                  >
+                    <option value="3+">👶 3+ (Kids & Toddlers)</option>
+                    <option value="7+">🧒 7+ (Children & Family)</option>
+                    <option value="13+">🧑 13+ (Teens & YA)</option>
+                    <option value="16+">🧑‍🎤 16+ (Upper YA)</option>
+                    <option value="18+">🔥 18+ (Mature / Adult Only)</option>
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {ageRating === '18+' 
+                      ? '⚠️ Restricted to users with verified DOB 18+. Completely hidden from minors.' 
+                      : `Accessible to readers verified aged ${ageRating} and above.`}
+                  </p>
+                </div>
 
                 {/* Cover Image */}
                 <div>
@@ -317,7 +532,7 @@ export default function AuthorStudio() {
 
                 {/* Maturity Rating */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Maturity Level</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">Maturity Flag</label>
                   <select 
                     value={maturity}
                     onChange={(e) => setMaturity(e.target.value)}

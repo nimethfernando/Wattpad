@@ -18,14 +18,17 @@ import {
   Flame,
   Check,
   BookMarked,
-  Plus
+  Plus,
+  ShieldAlert
 } from 'lucide-react';
+import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 
 export default function BrowsePage() {
-  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, t } = useApp();
+  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, user, t } = useApp();
 
   // Filters & Sorting state
   const [selectedGenre, setSelectedGenre] = useState('all');
+  const [selectedAgeRating, setSelectedAgeRating] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedMaturity, setSelectedMaturity] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
@@ -38,10 +41,17 @@ export default function BrowsePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
 
+  // DOB & Age Policy Enforced Collections
+  const accessibleStories = useMemo(() => filterStoriesForUser(stories, user), [stories, user]);
+  const accessibleGenres = useMemo(() => filterGenresForUser(genres, user), [genres, user]);
+
+  const isMinorOrKidsMode = (user?.age !== undefined && user.age < 18) || user?.experienceMode === 'kids';
+
   // Filtered and sorted stories
   const filteredStories = useMemo(() => {
-    return stories.filter(story => {
+    return accessibleStories.filter(story => {
       if (selectedGenre !== 'all' && story.genreSlug !== selectedGenre) return false;
+      if (selectedAgeRating !== 'all' && story.ageRating !== selectedAgeRating) return false;
       if (selectedStatus !== 'all' && story.status !== selectedStatus) return false;
       if (selectedMaturity !== 'all' && story.maturity !== selectedMaturity) return false;
       if (selectedLanguage !== 'all' && story.language !== selectedLanguage) return false;
@@ -65,7 +75,7 @@ export default function BrowsePage() {
       if (sortBy === 'recently_updated') return b.id - a.id;
       return (b.reads + b.votes * 5) - (a.reads + a.votes * 5); // trending
     });
-  }, [stories, selectedGenre, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, specialFilter, sortBy, searchFilter]);
+  }, [accessibleStories, selectedGenre, selectedAgeRating, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, specialFilter, sortBy, searchFilter]);
 
   // Pagination calculation
   const totalPages = Math.ceil(filteredStories.length / itemsPerPage) || 1;
@@ -73,6 +83,7 @@ export default function BrowsePage() {
 
   const resetFilters = () => {
     setSelectedGenre('all');
+    setSelectedAgeRating('all');
     setSelectedStatus('all');
     setSelectedMaturity('all');
     setSelectedLanguage('all');
@@ -95,7 +106,7 @@ export default function BrowsePage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{t.browse} Library</h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Explore thousands of serialized novels, filtered by mood, tropes, maturity, and length.
+              Explore thousands of serialized novels, filtered by age rating, mood, tropes, and length.
             </p>
           </div>
 
@@ -136,7 +147,7 @@ export default function BrowsePage() {
 
         {/* Filter Controls Row 1 & 2 */}
         <div className="space-y-3 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Keyword Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -156,10 +167,28 @@ export default function BrowsePage() {
                 onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
               >
-                <option value="all">All Genres (20+)</option>
-                {genres.map(g => (
+                <option value="all">All Genres ({accessibleGenres.length})</option>
+                {accessibleGenres.map(g => (
                   <option key={g.id} value={g.slug}>{g.name} ({g.count})</option>
                 ))}
+              </select>
+            </div>
+
+            {/* Age Rating Filter (DOB Enforced) */}
+            <div>
+              <select 
+                value={selectedAgeRating}
+                onChange={(e) => { setSelectedAgeRating(e.target.value); setCurrentPage(1); }}
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-bold text-brand-600 dark:text-brand-400 cursor-pointer"
+              >
+                <option value="all">🎯 All Age Ratings</option>
+                <option value="3+">👶 3+ (Kids & Toddlers)</option>
+                <option value="7+">🧒 7+ (Children & Family)</option>
+                <option value="13+">🧑 13+ (Teens & YA)</option>
+                <option value="16+">🧑‍🎤 16+ (Upper YA)</option>
+                {!isMinorOrKidsMode && (
+                  <option value="18+">🔥 18+ (Mature)</option>
+                )}
               </select>
             </div>
 
@@ -183,9 +212,11 @@ export default function BrowsePage() {
                 onChange={(e) => { setSelectedMaturity(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
               >
-                <option value="all">All Maturity Levels</option>
+                <option value="all">All Maturity</option>
                 <option value="everyone">Everyone</option>
-                <option value="mature">Mature (18+)</option>
+                {!isMinorOrKidsMode && (
+                  <option value="mature">Mature (18+)</option>
+                )}
               </select>
             </div>
           </div>
@@ -270,7 +301,7 @@ export default function BrowsePage() {
         {/* Results Bar */}
         <div className="flex items-center justify-between text-xs text-slate-500 pb-4">
           <p>Showing <span className="font-bold text-slate-900 dark:text-white">{filteredStories.length}</span> stories</p>
-          {(selectedGenre !== 'all' || selectedStatus !== 'all' || selectedMaturity !== 'all' || selectedMood !== 'all' || selectedTrope !== 'all' || specialFilter !== 'all' || searchFilter !== '') && (
+          {(selectedGenre !== 'all' || selectedAgeRating !== 'all' || selectedStatus !== 'all' || selectedMaturity !== 'all' || selectedMood !== 'all' || selectedTrope !== 'all' || specialFilter !== 'all' || searchFilter !== '') && (
             <button onClick={resetFilters} className="text-brand-500 font-bold hover:underline">
               Clear all filters
             </button>
@@ -280,7 +311,7 @@ export default function BrowsePage() {
         {/* Editor's Pick in Category Banner (Scope 2: shown on category pages) */}
         {selectedGenre !== 'all' && (
           (() => {
-            const categoryPick = stories.find(s => s.genreSlug === selectedGenre && s.isEditorsPick) || stories.find(s => s.genreSlug === selectedGenre);
+            const categoryPick = accessibleStories.find(s => s.genreSlug === selectedGenre && s.isEditorsPick) || accessibleStories.find(s => s.genreSlug === selectedGenre);
             if (!categoryPick) return null;
             return (
               <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -334,6 +365,21 @@ export default function BrowsePage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md">
                           {story.genre}
                         </span>
+                        {/* Age Rating Badge */}
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
+                          story.ageRating === '18+'
+                            ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+                            : story.ageRating === '16+'
+                            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                            : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                        }`}>
+                          {story.ageRating || 'Everyone'}
+                        </span>
+                        {story.contentType === 'picture_book' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
+                            🎨 Picture Book
+                          </span>
+                        )}
                         {story.ranking && (
                           <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
                             #{story.ranking.rank} in {story.ranking.tag}
@@ -342,11 +388,6 @@ export default function BrowsePage() {
                         {story.isOriginal && (
                           <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-600">
                             Original
-                          </span>
-                        )}
-                        {story.maturity === 'mature' && (
-                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-600">
-                            18+
                           </span>
                         )}
                         <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">

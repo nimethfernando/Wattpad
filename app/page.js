@@ -23,6 +23,7 @@ import {
   Share2,
   BookOpen
 } from 'lucide-react';
+import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 
 export default function HomePage() {
   const { 
@@ -37,10 +38,14 @@ export default function HomePage() {
   } = useApp();
   const [installPromptShown, setInstallPromptShown] = useState(false);
 
-  const trendingStories = stories.filter(s => s.isTrending);
-  const houseOriginals = stories.filter(s => s.isOriginal);
-  const editorsPicks = stories.filter(s => s.isEditorsPick);
-  const mustReadFanfiction = stories.filter(s => s.genreSlug === 'fanfiction' || s.isFanfiction);
+  // DOB & Age Policy Enforced Content
+  const accessibleStories = filterStoriesForUser(stories, user);
+  const accessibleGenres = filterGenresForUser(genres, user);
+
+  const trendingStories = accessibleStories.filter(s => s.isTrending);
+  const houseOriginals = accessibleStories.filter(s => s.isOriginal);
+  const editorsPicks = accessibleStories.filter(s => s.isEditorsPick);
+  const mustReadFanfiction = accessibleStories.filter(s => s.genreSlug === 'fanfiction' || s.isFanfiction);
 
   const handleInstallClick = () => {
     setInstallPromptShown(true);
@@ -348,7 +353,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3.5">
-            {genres.map((g) => (
+            {accessibleGenres.map((g) => (
               <Link 
                 key={g.id} 
                 href={`/browse?genre=${g.slug}`}

@@ -21,6 +21,7 @@ import {
   Send,
   Trophy
 } from 'lucide-react';
+import { filterStoriesForUser } from '@/lib/agePolicy';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -43,8 +44,9 @@ export default function ProfilePage() {
   const isSelf = user?.username?.toLowerCase() === username?.toLowerCase();
   const isFollowing = followingAuthors.includes(username);
 
-  // Author stories
-  const userStories = stories.filter(s => s.authorUsername?.toLowerCase() === username?.toLowerCase() || s.author?.toLowerCase().includes(username?.toLowerCase()));
+  // Author stories (Protected by age policy if viewer is under 18)
+  const accessibleCatalog = isSelf ? stories : filterStoriesForUser(stories, user);
+  const userStories = accessibleCatalog.filter(s => s.authorUsername?.toLowerCase() === username?.toLowerCase() || s.author?.toLowerCase().includes(username?.toLowerCase()));
 
   // Conversations on this profile
   const profileKey = (username || "elenavance").toLowerCase();

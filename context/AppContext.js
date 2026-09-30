@@ -17,6 +17,13 @@ import {
   initialCmsConfig
 } from '@/lib/data';
 import { translations } from '@/lib/translations';
+import { 
+  calculateAgeFromDob, 
+  canUserAccessContent, 
+  filterStoriesForUser, 
+  filterGenresForUser, 
+  EXPERIENCE_MODES 
+} from '@/lib/agePolicy';
 
 const AppContext = createContext();
 
@@ -112,6 +119,9 @@ export function AppProvider({ children }) {
   const [authModalMessage, setAuthModalMessage] = useState('');
   const [pendingAction, setPendingAction] = useState(null);
 
+  // Age Verification & Content Access Control State
+  const [ageVerificationModalOpen, setAgeVerificationModalOpen] = useState(false);
+
   // NextAuth Session Sync (Automatically populates user from Google OAuth)
   const { data: session, status: sessionStatus } = useSession();
 
@@ -124,6 +134,28 @@ export function AppProvider({ children }) {
         const name = session.user.name || email.split('@')[0].replace(/[._-]/g, ' ');
         const avatar = session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
+        let savedDob = null;
+        let savedAge = null;
+        let savedMode = EXPERIENCE_MODES.KIDS;
+        let isAgeVerified = false;
+
+        if (typeof window !== 'undefined') {
+          try {
+            const rawUser = localStorage.getItem('avora_user');
+            if (rawUser) {
+              const u = JSON.parse(rawUser);
+              if (u.email === email && u.birthdate) {
+                savedDob = u.birthdate;
+                savedAge = calculateAgeFromDob(savedDob);
+                savedMode = (savedAge !== null && savedAge < 18) 
+                  ? EXPERIENCE_MODES.KIDS 
+                  : (u.experienceMode || EXPERIENCE_MODES.MATURE);
+                isAgeVerified = true;
+              }
+            }
+          } catch (e) {}
+        }
+
         const authenticatedUser = {
           id: session.user.id || Date.now(),
           username,
@@ -133,8 +165,11 @@ export function AppProvider({ children }) {
           role: "reader",
           avatar,
           badges: ["Google Verified", "Avid Reader"],
-          isAgeVerified: true,
-          hideMature: false,
+          birthdate: savedDob,
+          age: savedAge,
+          experienceMode: savedMode,
+          isAgeVerified,
+          hideMature: savedMode === EXPERIENCE_MODES.KIDS,
           hasCompletedOnboarding: true,
           userPreferences: {
             goals: "I'm here to read stories",
@@ -147,12 +182,22 @@ export function AppProvider({ children }) {
         setHomeFeedViewMode('feed');
         setAuthModalOpen(false);
 
+        if (!isAgeVerified) {
+          // Immediately prompt for DOB if account does not have a verified DOB yet
+          setAgeVerificationModalOpen(true);
+        }
+
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('avora_user', JSON.stringify(authenticatedUser));
             localStorage.setItem('avora_user_preferences', JSON.stringify(authenticatedUser.userPreferences));
             localStorage.setItem('avora_user_onboarding', 'true');
             document.cookie = `avora_session=${encodeURIComponent(email)}; path=/; max-age=2592000; SameSite=Lax`;
+            if (savedDob) {
+              document.cookie = `avora_dob=${encodeURIComponent(savedDob)}; path=/; max-age=2592000; SameSite=Lax`;
+              document.cookie = `avora_age=${encodeURIComponent(String(savedAge))}; path=/; max-age=2592000; SameSite=Lax`;
+              document.cookie = `avora_experience_mode=${encodeURIComponent(savedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+            }
           } catch (e) {
             console.error("Failed to sync session to localStorage", e);
           }
@@ -196,8 +241,20 @@ export function AppProvider({ children }) {
         const savedUser = localStorage.getItem('avora_user');
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
+          if (parsedUser.birthdate) {
+            parsedUser.age = calculateAgeFromDob(parsedUser.birthdate);
+            parsedUser.isAgeVerified = true;
+            if (parsedUser.age !== null && parsedUser.age < 18) {
+              parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
+              parsedUser.hideMature = true;
+            }
+          }
           setUser(parsedUser);
           setHomeFeedViewMode('feed');
+
+          if (!parsedUser.birthdate) {
+            setAgeVerificationModalOpen(true);
+          }
         }
       } catch (e) {
         console.error("Could not load user from localStorage", e);
@@ -936,7 +993,12 @@ export function AppProvider({ children }) {
     return emailUser;
   };
 
-  const registerWithEmail = ({ username, email, password, birthdate, isAgeConfirmed }) => {
+  const registerWithEmail = ({ username, email, password, birthdate, age = null, experienceMode = 'mature', isAgeConfirmed }) => {
+    const calculatedAge = age !== null ? age : (birthdate ? calculateAgeFromDob(birthdate) : null);
+    const enforcedMode = (calculatedAge !== null && calculatedAge < 18) 
+      ? EXPERIENCE_MODES.KIDS 
+      : (experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+
     const newUser = {
       id: Date.now(),
       username,
@@ -944,11 +1006,13 @@ export function AppProvider({ children }) {
       email,
       provider: "email",
       birthdate,
+      age: calculatedAge,
+      experienceMode: enforcedMode,
       role: 'author',
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-      badges: ["New Creator"],
-      isAgeVerified: isAgeConfirmed,
-      hideMature: false,
+      badges: calculatedAge && calculatedAge < 18 ? ["Young Creator", "Kids Reader"] : ["New Creator"],
+      isAgeVerified: Boolean(birthdate && calculatedAge !== null),
+      hideMature: enforcedMode === EXPERIENCE_MODES.KIDS,
       hasCompletedOnboarding: false
     };
 
@@ -956,6 +1020,11 @@ export function AppProvider({ children }) {
       try {
         localStorage.setItem('avora_user', JSON.stringify(newUser));
         document.cookie = `avora_session=${encodeURIComponent(newUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+        if (birthdate) {
+          document.cookie = `avora_dob=${encodeURIComponent(birthdate)}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_age=${encodeURIComponent(String(calculatedAge))}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_experience_mode=${encodeURIComponent(enforcedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        }
       } catch (e) {}
     }
 
@@ -964,6 +1033,72 @@ export function AppProvider({ children }) {
     setAuthModalOpen(false);
     executePending();
     setOnboardingModalOpen(true);
+
+  // Age Verification & DOB Management
+  const updateUserAgeAndDob = (birthdate, age, experienceMode = EXPERIENCE_MODES.MATURE) => {
+    const calculatedAge = age ?? calculateAgeFromDob(birthdate);
+    const enforcedMode = (calculatedAge !== null && calculatedAge < 18) 
+      ? EXPERIENCE_MODES.KIDS 
+      : (experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+
+    setUser(prev => {
+      const updated = {
+        ...(prev || {}),
+        birthdate,
+        age: calculatedAge,
+        experienceMode: enforcedMode,
+        isAgeVerified: true,
+        hideMature: enforcedMode === EXPERIENCE_MODES.KIDS
+      };
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+          document.cookie = `avora_dob=${encodeURIComponent(birthdate)}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_age=${encodeURIComponent(String(calculatedAge))}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_experience_mode=${encodeURIComponent(enforcedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {
+          console.error("Failed to update user age in localStorage", e);
+        }
+      }
+
+      return updated;
+    });
+
+    sendNotification({
+      title: "Age Verification Completed",
+      message: `Your account is verified (${calculatedAge} years old) in ${enforcedMode === EXPERIENCE_MODES.KIDS ? 'Kids / Family' : '18+ Mature'} mode.`,
+      type: "system"
+    });
+  };
+
+  const toggleExperienceMode = (mode) => {
+    if (!user) return;
+    const userAge = user.birthdate ? calculateAgeFromDob(user.birthdate) : user.age;
+    if (userAge !== null && userAge < 18 && mode === EXPERIENCE_MODES.MATURE) {
+      alert("Access Restricted: Accounts verified under 18 years cannot access 18+ Mature mode.");
+      return;
+    }
+    const newMode = mode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE;
+    setUser(prev => {
+      const updated = {
+        ...prev,
+        experienceMode: newMode,
+        hideMature: newMode === EXPERIENCE_MODES.KIDS
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+          document.cookie = `avora_experience_mode=${encodeURIComponent(newMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {}
+      }
+      return updated;
+    });
+  };
+
+  const canAccessStory = (story) => {
+    return canUserAccessContent(user, story);
+  };
 
     // Dispatch welcome notification & welcome email
     sendNotification({
@@ -1043,6 +1178,86 @@ export function AppProvider({ children }) {
       }
     }
     addAuditLog("CMS Reset", "Website content restored to defaults");
+  };
+
+  // DOB-based Age Verification and Experience Mode controls
+  const updateUserAgeAndDob = ({ birthdate, experienceMode }) => {
+    const age = calculateAgeFromDob(birthdate);
+    const enforcedMode = (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : experienceMode;
+    const hideMature = enforcedMode === EXPERIENCE_MODES.KIDS || (age !== null && age < 18);
+
+    setUser(prev => {
+      const updated = prev ? {
+        ...prev,
+        birthdate,
+        age,
+        experienceMode: enforcedMode,
+        isAgeVerified: true,
+        hideMature
+      } : {
+        id: Date.now(),
+        name: "Reader",
+        username: "reader",
+        email: "reader@avora.org",
+        role: "reader",
+        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=reader",
+        badges: ["Verified Reader"],
+        birthdate,
+        age,
+        experienceMode: enforcedMode,
+        isAgeVerified: true,
+        hideMature,
+        hasCompletedOnboarding: true,
+        userPreferences: {
+          goals: "I'm here to read stories",
+          favoriteGenres: (age !== null && age < 18) ? ["Kids Books", "Educational Stories", "Fantasy"] : ["Romance", "Fantasy", "Werewolf"],
+          language: "en"
+        }
+      };
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+          document.cookie = `avora_dob=${encodeURIComponent(birthdate)}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_age=${encodeURIComponent(String(age))}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_experience_mode=${encodeURIComponent(enforcedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {
+          console.error("Could not sync age to localStorage/cookies:", e);
+        }
+      }
+      return updated;
+    });
+
+    setAgeVerificationModalOpen(false);
+  };
+
+  const toggleExperienceMode = () => {
+    if (!user) return;
+    if (user.age !== undefined && user.age !== null && user.age < 18) {
+      alert("Protected Minor Account: Users under 18 cannot switch to 18+ Mature mode.");
+      return;
+    }
+    const nextMode = user.experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.MATURE : EXPERIENCE_MODES.KIDS;
+    setUser(prev => {
+      const updated = {
+        ...prev,
+        experienceMode: nextMode,
+        hideMature: nextMode === EXPERIENCE_MODES.KIDS
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+          document.cookie = `avora_experience_mode=${encodeURIComponent(nextMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {
+          console.error("Could not save mode:", e);
+        }
+      }
+      return updated;
+    });
+  };
+
+  const canAccessStory = (story) => {
+    return canUserAccessContent(user, story);
   };
 
   return (
@@ -1149,7 +1364,13 @@ export function AppProvider({ children }) {
       cmsConfig,
       setCmsConfig,
       updateCmsConfig,
-      resetCmsConfig
+      resetCmsConfig,
+      ageVerificationModalOpen,
+      setAgeVerificationModalOpen,
+      updateUserAgeAndDob,
+      toggleExperienceMode,
+      canAccessStory,
+      EXPERIENCE_MODES
     }}>
       {children}
     </AppContext.Provider>

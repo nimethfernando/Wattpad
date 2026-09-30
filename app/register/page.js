@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { BookOpen, Mail, Lock, User, Calendar, AlertCircle } from 'lucide-react';
+import { calculateAgeFromDob, EXPERIENCE_MODES } from '@/lib/agePolicy';
+import { BookOpen, Mail, Lock, User, Calendar, AlertCircle, Sparkles, Check, ShieldCheck } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
 export default function RegisterPage() {
@@ -14,24 +15,63 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [birthdate, setBirthdate] = useState('2000-01-01');
+  const [birthdate, setBirthdate] = useState('2005-01-01');
+  const [experienceMode, setExperienceMode] = useState(EXPERIENCE_MODES.MATURE);
   const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleRegister = (e) => {
+  const calculatedAge = calculateAgeFromDob(birthdate);
+  const isUnder18 = calculatedAge !== null && calculatedAge < 18;
+  const isUnder13 = calculatedAge !== null && calculatedAge < 13;
+
+  const handleRegister = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      setErrorMessage('Please fill in all required fields.');
+    if (!username.trim() || !email.trim() || !password.trim() || !birthdate) {
+      setErrorMessage('Please fill in all required fields including your Date of Birth.');
+      return;
+    }
+    if (isUnder13) {
+      setErrorMessage('You must be at least 13 years of age to register on Avora Library.');
       return;
     }
     if (!isAgeConfirmed) {
-      setErrorMessage('Please confirm that you meet the age requirement (13+).');
+      setErrorMessage('Please confirm that you meet the platform terms and age confirmation.');
       return;
     }
 
-    registerWithEmail({ username, email, password, birthdate, isAgeConfirmed });
-    router.push('/home');
+    setLoading(true);
+    setErrorMessage('');
+
+    const finalMode = isUnder18 ? EXPERIENCE_MODES.KIDS : experienceMode;
+
+    try {
+      // Set server-level age verification cookies
+      await fetch('/api/user/age-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthdate,
+          experienceMode: finalMode
+        })
+      });
+
+      registerWithEmail({
+        username,
+        email,
+        password,
+        birthdate,
+        age: calculatedAge,
+        experienceMode: finalMode,
+        isAgeConfirmed
+      });
+
+      router.push('/home');
+    } catch (err) {
+      setErrorMessage(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,16 +79,16 @@ export default function RegisterPage() {
       <Header />
 
       <main className="flex-1 flex items-center justify-center p-4 py-12">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
+        <div className="max-w-lg w-full bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
           
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/25">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-black">Create Your Free Avora Library Account</h1>
+            <h1 className="text-2xl font-black">Create Your Free Avora Account</h1>
             <p className="text-xs text-slate-400">
-              Join thousands of serialized readers, follow authors, and start your own stories.
+              One account with DOB-based age verification for age-appropriate reading access.
             </p>
           </div>
 
@@ -59,7 +99,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* 1. SOCIAL SIGN UP (Facebook & Google at top, matching Wattpad layout) */}
+          {/* 1. SOCIAL SIGN UP (Facebook & Google at top) */}
           <div className="space-y-3">
             {/* Facebook Button */}
             <button
@@ -98,9 +138,9 @@ export default function RegisterPage() {
           </div>
 
           {/* 2. REGISTRATION FORM */}
-          <form onSubmit={handleRegister} className="space-y-3.5 text-xs">
+          <form onSubmit={handleRegister} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Username</label>
+              <label className="block font-bold text-slate-500 mb-1">Username</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -115,7 +155,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Email Address</label>
+              <label className="block font-bold text-slate-500 mb-1">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -130,7 +170,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Password</label>
+              <label className="block font-bold text-slate-500 mb-1">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -144,36 +184,123 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Birthday / Age Verification (Wattpad COPPA Standard) */}
+            {/* 3. Date of Birth & Live Age Calculation */}
+            <div className="space-y-1.5 pt-1">
+              <label className="block font-bold text-slate-700 dark:text-slate-300">
+                Date of Birth (DOB) <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="date" 
+                  value={birthdate}
+                  onChange={(e) => setBirthdate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  required
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none focus:ring-2 focus:ring-brand-500 text-xs border border-slate-200 dark:border-slate-700"
+                />
+              </div>
+
+              {calculatedAge !== null && (
+                <div className="flex items-center justify-between text-[11px] px-1 pt-0.5">
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Calculated Age: <strong className="text-slate-900 dark:text-white">{calculatedAge} years old</strong>
+                  </span>
+                  <span className={`font-bold px-2 py-0.5 rounded-full ${
+                    isUnder18 
+                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                  }`}>
+                    {isUnder18 ? 'Under 18 (Minor)' : '18+ (Adult)'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Choose Your Experience */}
             <div className="space-y-2 pt-1">
-              <div>
-                <label className="block font-bold text-slate-400 mb-1">Birthday</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="date" 
-                    value={birthdate}
-                    onChange={(e) => setBirthdate(e.target.value)}
-                    required
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500 text-xs"
-                  />
+              <label className="block font-bold text-slate-700 dark:text-slate-300">
+                Choose Your Experience
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Kids / Family */}
+                <div 
+                  onClick={() => setExperienceMode(EXPERIENCE_MODES.KIDS)}
+                  className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-1.5 ${
+                    experienceMode === EXPERIENCE_MODES.KIDS || isUnder18
+                      ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Kids / Family
+                    </span>
+                    {(experienceMode === EXPERIENCE_MODES.KIDS || isUnder18) && (
+                      <div className="w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Kids Books, Educational Stories, and age-appropriate Fantasy. Mature content is hidden.
+                  </p>
+                </div>
+
+                {/* 18+ / Mature */}
+                <div 
+                  onClick={() => {
+                    if (!isUnder18) setExperienceMode(EXPERIENCE_MODES.MATURE);
+                  }}
+                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-1.5 relative ${
+                    isUnder18
+                      ? 'opacity-60 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed'
+                      : experienceMode === EXPERIENCE_MODES.MATURE
+                        ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm cursor-pointer'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {isUnder18 ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />} 18+ / Mature
+                    </span>
+                    {!isUnder18 && experienceMode === EXPERIENCE_MODES.MATURE && (
+                      <div className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                    )}
+                    {isUnder18 && (
+                      <span className="text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-full">
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Full general catalog: Fantasy, Romance, Thriller, and 18+ classified works.
+                  </p>
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox"
-                    checked={isAgeConfirmed}
-                    onChange={(e) => setIsAgeConfirmed(e.target.checked)}
-                    required
-                    className="w-4 h-4 mt-0.5 accent-brand-500 rounded"
-                  />
-                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
-                    I confirm that I am at least 13 years of age, and agree to the Terms of Service and Privacy Policy.
-                  </span>
-                </label>
-              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed italic">
+                * Note: Content access is primarily controlled by the DOB stored in your account. Users under 18 cannot unlock 18+ mature content.
+              </p>
+            </div>
+
+            {/* Age Confirmation */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={isAgeConfirmed}
+                  onChange={(e) => setIsAgeConfirmed(e.target.checked)}
+                  required
+                  className="w-4 h-4 mt-0.5 accent-brand-500 rounded"
+                />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                  I confirm that the Date of Birth provided is accurate, and I agree to Avora Library&apos;s Terms of Service and Privacy Policy.
+                </span>
+              </label>
             </div>
 
             <button 
@@ -181,7 +308,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer mt-2"
             >
-              Complete Registration & Join Avora Library
+              {loading ? 'Creating Account & Verifying DOB...' : 'Complete Registration & Join Avora'}
             </button>
           </form>
 

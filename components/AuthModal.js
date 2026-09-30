@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
-import { X, BookOpen, Lock, Mail, User, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, BookOpen, Lock, Mail, User, Calendar, CheckCircle2, AlertCircle, Sparkles, Check, ShieldCheck } from 'lucide-react';
 import { signIn } from 'next-auth/react';
+import { calculateAgeFromDob, EXPERIENCE_MODES } from '@/lib/agePolicy';
 
 export default function AuthModal() {
   const { 
@@ -19,10 +20,15 @@ export default function AuthModal() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [birthdate, setBirthdate] = useState('2000-01-01');
+  const [birthdate, setBirthdate] = useState('2005-01-01');
+  const [experienceMode, setExperienceMode] = useState(EXPERIENCE_MODES.MATURE);
   const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const calculatedAge = calculateAgeFromDob(birthdate);
+  const isUnder18 = calculatedAge !== null && calculatedAge < 18;
+  const isUnder13 = calculatedAge !== null && calculatedAge < 13;
 
   // Close modal on Escape key press
   useEffect(() => {
@@ -39,7 +45,7 @@ export default function AuthModal() {
 
   if (!authModalOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setLoading(true);
@@ -53,18 +59,48 @@ export default function AuthModal() {
       loginWithEmail(email, password);
       setLoading(false);
     } else {
-      if (!email.trim() || !username.trim() || !password.trim()) {
+      if (!email.trim() || !username.trim() || !password.trim() || !birthdate) {
         setErrorMessage('Please complete all registration fields.');
         setLoading(false);
         return;
       }
-      if (!isAgeConfirmed) {
-        setErrorMessage('You must confirm you meet the age requirements (13+).');
+      if (isUnder13) {
+        setErrorMessage('You must be at least 13 years of age to register.');
         setLoading(false);
         return;
       }
-      registerWithEmail({ username, email, password, birthdate, isAgeConfirmed });
-      setLoading(false);
+      if (!isAgeConfirmed) {
+        setErrorMessage('You must confirm that your Date of Birth is accurate.');
+        setLoading(false);
+        return;
+      }
+
+      const finalMode = isUnder18 ? EXPERIENCE_MODES.KIDS : experienceMode;
+
+      try {
+        await fetch('/api/user/age-verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            birthdate,
+            experienceMode: finalMode
+          })
+        });
+
+        registerWithEmail({
+          username,
+          email,
+          password,
+          birthdate,
+          age: calculatedAge,
+          experienceMode: finalMode,
+          isAgeConfirmed
+        });
+      } catch (err) {
+        console.error("Age verification API error during registration:", err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -217,20 +253,81 @@ export default function AuthModal() {
               </div>
             </div>
 
-            {/* Birthday / Age Verification for COPPA/Mature Content Compliance */}
+            {/* Birthday / Age Verification for DOB Access Control */}
             {authModalMode === 'register' && (
-              <div className="space-y-1.5 pt-0.5">
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Birthday</label>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Date of Birth (DOB) <span className="text-rose-500">*</span>
+                  </label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input 
                       type="date" 
                       value={birthdate}
                       onChange={(e) => setBirthdate(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500 text-xs"
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none focus:ring-2 focus:ring-brand-500 text-xs"
                     />
+                  </div>
+                  
+                  {calculatedAge !== null && (
+                    <div className="flex items-center justify-between text-[10px] px-1 pt-1">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Age: <strong className="text-slate-900 dark:text-white">{calculatedAge} yrs</strong>
+                      </span>
+                      <span className={`font-bold px-1.5 py-0.5 rounded-full ${
+                        isUnder18 
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' 
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {isUnder18 ? 'Under 18 (Minor)' : '18+ (Adult)'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Experience Mode Selector */}
+                <div className="space-y-1">
+                  <span className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                    Choose Experience:
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div 
+                      onClick={() => setExperienceMode(EXPERIENCE_MODES.KIDS)}
+                      className={`p-2 rounded-xl border-2 transition-all cursor-pointer text-left ${
+                        experienceMode === EXPERIENCE_MODES.KIDS || isUnder18
+                          ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20'
+                          : 'border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <div className="font-bold text-[11px] flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-emerald-500" /> Kids / Family
+                      </div>
+                      <p className="text-[9px] text-slate-400 leading-tight mt-0.5">Kids & Teen stories</p>
+                    </div>
+
+                    <div 
+                      onClick={() => {
+                        if (!isUnder18) setExperienceMode(EXPERIENCE_MODES.MATURE);
+                      }}
+                      className={`p-2 rounded-xl border-2 transition-all text-left ${
+                        isUnder18
+                          ? 'opacity-60 bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 cursor-not-allowed'
+                          : experienceMode === EXPERIENCE_MODES.MATURE
+                            ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer'
+                            : 'border-slate-200 dark:border-slate-700 cursor-pointer'
+                      }`}
+                    >
+                      <div className="font-bold text-[11px] flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          {isUnder18 ? <Lock className="w-3 h-3 text-slate-400" /> : <ShieldCheck className="w-3 h-3 text-amber-500" />} 18+ / Mature
+                        </span>
+                        {isUnder18 && <span className="text-[8px] text-rose-500 font-bold">Locked</span>}
+                      </div>
+                      <p className="text-[9px] text-slate-400 leading-tight mt-0.5">Full adult library</p>
+                    </div>
                   </div>
                 </div>
 
@@ -239,10 +336,11 @@ export default function AuthModal() {
                     type="checkbox" 
                     checked={isAgeConfirmed}
                     onChange={(e) => setIsAgeConfirmed(e.target.checked)}
+                    required
                     className="w-4 h-4 mt-0.5 accent-brand-500 rounded"
                   />
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                    I confirm that I am at least 13 years of age, and agree to the Terms of Service.
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    I confirm that my Date of Birth is accurate and agree to Terms of Service.
                   </span>
                 </label>
               </div>

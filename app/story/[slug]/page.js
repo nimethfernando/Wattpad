@@ -23,8 +23,10 @@ import {
   Trophy,
   BookMarked,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Lock
 } from 'lucide-react';
+import { canUserAccessContent } from '@/lib/agePolicy';
 
 export default function StoryDetailPage() {
   const params = useParams();
@@ -41,7 +43,8 @@ export default function StoryDetailPage() {
     setReadingLists,
     readingProgress,
     openAuthModal,
-    user
+    user,
+    setAgeVerificationModalOpen
   } = useApp();
 
   const [copiedShare, setCopiedShare] = useState(false);
@@ -69,6 +72,85 @@ export default function StoryDetailPage() {
           >
             Browse Stories Library →
           </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Core Platform-Level Rule: Check DOB Age & Access Permissions
+  const accessCheck = canUserAccessContent(user, story);
+  if (!accessCheck.canAccess) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-md w-full mx-auto px-4 py-20 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mb-5 shadow-lg shadow-rose-500/10">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+
+          <span className="text-xs font-black uppercase tracking-widest text-rose-500 bg-rose-500/10 px-3 py-1 rounded-full mb-2">
+            Classified: {story.ageRating || '18+'} Content
+          </span>
+
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+            Age-Restricted Content
+          </h1>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+            {accessCheck.message}
+          </p>
+
+          <div className="w-full bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2 mb-6 shadow-sm">
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+              <span>Title:</span>
+              <strong className="text-slate-900 dark:text-white">{story.title}</strong>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+              <span>Required Rating:</span>
+              <span className="font-extrabold text-rose-500">{story.ageRating || '18+'}</span>
+            </div>
+            {accessCheck.userAge !== null && (
+              <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+                <span>Your Verified Age:</span>
+                <span className="font-bold text-amber-500">{accessCheck.userAge} years old</span>
+              </div>
+            )}
+          </div>
+
+          <div className="w-full flex flex-col gap-2.5">
+            {accessCheck.reason === 'LOGIN_REQUIRED_FOR_MATURE' && (
+              <button
+                onClick={() => openAuthModal('login', `Log in with an age-verified account to read ${story.title}.`)}
+                className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              >
+                Log In / Create Verified Account
+              </button>
+            )}
+
+            {accessCheck.reason === 'DOB_REQUIRED' && (
+              <button
+                onClick={() => setAgeVerificationModalOpen(true)}
+                className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              >
+                Verify Your Date of Birth
+              </button>
+            )}
+
+            <Link
+              href="/browse"
+              className="w-full py-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all"
+            >
+              Browse Age-Appropriate Stories →
+            </Link>
+
+            <Link
+              href="/home"
+              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-semibold pt-1"
+            >
+              Return to Family Home Feed
+            </Link>
+          </div>
         </main>
         <Footer />
       </div>
@@ -144,17 +226,28 @@ export default function StoryDetailPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-lg">
                   {story.genre}
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  {story.status === 'completed' ? '✓ Completed' : '⚡ Ongoing'}
+                {/* Age Rating Badge */}
+                <span className={`text-xs font-black px-2.5 py-0.5 rounded-lg border ${
+                  story.ageRating === '18+' 
+                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' 
+                    : story.ageRating === '16+'
+                      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
+                      : story.ageRating === '13+'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                }`}>
+                  Rating: {story.ageRating || (story.maturity === 'mature' ? '18+' : '13+')}
                 </span>
-                {story.maturity === 'mature' && (
-                  <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-600">
-                    18+ Mature
+
+                {story.contentType === 'picture_book' && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    📖 Illustrated Picture Book
                   </span>
                 )}
-                {story.trope && (
-                  <span className="text-xs px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
-                    {story.trope}
+
+                {story.status === 'completed' && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    ✓ Completed
                   </span>
                 )}
               </div>

@@ -15,6 +15,8 @@ export default function SettingsPage() {
     cancelSubscription, 
     openPaymentModal, 
     featureFlags, 
+    setAgeVerificationModalOpen,
+    toggleExperienceMode,
     t 
   } = useApp();
   const [currentPassword, setCurrentPassword] = useState('');
@@ -117,25 +119,82 @@ export default function SettingsPage() {
         </div>
 
         {/* Content Preferences Card */}
+        {/* Content Preferences & Age-Based Content Access Card */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <ShieldCheck className="w-5 h-5 text-brand-500" />
-            <h3 className="font-bold text-base">Reading & Safety Preferences</h3>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-brand-500" />
+              <h3 className="font-bold text-base">Date of Birth &amp; Age-Based Content Access</h3>
+            </div>
+            <button
+              onClick={() => setAgeVerificationModalOpen(true)}
+              className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+            >
+              Update DOB / Mode
+            </button>
           </div>
 
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+            {/* Age & DOB Status Banner */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl grid sm:grid-cols-3 gap-4">
               <div>
-                <h4 className="font-bold text-sm">Hide Mature Content (18+)</h4>
-                <p className="text-slate-400 mt-0.5">Filter out all stories with explicit violence or mature themes from your browse feeds and recommendations.</p>
+                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-1">Date of Birth (DOB)</span>
+                <p className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {user?.birthdate || 'Not entered'}
+                </p>
               </div>
-              <input 
-                type="checkbox"
-                checked={hideMature}
-                onChange={(e) => setHideMature(e.target.checked)}
-                className="w-5 h-5 accent-brand-500 cursor-pointer"
-              />
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-1">Calculated Age</span>
+                <p className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {user?.age !== undefined ? `${user.age} years old` : 'Unverified'}
+                </p>
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-1">Active Experience Mode</span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-black ${
+                    user?.experienceMode === 'kids' || (user?.age !== undefined && user.age < 18)
+                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
+                  }`}>
+                    {user?.experienceMode === 'kids' || (user?.age !== undefined && user.age < 18) ? '🧒 Kids / Family' : '🔥 18+ Mature'}
+                  </span>
+                  {user?.age !== undefined && user.age >= 18 && (
+                    <button
+                      onClick={() => toggleExperienceMode()}
+                      className="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
+                    >
+                      (Switch)
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
+
+            {user?.age !== undefined && user.age < 18 ? (
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-sm text-emerald-900 dark:text-emerald-200">Minor Protection Active</h4>
+                  <p className="text-emerald-700 dark:text-emerald-400 mt-0.5 leading-relaxed">
+                    Based on your verified Date of Birth ({user.age} years old), mature (18+) categories, adult stories, and search suggestions are permanently blocked and hidden.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <div>
+                  <h4 className="font-bold text-sm">Hide Mature Content (18+)</h4>
+                  <p className="text-slate-400 mt-0.5">Filter out all stories with explicit violence or mature themes from your browse feeds and recommendations.</p>
+                </div>
+                <input 
+                  type="checkbox"
+                  checked={hideMature}
+                  onChange={(e) => setHideMature(e.target.checked)}
+                  className="w-5 h-5 accent-brand-500 cursor-pointer"
+                />
+              </div>
+            )}
 
             <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
               <div>
@@ -158,7 +217,7 @@ export default function SettingsPage() {
 
             <button 
               onClick={handleSaveSettings}
-              className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold"
+              className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold cursor-pointer"
             >
               Save Preferences
             </button>
