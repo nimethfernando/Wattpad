@@ -33,27 +33,9 @@ export default function HomePage() {
     readerReactions, 
     user,
     homeFeedViewMode = 'landing',
-    setHomeFeedViewMode,
-    cmsConfig
+    setHomeFeedViewMode
   } = useApp();
   const [installPromptShown, setInstallPromptShown] = useState(false);
-
-  const pwaSettings = cmsConfig?.pwaSection || {
-    enabled: true,
-    badgeText: "Progressive Web App (PWA)",
-    title: "Read Anywhere on Mobile",
-    description: "Install Avora Library directly to your phone screen as a lightweight web app (PWA). No app store downloads required. Reads seamlessly offline and resumes exactly where you left off on phone, tablet, or laptop.",
-    buttonText: "Install Web App",
-    qrCodeType: "dynamic",
-    qrTargetUrl: "https://avoralibrary.com",
-    qrCodeImageUrl: "",
-    qrCodeLabel: "Scan QR with Phone",
-    qrCodeSublabel: "Instant mobile web app"
-  };
-
-  const qrImageUrl = pwaSettings.qrCodeType === 'custom_image' && pwaSettings.qrCodeImageUrl
-    ? pwaSettings.qrCodeImageUrl
-    : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pwaSettings.qrTargetUrl || 'https://avoralibrary.com')}&margin=10`;
 
   const trendingStories = stories.filter(s => s.isTrending);
   const houseOriginals = stories.filter(s => s.isOriginal);
@@ -123,16 +105,16 @@ export default function HomePage() {
             <div className="grid lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-900">
-                  <Sparkles className="w-3.5 h-3.5 text-brand-500" /> {cmsConfig?.pagesContent?.hero?.badge || "Original Serialized Fiction & Community"}
+                  <Sparkles className="w-3.5 h-3.5 text-brand-500" /> Original Serialized Fiction & Community
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
-                  {cmsConfig?.pagesContent?.hero?.titlePrefix || "Stories That"} <br />
+                  Stories That <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-amber-500 to-rose-500">
-                    {cmsConfig?.pagesContent?.hero?.titleHighlight || "Capture Your Imagination."}
+                    Capture Your Imagination.
                   </span>
                 </h1>
                 <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                  {cmsConfig?.pagesContent?.hero?.subtitle || t.heroSubtitle}
+                  {t.heroSubtitle}
                 </p>
                 
                 {/* Hero section with sign-up, start reading, and login calls to action (Scope 1) */}
@@ -141,7 +123,7 @@ export default function HomePage() {
                     href="/register" 
                     className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm text-center shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
                   >
-                    {t.signUp} Free
+                    {t.signUp || t.signup || 'Sign up'} Free
                   </Link>
                   <Link 
                     href="/browse" 
@@ -154,7 +136,7 @@ export default function HomePage() {
                       href="/login" 
                       className="w-full sm:w-auto px-5 py-3.5 rounded-full text-slate-700 dark:text-slate-300 font-bold text-sm text-center hover:text-brand-500 transition-colors"
                     >
-                      {t.logIn} →
+                      {t.logIn || t.login || 'Log in'} →
                     </Link>
                   )}
                   {user && (
@@ -489,69 +471,44 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 8. INSTALL AS PWA SECTION WITH QR CODE (Scope 1 & Milestone 1 & CMS Managed) */}
-        {pwaSettings.enabled !== false && (
-          <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-brand-950 text-white p-8 sm:p-14 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10">
-              <div className="max-w-xl space-y-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">
-                  <Smartphone className="w-3.5 h-3.5" /> {pwaSettings.badgeText || "Progressive Web App (PWA)"}
-                </span>
-                <h2 className="text-3xl sm:text-4xl font-black leading-tight">
-                  {pwaSettings.title || t.installApp}
-                </h2>
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  {pwaSettings.description || t.installDesc}
-                </p>
-                <div className="pt-2 flex flex-wrap gap-4">
-                  {pwaSettings.buttonUrl ? (
-                    <a 
-                      href={pwaSettings.buttonUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-6 py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-brand-500/30 inline-block"
-                    >
-                      {pwaSettings.buttonText || t.installBtn}
-                    </a>
-                  ) : (
-                    <button 
-                      onClick={handleInstallClick}
-                      className="px-6 py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-brand-500/30"
-                    >
-                      {pwaSettings.buttonText || t.installBtn}
-                    </button>
-                  )}
-                  {installPromptShown && (
-                    <p className="text-xs text-brand-300 font-semibold flex items-center gap-1 animate-fadeIn">
-                      <CheckCircle className="w-4 h-4 text-emerald-400" /> Web App ready: tap 'Add to Home Screen' in your mobile browser!
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* QR Code Container */}
-              <div className="flex flex-col items-center bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-center">
-                <div className="w-36 h-36 bg-white rounded-xl flex items-center justify-center p-2 shadow-inner overflow-hidden relative">
-                  <img 
-                    src={qrImageUrl} 
-                    alt="PWA QR Code" 
-                    className="w-32 h-32 object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.parentElement?.querySelector('.qr-fallback');
-                      if (fallback) fallback.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="qr-fallback hidden flex items-center justify-center w-32 h-32">
-                    <QrCode className="w-28 h-28 text-slate-900" />
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-slate-300 mt-3">{pwaSettings.qrCodeLabel || t.scanQR}</span>
-                <span className="text-[10px] text-slate-400">{pwaSettings.qrCodeSublabel || "Instant mobile web app"}</span>
+        {/* 8. INSTALL AS PWA SECTION WITH QR CODE */}
+        <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-brand-950 text-white p-8 sm:p-14 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="max-w-xl space-y-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                <Smartphone className="w-3.5 h-3.5" /> Progressive Web App (PWA)
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black leading-tight">
+                {t.installApp}
+              </h2>
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                {t.installDesc} Reads seamlessly offline and resumes exactly where you left off on phone, tablet, or laptop.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-4">
+                <button 
+                  onClick={handleInstallClick}
+                  className="px-6 py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-brand-500/30"
+                >
+                  {t.installBtn}
+                </button>
+                {installPromptShown && (
+                  <p className="text-xs text-brand-300 font-semibold flex items-center gap-1 animate-fadeIn">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" /> Web App ready: tap 'Add to Home Screen' in your mobile browser!
+                  </p>
+                )}
               </div>
             </div>
-          </section>
-        )}
+
+            {/* QR Code Container */}
+            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-center">
+              <div className="w-36 h-36 bg-white rounded-xl flex items-center justify-center p-2 shadow-inner">
+                <QrCode className="w-32 h-32 text-slate-900" />
+              </div>
+              <span className="text-xs font-bold text-slate-300 mt-3">{t.scanQR}</span>
+              <span className="text-[10px] text-slate-400">Instant mobile web app</span>
+            </div>
+          </div>
+        </section>
       </main>
       )}
 

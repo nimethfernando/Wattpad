@@ -314,8 +314,14 @@ export default function LibraryPage() {
 
       {/* CREATE READING LIST MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full my-auto border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 max-h-[calc(100vh-2.5rem)] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="font-black text-xl">Create New Reading List</h3>
             <form onSubmit={handleCreateList} className="space-y-4 text-xs">
               <div>

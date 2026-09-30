@@ -61,9 +61,12 @@ export default function ReadingListModal({ isOpen, onClose, story }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div 
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in overflow-y-auto"
+      onClick={onClose}
+    >
       <div 
-        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5"
+        className="w-full max-w-md my-auto bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 max-h-[calc(100vh-2.5rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
