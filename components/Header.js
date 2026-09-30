@@ -53,15 +53,28 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* Brand Logo */}
+        {/* Brand Logo: Separate Light & Dark Logos (Scope 9) */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
-              <BookOpen className="w-5 h-5" />
+            {theme === 'dark' ? (
+              // Dark Theme Logo: Electric Amber/Violet glowing crest with high-contrast white glyph
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 via-amber-400 to-yellow-300 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/30">
+                <BookOpen className="w-5 h-5 stroke-[2.5]" />
+              </div>
+            ) : (
+              // Light Theme Logo: Deep Crimson/Brand-600 with warm amber
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
+                <BookOpen className="w-5 h-5 stroke-[2.5]" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
+                Story<span className="text-brand-500 dark:text-amber-400">Vault</span>
+              </span>
+              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5">
+                {theme === 'dark' ? 'Night Reader' : 'Serial Fiction'}
+              </span>
             </div>
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
-              Story<span className="text-brand-500">Vault</span>
-            </span>
           </Link>
 
           {/* Desktop Navigation Links */}

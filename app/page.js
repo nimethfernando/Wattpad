@@ -59,20 +59,36 @@ export default function HomePage() {
                   {t.heroSubtitle}
                 </p>
                 
-                {/* CTA Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                {/* Hero section with sign-up, start reading, and login calls to action (Scope 1) */}
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+                  <Link 
+                    href="/register" 
+                    className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm text-center shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+                  >
+                    {t.signUp} Free
+                  </Link>
                   <Link 
                     href="/browse" 
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm text-center shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+                    className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 font-bold text-sm text-center hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
                   >
                     {t.startReading}
                   </Link>
-                  <Link 
-                    href="/write" 
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 font-bold text-sm text-center hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
-                  >
-                    {t.becomeAuthor}
-                  </Link>
+                  {!user && (
+                    <Link 
+                      href="/login" 
+                      className="w-full sm:w-auto px-5 py-3.5 rounded-full text-slate-700 dark:text-slate-300 font-bold text-sm text-center hover:text-brand-500 transition-colors"
+                    >
+                      {t.logIn} →
+                    </Link>
+                  )}
+                  {user && (
+                    <Link 
+                      href="/write" 
+                      className="w-full sm:w-auto px-5 py-3.5 rounded-full text-brand-600 dark:text-brand-400 font-bold text-sm text-center hover:underline"
+                    >
+                      {t.write} +
+                    </Link>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-center lg:justify-start gap-6 pt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -161,6 +177,54 @@ export default function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* 2B. EDITOR'S PICKS CAROUSEL (Admin-Curated, Scope 2) */}
+        <section className="py-12 bg-amber-50/40 dark:bg-amber-950/20 border-y border-amber-200/50 dark:border-amber-900/40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Editorial Selection</span>
+                </div>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-1">Editor's Picks</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Handpicked literary serialized masterpieces chosen directly by our staff</p>
+              </div>
+              <Link href="/browse?filter=picks" className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
+                View All Picks <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {editorsPicks.map((story) => (
+                <div key={story.id} className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-amber-200/60 dark:border-amber-900/50 p-4 flex gap-4 hover:shadow-lg transition-all group">
+                  <img src={story.cover} alt={story.title} className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-xl shrink-0 group-hover:scale-105 transition-transform" />
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">
+                          ★ Editor's Choice
+                        </span>
+                        <span className="text-[10px] text-slate-400">{story.genre}</span>
+                      </div>
+                      <h3 className="font-bold text-sm sm:text-base mt-1.5 text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors line-clamp-1">{story.title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">By {story.author}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">{story.description}</p>
+                    </div>
+                    <div className="pt-2 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()} votes
+                      </span>
+                      <Link href={`/story/${story.slug}`} className="text-xs font-bold text-amber-600 hover:underline">
+                        Read Story →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

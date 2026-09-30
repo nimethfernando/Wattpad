@@ -43,6 +43,7 @@ export default function AuthorStudio() {
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [publishStatus, setPublishStatus] = useState('published'); // 'draft' | 'published' | 'scheduled'
+  const [scheduledDate, setScheduledDate] = useState('');
   const [autoSaved, setAutoSaved] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
@@ -247,25 +248,38 @@ export default function AuthorStudio() {
                 </p>
               </div>
 
-              {/* Publishing Bar */}
-              <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2">
+              {/* Publishing Bar (Scope 4: draft, publish and scheduled release) */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full sm:w-auto">
                   <select 
                     value={publishStatus}
                     onChange={(e) => setPublishStatus(e.target.value)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
                   >
                     <option value="published">Publish Immediately</option>
                     <option value="draft">Save as Draft</option>
-                    <option value="scheduled">Schedule Release</option>
+                    <option value="scheduled">Schedule Release ⏰</option>
                   </select>
+
+                  {publishStatus === 'scheduled' && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-semibold text-slate-400">Release Date:</span>
+                      <input 
+                        type="datetime-local" 
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        required={publishStatus === 'scheduled'}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <button 
                   type="submit"
-                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
                 >
-                  <Sparkles className="w-4 h-4" /> {t.publishChapter}
+                  <Sparkles className="w-4 h-4" /> {publishStatus === 'scheduled' ? 'Schedule Chapter' : publishStatus === 'draft' ? 'Save Draft' : t.publishChapter}
                 </button>
               </div>
             </div>
@@ -354,14 +368,22 @@ export default function AuthorStudio() {
                 </div>
               </div>
 
-              {/* Guidelines helper card */}
+              {/* Guidelines & Writer Resources helper card (Scope 4) */}
               <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="text-xs space-y-1">
-                  <h4 className="font-bold text-amber-800 dark:text-amber-300">Creator Standards</h4>
+                <div className="text-xs space-y-2">
+                  <h4 className="font-bold text-amber-800 dark:text-amber-300">Creator Standards & Resources</h4>
                   <p className="text-amber-700 dark:text-amber-400 leading-relaxed">
                     Serialized stories that maintain consistent weekly release schedules receive featured carousels and eligibility for Golden Quill awards.
                   </p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <Link href="/guidelines" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
+                      Author Guidelines →
+                    </Link>
+                    <Link href="/writers" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
+                      Writer Hub & Craft →
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
