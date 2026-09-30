@@ -227,9 +227,22 @@ export default function ReaderPage() {
           <button 
             onClick={() => setFontFamily(fontFamily === 'serif' ? 'sans' : 'serif')}
             className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10"
-            title="Toggle Font Family"
+            title="Toggle Font Family (Serif / Sans)"
           >
             {fontFamily === 'serif' ? 'Serif' : 'Sans'}
+          </button>
+
+          {/* Line Spacing Toggle (Scope 2) */}
+          <button 
+            onClick={() => {
+              if (lineSpacing === 'leading-normal') setLineSpacing('leading-relaxed');
+              else if (lineSpacing === 'leading-relaxed') setLineSpacing('leading-loose');
+              else setLineSpacing('leading-normal');
+            }}
+            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10"
+            title="Toggle Line Spacing"
+          >
+            {lineSpacing === 'leading-normal' ? 'Spacing: 1.0' : lineSpacing === 'leading-relaxed' ? 'Spacing: 1.5' : 'Spacing: 2.0'}
           </button>
 
           {/* Report Button */}
@@ -388,25 +401,46 @@ export default function ReaderPage() {
                     {c.text}
                   </p>
 
-                  {/* Comment Reaction & Reply Bar */}
-                  <div className="pl-7 flex items-center justify-between pt-1 text-[11px] text-slate-400">
-                    <div className="flex items-center gap-3">
+                  {/* Comment Reaction & Reply Bar (Scope 3: Emoji reactions on comments) */}
+                  <div className="pl-7 flex items-center justify-between pt-1 text-[11px] text-slate-400 flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button 
                         onClick={() => {
                           c.likes = (c.likes || 0) + 1;
                           setActiveParagraph({ ...activeParagraph });
                         }}
-                        className="flex items-center gap-1 hover:text-rose-500"
+                        className="flex items-center gap-1 hover:text-rose-500 font-bold px-1.5 py-0.5 rounded hover:bg-black/5"
+                        title="Like comment"
                       >
-                        <Heart className="w-3 h-3" /> {c.likes || 0}
+                        <Heart className="w-3 h-3 text-rose-500 fill-rose-500" /> {c.likes || 0}
                       </button>
-                      <button 
-                        onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
-                        className="hover:text-brand-500 font-semibold"
-                      >
-                        Reply
-                      </button>
+
+                      {['🔥', '❤️', '😭', '👏'].map(emoji => {
+                        const count = c.emojis?.[emoji] || 0;
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => {
+                              if (!c.emojis) c.emojis = {};
+                              c.emojis[emoji] = (c.emojis[emoji] || 0) + 1;
+                              setActiveParagraph({ ...activeParagraph });
+                            }}
+                            className="px-1.5 py-0.5 rounded text-[10px] hover:bg-black/5 flex items-center gap-0.5"
+                            title={`React with ${emoji}`}
+                          >
+                            <span>{emoji}</span>
+                            {count > 0 && <span className="font-bold text-[9px] text-slate-500">{count}</span>}
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    <button 
+                      onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
+                      className="hover:text-brand-500 font-semibold"
+                    >
+                      Reply
+                    </button>
                   </div>
 
                   {/* Nested Replies */}

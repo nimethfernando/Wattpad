@@ -43,7 +43,6 @@ export default function AuthorStudio() {
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [publishStatus, setPublishStatus] = useState('published'); // 'draft' | 'published' | 'scheduled'
-  const [scheduledDate, setScheduledDate] = useState('');
   const [autoSaved, setAutoSaved] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
@@ -248,38 +247,25 @@ export default function AuthorStudio() {
                 </p>
               </div>
 
-              {/* Publishing Bar (Scope 4: draft, publish and scheduled release) */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full sm:w-auto">
+              {/* Publishing Bar */}
+              <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2">
                   <select 
                     value={publishStatus}
                     onChange={(e) => setPublishStatus(e.target.value)}
-                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
                   >
                     <option value="published">Publish Immediately</option>
                     <option value="draft">Save as Draft</option>
-                    <option value="scheduled">Schedule Release ⏰</option>
+                    <option value="scheduled">Schedule Release</option>
                   </select>
-
-                  {publishStatus === 'scheduled' && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-slate-400">Release Date:</span>
-                      <input 
-                        type="datetime-local" 
-                        value={scheduledDate}
-                        onChange={(e) => setScheduledDate(e.target.value)}
-                        required={publishStatus === 'scheduled'}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
-                      />
-                    </div>
-                  )}
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
                 >
-                  <Sparkles className="w-4 h-4" /> {publishStatus === 'scheduled' ? 'Schedule Chapter' : publishStatus === 'draft' ? 'Save Draft' : t.publishChapter}
+                  <Sparkles className="w-4 h-4" /> {t.publishChapter}
                 </button>
               </div>
             </div>
@@ -368,22 +354,14 @@ export default function AuthorStudio() {
                 </div>
               </div>
 
-              {/* Guidelines & Writer Resources helper card (Scope 4) */}
+              {/* Guidelines helper card */}
               <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="text-xs space-y-2">
-                  <h4 className="font-bold text-amber-800 dark:text-amber-300">Creator Standards & Resources</h4>
+                <div className="text-xs space-y-1">
+                  <h4 className="font-bold text-amber-800 dark:text-amber-300">Creator Standards</h4>
                   <p className="text-amber-700 dark:text-amber-400 leading-relaxed">
                     Serialized stories that maintain consistent weekly release schedules receive featured carousels and eligibility for Golden Quill awards.
                   </p>
-                  <div className="flex items-center gap-3 pt-1">
-                    <Link href="/guidelines" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
-                      Author Guidelines →
-                    </Link>
-                    <Link href="/writers" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
-                      Writer Hub & Craft →
-                    </Link>
-                  </div>
                 </div>
               </div>
             </div>
@@ -465,6 +443,42 @@ export default function AuthorStudio() {
                 <span className="text-xs text-slate-400 font-bold">Follower Base</span>
                 <p className="text-2xl sm:text-3xl font-black mt-2">4,890</p>
                 <span className="text-[11px] text-emerald-500 font-bold mt-1 block">↑ 310 this month</span>
+              </div>
+            </div>
+
+            {/* Reads Over Time Timeline Chart (Scope 4: reads over time) */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Reads Over Time</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Daily reading traffic and chapter completion velocity (Past 7 Days)</p>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600">
+                  Weekly Reads: 37,700
+                </span>
+              </div>
+
+              <div className="pt-4 flex items-end justify-between gap-3 h-44 border-b border-slate-100 dark:border-slate-800 pb-2">
+                {[
+                  { day: "Mon", reads: 3200, height: "45%" },
+                  { day: "Tue", reads: 4800, height: "65%" },
+                  { day: "Wed", reads: 4100, height: "55%" },
+                  { day: "Thu", reads: 5600, height: "78%" },
+                  { day: "Fri", reads: 6900, height: "92%" },
+                  { day: "Sat", reads: 7200, height: "100%" },
+                  { day: "Sun", reads: 5900, height: "80%" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded shadow">
+                      {item.reads.toLocaleString()}
+                    </div>
+                    <div 
+                      className="w-full max-w-[44px] bg-gradient-to-t from-brand-600 to-amber-500 rounded-t-xl group-hover:brightness-110 transition-all cursor-pointer shadow-sm"
+                      style={{ height: item.height }}
+                    />
+                    <span className="text-[11px] font-bold text-slate-400">{item.day}</span>
+                  </div>
+                ))}
               </div>
             </div>
 

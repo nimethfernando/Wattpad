@@ -1,7 +1,6 @@
 'use client';
-import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
@@ -16,49 +15,25 @@ import {
   ChevronRight, 
   SlidersHorizontal,
   Flame,
-  Check,
-  Clock,
-  Globe
+  Check
 } from 'lucide-react';
 
-function BrowseContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function BrowsePage() {
   const { stories, genres, t } = useApp();
 
-  // Read URL query params on initial load
-  const initialPage = parseInt(searchParams.get('page') || '1', 10);
-  const initialGenre = searchParams.get('genre') || 'all';
-  const initialSort = searchParams.get('sort') || 'trending';
-  const initialFilter = searchParams.get('filter') || 'all';
-
   // Filters & Sorting state
-  const [selectedGenre, setSelectedGenre] = useState(initialGenre);
+  const [selectedGenre, setSelectedGenre] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedMaturity, setSelectedMaturity] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedMood, setSelectedMood] = useState('all');
   const [selectedTrope, setSelectedTrope] = useState('all');
   const [selectedLength, setSelectedLength] = useState('all');
-  const [selectedLastUpdated, setSelectedLastUpdated] = useState('all'); // 'all' | 'today' | 'week' | 'month'
-  const [specialFilter, setSpecialFilter] = useState(initialFilter); // 'all' | 'originals' | 'picks'
-  const [sortBy, setSortBy] = useState(initialSort); // 'trending' | 'newest' | 'most_read' | 'most_voted' | 'recently_updated'
+  const [specialFilter, setSpecialFilter] = useState('all'); // 'all' | 'originals' | 'picks'
+  const [sortBy, setSortBy] = useState('trending'); // 'trending' | 'newest' | 'most_read' | 'most_voted' | 'recently_updated'
   const [searchFilter, setSearchFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
-
-  // Sync page changes with URL parameter (Scope 10)
-  const updatePage = (newPage) => {
-    setCurrentPage(newPage);
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      params.set('page', newPage.toString());
-      if (selectedGenre !== 'all') params.set('genre', selectedGenre);
-      if (sortBy !== 'trending') params.set('sort', sortBy);
-      if (specialFilter !== 'all') params.set('filter', specialFilter);
-      router.push(`/browse?${params.toString()}`);
-    }
-  };
 
   // Filtered and sorted stories
   const filteredStories = useMemo(() => {
@@ -72,8 +47,6 @@ function BrowseContent() {
       if (selectedLength !== 'all' && story.length !== selectedLength) return false;
       if (specialFilter === 'originals' && !story.isOriginal) return false;
       if (specialFilter === 'picks' && !story.isEditorsPick) return false;
-      if (selectedLastUpdated === 'today' && !story.lastUpdated?.toLowerCase().includes('now') && !story.lastUpdated?.toLowerCase().includes('hour')) return false;
-      if (selectedLastUpdated === 'week' && !story.lastUpdated?.toLowerCase().includes('day') && !story.lastUpdated?.toLowerCase().includes('now')) return false;
       if (searchFilter.trim() !== '') {
         const q = searchFilter.toLowerCase();
         const matchTitle = story.title.toLowerCase().includes(q);
@@ -89,7 +62,7 @@ function BrowseContent() {
       if (sortBy === 'recently_updated') return b.id - a.id;
       return (b.reads + b.votes * 5) - (a.reads + a.votes * 5); // trending
     });
-  }, [stories, selectedGenre, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, selectedLastUpdated, specialFilter, sortBy, searchFilter]);
+  }, [stories, selectedGenre, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, specialFilter, sortBy, searchFilter]);
 
   // Pagination calculation
   const totalPages = Math.ceil(filteredStories.length / itemsPerPage) || 1;
@@ -103,10 +76,9 @@ function BrowseContent() {
     setSelectedMood('all');
     setSelectedTrope('all');
     setSelectedLength('all');
-    setSelectedLastUpdated('all');
     setSpecialFilter('all');
     setSearchFilter('');
-    updatePage(1);
+    setCurrentPage(1);
   };
 
   return (
@@ -215,27 +187,13 @@ function BrowseContent() {
             </div>
           </div>
 
-          {/* Trope, Mood, Length, Language, Last Updated & Sorting Rows */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Language */}
-            <div>
-              <select 
-                value={selectedLanguage}
-                onChange={(e) => { setSelectedLanguage(e.target.value); updatePage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
-              >
-                <option value="all">All Languages</option>
-                <option value="en">English (US)</option>
-                <option value="ka">ქართული (GE)</option>
-                <option value="hi">हिन्दी (IN)</option>
-              </select>
-            </div>
-
+          {/* Trope, Mood, Length & Sorting Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Mood */}
             <div>
               <select 
                 value={selectedMood}
-                onChange={(e) => { setSelectedMood(e.target.value); updatePage(1); }}
+                onChange={(e) => { setSelectedMood(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Moods</option>
@@ -250,7 +208,7 @@ function BrowseContent() {
             <div>
               <select 
                 value={selectedTrope}
-                onChange={(e) => { setSelectedTrope(e.target.value); updatePage(1); }}
+                onChange={(e) => { setSelectedTrope(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Tropes</option>
@@ -265,7 +223,7 @@ function BrowseContent() {
             <div>
               <select 
                 value={selectedLength}
-                onChange={(e) => { setSelectedLength(e.target.value); updatePage(1); }}
+                onChange={(e) => { setSelectedLength(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Lengths</option>
@@ -275,30 +233,16 @@ function BrowseContent() {
               </select>
             </div>
 
-            {/* Last Updated (Scope 2) */}
-            <div>
-              <select 
-                value={selectedLastUpdated}
-                onChange={(e) => { setSelectedLastUpdated(e.target.value); updatePage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
-              >
-                <option value="all">Updated: Anytime</option>
-                <option value="today">Past 24 Hours</option>
-                <option value="week">Past 7 Days</option>
-                <option value="month">Past Month</option>
-              </select>
-            </div>
-
             {/* Sorting */}
             <div>
               <select 
                 value={sortBy}
-                onChange={(e) => { setSortBy(e.target.value); updatePage(1); }}
+                onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
                 className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-bold text-brand-600 dark:text-brand-400 cursor-pointer"
               >
                 <option value="trending">🔥 Trending</option>
-                <option value="newest">🕒 Newest</option>
-                <option value="recently_updated">⚡ Updated</option>
+                <option value="newest">🕒 Newest Releases</option>
+                <option value="recently_updated">⚡ Recently Updated</option>
                 <option value="most_read">👁️ Most Read</option>
                 <option value="most_voted">❤️ Most Voted</option>
               </select>
@@ -315,6 +259,31 @@ function BrowseContent() {
             </button>
           )}
         </div>
+
+        {/* Editor's Pick in Category Banner (Scope 2: shown on category pages) */}
+        {selectedGenre !== 'all' && (
+          (() => {
+            const categoryPick = stories.find(s => s.genreSlug === selectedGenre && s.isEditorsPick) || stories.find(s => s.genreSlug === selectedGenre);
+            if (!categoryPick) return null;
+            return (
+              <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <img src={categoryPick.cover} alt={categoryPick.title} className="w-16 sm:w-20 aspect-[3/4] object-cover rounded-xl shadow-md shrink-0" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                      ★ Editor's Pick in {categoryPick.genre}
+                    </span>
+                    <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">{categoryPick.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-1">By {categoryPick.author} • {categoryPick.reads.toLocaleString()} reads</p>
+                  </div>
+                </div>
+                <Link href={`/story/${categoryPick.slug}`} className="px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shrink-0 shadow-md">
+                  Read Spotlight Novel →
+                </Link>
+              </div>
+            );
+          })()
+        )}
 
         {/* Stories Grid */}
         {paginatedStories.length === 0 ? (
@@ -391,21 +360,20 @@ function BrowseContent() {
           </div>
         )}
 
-        {/* PAGINATION CONTROLS (Scope 10: Page number in URL) */}
+        {/* PAGINATION CONTROLS */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 pt-10 pb-4">
             <button 
-              onClick={() => updatePage(Math.max(1, currentPage - 1))}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-900"
-              aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => (
               <button
                 key={pageNum}
-                onClick={() => updatePage(pageNum)}
+                onClick={() => setCurrentPage(pageNum)}
                 className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
                   currentPage === pageNum
                     ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
@@ -416,10 +384,9 @@ function BrowseContent() {
               </button>
             ))}
             <button 
-              onClick={() => updatePage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-900"
-              aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -430,20 +397,5 @@ function BrowseContent() {
 
       <Footer />
     </div>
-  );
-}
-
-export default function BrowsePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-bold">Loading Browse Library...</p>
-        </div>
-      </div>
-    }>
-      <BrowseContent />
-    </Suspense>
   );
 }

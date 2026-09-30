@@ -1,32 +1,12 @@
 'use client';
-import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { BookOpen, Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ArrowRight } from 'lucide-react';
 
-function BlogContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function BlogPage() {
   const { blogPosts, t } = useApp();
-
-  const initialPage = parseInt(searchParams.get('page') || '1', 10);
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const itemsPerPage = 4;
-
-  const updatePage = (newPage) => {
-    setCurrentPage(newPage);
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      params.set('page', newPage.toString());
-      router.push(`/blog?${params.toString()}`);
-    }
-  };
-
-  const totalPages = Math.ceil(blogPosts.length / itemsPerPage) || 1;
-  const paginatedPosts = blogPosts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -45,7 +25,7 @@ function BlogContent() {
 
         {/* Blog Articles Grid */}
         <div className="grid md:grid-cols-2 gap-8">
-          {paginatedPosts.map((post) => (
+          {blogPosts.map((post) => (
             <article 
               key={post.id}
               className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between"
@@ -89,56 +69,9 @@ function BlogContent() {
           ))}
         </div>
 
-        {/* Blog Pagination (Scope 10) */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-12 pb-4">
-            <button 
-              onClick={() => updatePage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-900"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => (
-              <button
-                key={pageNum}
-                onClick={() => updatePage(pageNum)}
-                className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
-                  currentPage === pageNum
-                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
-            <button 
-              onClick={() => updatePage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-900"
-              aria-label="Next page"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
       </main>
 
       <Footer />
     </div>
-  );
-}
-
-export default function BlogPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <p className="text-xs text-slate-500 font-bold">Loading Editorials...</p>
-      </div>
-    }>
-      <BlogContent />
-    </Suspense>
   );
 }

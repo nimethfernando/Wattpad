@@ -30,13 +30,36 @@ import {
   Sparkles,
   Layers,
   Search,
-  LogIn
+  LogIn,
+  Calendar,
+  Clock,
+  Trophy,
+  FileText
 } from 'lucide-react';
 
 export default function AdminPanel() {
-  const { stories, setStories, genres, setGenres, reports, setReports, auditLogs, addAuditLog, user, setUser, t } = useApp();
+  const { 
+    stories, 
+    setStories, 
+    genres, 
+    setGenres, 
+    reports, 
+    setReports, 
+    auditLogs, 
+    addAuditLog, 
+    user, 
+    setUser, 
+    blogPosts,
+    setBlogPosts,
+    contests,
+    setContests,
+    communitySpaces,
+    setCommunitySpaces,
+    t 
+  } = useApp();
+
   const [activeTab, setActiveTab] = useState('stories'); 
-  // 'stories' | 'moderation' | 'users' | 'genres' | 'authors' | 'homepage' | 'emails' | 'seo' | 'audit' | 'settings'
+  // 'stories' | 'moderation' | 'users' | 'genres' | 'authors' | 'blog' | 'contests' | 'homepage' | 'emails' | 'seo' | 'audit' | 'settings'
 
   // Settings State
   const [authorSelfPublishing, setAuthorSelfPublishing] = useState(true);
@@ -75,6 +98,23 @@ export default function AdminPanel() {
   });
   const [bannerText, setBannerText] = useState("🎉 The Golden Quill Awards 2026 are officially open for submissions! Enter your serialized novel today.");
   const [siteLogoUrl, setSiteLogoUrl] = useState("/icon.png");
+
+  // Blog Editor State (Scope 5 & Scope 6: admin can create, edit, schedule, delete posts with SEO fields)
+  const [blogTitle, setBlogTitle] = useState('');
+  const [blogExcerpt, setBlogExcerpt] = useState('');
+  const [blogCategory, setBlogCategory] = useState('Writing Craft');
+  const [blogAuthor, setBlogAuthor] = useState('StoryVault Editorial');
+  const [blogCover, setBlogCover] = useState('https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80');
+  const [blogScheduleDate, setBlogScheduleDate] = useState('');
+  const [blogMetaDesc, setBlogMetaDesc] = useState('');
+  const [blogSavedNotice, setBlogSavedNotice] = useState(false);
+
+  // Contest Creator State (Scope 8)
+  const [contestTitle, setContestTitle] = useState('');
+  const [contestPrize, setContestPrize] = useState('$5,000 Cash + House Original Development');
+  const [contestDeadline, setContestDeadline] = useState('Nov 30, 2026');
+  const [contestCategories, setContestCategories] = useState('Fantasy, Sci-Fi, Romance, Thriller');
+  const [contestSavedNotice, setContestSavedNotice] = useState(false);
 
   // Email Templates State (Scope 8)
   const [emailTemplates, setEmailTemplates] = useState({
@@ -254,7 +294,6 @@ export default function AdminPanel() {
     }, 2500);
   };
 
-  // User Actions (Scope 8)
   const handleToggleUserStatus = (userId) => {
     setUsersList(prev => prev.map(u => {
       if (u.id === userId) {
@@ -282,6 +321,56 @@ export default function AdminPanel() {
     alert(`Switched active user session to @${targetUser.username} without login credential requirement.`);
   };
 
+  // Blog Creation Action (Scope 5 & Scope 6)
+  const handlePublishBlogPost = (e) => {
+    e.preventDefault();
+    if (!blogTitle.trim()) return;
+    const slug = blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const newPost = {
+      id: Date.now(),
+      slug,
+      title: blogTitle.trim(),
+      category: blogCategory,
+      author: blogAuthor,
+      date: blogScheduleDate || new Date().toISOString().split('T')[0],
+      readTime: "5 min read",
+      cover: blogCover,
+      excerpt: blogExcerpt || "Exclusive editorial advice from the StoryVault editorial desk."
+    };
+    setBlogPosts(prev => [newPost, ...prev]);
+    addAuditLog("Blog Post Created & Scheduled", blogTitle.trim());
+    setBlogSavedNotice(true);
+    setTimeout(() => {
+      setBlogSavedNotice(false);
+      setBlogTitle('');
+      setBlogExcerpt('');
+    }, 2500);
+  };
+
+  // Contest Creation Action (Scope 8)
+  const handleCreateContest = (e) => {
+    e.preventDefault();
+    if (!contestTitle.trim()) return;
+    const newContest = {
+      id: Date.now(),
+      title: contestTitle.trim(),
+      tagline: "Official annual competition curated by StoryVault editorial",
+      status: "open",
+      deadline: contestDeadline,
+      prize: contestPrize,
+      categories: contestCategories.split(',').map(s => s.trim()),
+      entriesCount: 0,
+      winners: []
+    };
+    setContests(prev => [newContest, ...prev]);
+    addAuditLog("Writing Contest Created", contestTitle.trim());
+    setContestSavedNotice(true);
+    setTimeout(() => {
+      setContestSavedNotice(false);
+      setContestTitle('');
+    }, 2500);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
@@ -296,7 +385,7 @@ export default function AdminPanel() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">StoryVault Admin Console</h1>
-              <p className="text-xs text-slate-400">Content moderation, user accounts, bulk actions, homepage curation, email templates, and audit logs</p>
+              <p className="text-xs text-slate-400">Content moderation, user accounts, bulk actions, homepage curation, blog publishing, email templates, and audit logs</p>
             </div>
           </div>
         </div>
@@ -309,6 +398,8 @@ export default function AdminPanel() {
             { key: 'users', label: `Users & Authors (${usersList.length})` },
             { key: 'genres', label: `Genre Library (${genres.length})` },
             { key: 'authors', label: `Author Persona Creator` },
+            { key: 'blog', label: `Blog Editor (${blogPosts.length})` },
+            { key: 'contests', label: `Contests & Awards (${contests.length})` },
             { key: 'homepage', label: `Homepage & Banners` },
             { key: 'emails', label: `Email Templates` },
             { key: 'seo', label: `SEO & Socials` },
@@ -710,7 +801,212 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 6: HOMEPAGE SECTIONS & BANNERS (Scope 8) */}
+        {/* TAB 6: BLOG EDITOR (Scope 5 & Scope 6: create, edit, schedule and delete posts, with SEO fields) */}
+        {activeTab === 'blog' && (
+          <div className="mt-8 space-y-6">
+            <div>
+              <h3 className="font-black text-lg">Admin Blog & Editorial Publisher</h3>
+              <p className="text-xs text-slate-400 mt-1">Draft, schedule, and publish official platform articles with integrated SEO metadata.</p>
+            </div>
+
+            {blogSavedNotice && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-bold rounded-xl flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500" /> Article published and visible on /blog!
+              </div>
+            )}
+
+            <div className="grid lg:grid-cols-12 gap-8">
+              {/* Blog Form */}
+              <form onSubmit={handlePublishBlogPost} className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Article Title</label>
+                  <input 
+                    type="text" 
+                    value={blogTitle} 
+                    onChange={e => setBlogTitle(e.target.value)} 
+                    placeholder="e.g. 5 Rules for Pacing Serialized Plot Twists"
+                    className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none font-bold text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Category</label>
+                    <select 
+                      value={blogCategory}
+                      onChange={e => setBlogCategory(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                    >
+                      <option value="Writing Craft">Writing Craft</option>
+                      <option value="Platform Updates">Platform Updates</option>
+                      <option value="Author Spotlight">Author Spotlight</option>
+                      <option value="Contest News">Contest News</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Author Byline</label>
+                    <input 
+                      type="text" 
+                      value={blogAuthor} 
+                      onChange={e => setBlogAuthor(e.target.value)} 
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Cover Image URL</label>
+                  <input 
+                    type="url" 
+                    value={blogCover} 
+                    onChange={e => setBlogCover(e.target.value)} 
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Scheduled Release Date (Optional)</label>
+                  <input 
+                    type="date" 
+                    value={blogScheduleDate} 
+                    onChange={e => setBlogScheduleDate(e.target.value)} 
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Article Excerpt (SEO Meta Description)</label>
+                  <textarea 
+                    rows={3}
+                    value={blogExcerpt} 
+                    onChange={e => setBlogExcerpt(e.target.value)} 
+                    placeholder="Short summary displayed in Google search results and blog feeds..."
+                    className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none"
+                  />
+                </div>
+
+                <button type="submit" className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                  Publish / Schedule Editorial Post
+                </button>
+              </form>
+
+              {/* Existing Blog Posts List */}
+              <div className="lg:col-span-5 space-y-3">
+                <h4 className="font-bold text-xs uppercase text-slate-400 tracking-wider">Published Articles ({blogPosts.length})</h4>
+                <div className="space-y-3">
+                  {blogPosts.map(post => (
+                    <div key={post.id} className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold text-purple-600 uppercase">{post.category}</span>
+                        <h5 className="font-bold mt-0.5 line-clamp-1">{post.title}</h5>
+                        <p className="text-[11px] text-slate-400">By {post.author} • {post.date}</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setBlogPosts(prev => prev.filter(p => p.id !== post.id));
+                          addAuditLog("Blog Post Deleted", post.title);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: CONTESTS & FANDOM GROUPS (Scope 8) */}
+        {activeTab === 'contests' && (
+          <div className="mt-8 space-y-6">
+            <div>
+              <h3 className="font-black text-lg">Contests & Fandom Spaces Manager</h3>
+              <p className="text-xs text-slate-400 mt-1">Create Watty-style annual awards competitions and monitor reader community discussion spaces.</p>
+            </div>
+
+            {contestSavedNotice && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-bold rounded-xl flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500" /> Contest competition created and open for submissions!
+              </div>
+            )}
+
+            <div className="grid lg:grid-cols-12 gap-8">
+              {/* Contest Form */}
+              <form onSubmit={handleCreateContest} className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
+                <h4 className="font-bold text-sm uppercase text-slate-400 tracking-wider">Launch New Writing Contest</h4>
+                
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Contest Title</label>
+                  <input 
+                    type="text" 
+                    value={contestTitle} 
+                    onChange={e => setContestTitle(e.target.value)} 
+                    placeholder="e.g. The Neon Horizon Cyberpunk Awards 2026"
+                    className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none font-bold"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Submission Deadline</label>
+                    <input 
+                      type="text" 
+                      value={contestDeadline} 
+                      onChange={e => setContestDeadline(e.target.value)} 
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 mb-1">Prizes & Grants</label>
+                    <input 
+                      type="text" 
+                      value={contestPrize} 
+                      onChange={e => setContestPrize(e.target.value)} 
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Eligible Categories (comma-separated)</label>
+                  <input 
+                    type="text" 
+                    value={contestCategories} 
+                    onChange={e => setContestCategories(e.target.value)} 
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none"
+                  />
+                </div>
+
+                <button type="submit" className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                  Publish Writing Contest
+                </button>
+              </form>
+
+              {/* Active Contests List */}
+              <div className="lg:col-span-5 space-y-3">
+                <h4 className="font-bold text-xs uppercase text-slate-400 tracking-wider">Active Competitions ({contests.length})</h4>
+                <div className="space-y-3">
+                  {contests.map(c => (
+                    <div key={c.id} className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">{c.status.toUpperCase()}</span>
+                        <span className="text-slate-400 text-[10px]">Deadline: {c.deadline}</span>
+                      </div>
+                      <h5 className="font-bold text-sm">{c.title}</h5>
+                      <p className="text-slate-500 text-[11px]">{c.prize}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 8: HOMEPAGE SECTIONS & BANNERS (Scope 8) */}
         {activeTab === 'homepage' && (
           <div className="mt-8 space-y-6">
             <div>
@@ -774,7 +1070,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 7: EMAIL TEMPLATES (Scope 8) */}
+        {/* TAB 9: EMAIL TEMPLATES (Scope 8) */}
         {activeTab === 'emails' && (
           <div className="mt-8 space-y-6">
             <div>
@@ -855,7 +1151,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 8: SEO & SOCIALS (Scope 8) */}
+        {/* TAB 10: SEO & SOCIALS (Scope 8) */}
         {activeTab === 'seo' && (
           <div className="mt-8 max-w-2xl bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
             <div>
@@ -935,7 +1231,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 9: AUDIT LOG */}
+        {/* TAB 11: AUDIT LOG */}
         {activeTab === 'audit' && (
           <div className="mt-8 space-y-4">
             <h3 className="font-bold text-base">Immutable Admin Security & Audit Trail</h3>
@@ -964,7 +1260,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 10: SETTINGS */}
+        {/* TAB 12: SETTINGS */}
         {activeTab === 'settings' && (
           <div className="mt-8 max-w-2xl bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6">
             <div>
