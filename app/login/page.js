@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
 import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,13 +20,17 @@ export default function LoginPage() {
   const [customName, setCustomName] = useState('');
   const [customEmail, setCustomEmail] = useState('');
 
+  // Handle Facebook Login via NextAuth (or fallback to custom mock if specified)
   const handleFacebook = async (custom = null) => {
     setSocialLoading('facebook');
     setErrorMessage('');
     try {
-      await new Promise(r => setTimeout(r, 600));
-      await loginWithFacebook(custom);
-      router.push('/home');
+      if (custom) {
+        await loginWithFacebook(custom);
+        router.push('/home');
+      } else {
+        await signIn('facebook', { callbackUrl: '/home' });
+      }
     } catch (err) {
       setErrorMessage('Facebook authentication failed. Please try again.');
     } finally {
@@ -33,13 +38,17 @@ export default function LoginPage() {
     }
   };
 
+  // Handle Google Login via NextAuth (or fallback to custom mock if specified)
   const handleGoogle = async (custom = null) => {
     setSocialLoading('google');
     setErrorMessage('');
     try {
-      await new Promise(r => setTimeout(r, 600));
-      await loginWithGoogle(custom);
-      router.push('/home');
+      if (custom) {
+        await loginWithGoogle(custom);
+        router.push('/home');
+      } else {
+        await signIn('google', { callbackUrl: '/home' });
+      }
     } catch (err) {
       setErrorMessage('Google authentication failed. Please try again.');
     } finally {
@@ -82,7 +91,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* 1. SOCIAL LOGINS (Facebook & Google at top, matching Wattpad layout) */}
+          {/* 1. SOCIAL LOGINS */}
           <div className="space-y-3">
             {/* Facebook Login Button */}
             <button
