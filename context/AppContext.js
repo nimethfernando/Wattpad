@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   initialGenres, 
   initialStories, 
@@ -192,14 +192,21 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // Sync User Session to localStorage
+  // Sync User Session to localStorage (only after initial load has finished)
+  const isInitialUserSyncRef = useRef(true);
   useEffect(() => {
     if (!isHydrated || typeof window === 'undefined') return;
+    if (isInitialUserSyncRef.current) {
+      isInitialUserSyncRef.current = false;
+      return;
+    }
     try {
       if (user) {
         localStorage.setItem('avora_user', JSON.stringify(user));
+        document.cookie = `avora_session=${encodeURIComponent(user.email)}; path=/; max-age=2592000; SameSite=Lax`;
       } else {
         localStorage.removeItem('avora_user');
+        document.cookie = 'avora_session=; path=/; max-age=0';
       }
     } catch (e) {
       console.error("Could not sync user to localStorage", e);
@@ -740,15 +747,20 @@ export function AppProvider({ children }) {
   };
 
   // 1. Google Authentication
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (customUser = null) => {
+    const email = customUser?.email || "jordan.reed@gmail.com";
+    const name = customUser?.name || (email ? email.split('@')[0].replace(/[._-]/g, ' ') : "Jordan Reed");
+    const username = customUser?.username || email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const avatar = customUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
+
     const googleUser = {
       id: Date.now(),
-      username: "jordan_reed",
-      name: "Jordan Reed",
-      email: "jordan.reed@gmail.com",
+      username,
+      name,
+      email,
       provider: "google",
       role: "reader",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      avatar,
       badges: ["Google Verified", "Avid Reader"],
       isAgeVerified: true,
       hideMature: false,
@@ -759,27 +771,48 @@ export function AppProvider({ children }) {
         language: "en"
       }
     };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_user', JSON.stringify(googleUser));
+        localStorage.setItem('avora_user_preferences', JSON.stringify(googleUser.userPreferences));
+        localStorage.setItem('avora_user_onboarding', 'true');
+        document.cookie = `avora_session=${encodeURIComponent(googleUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch (e) {
+        console.error("Failed to save google user to localStorage", e);
+      }
+    }
+
     setUser(googleUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
+
     sendNotification({
       title: "Google Sign-In",
-      message: "Welcome to Avora Library, Jordan! Signed in via Google.",
-      type: "system"
+      message: `Welcome to Avora Library, ${name}! Signed in via Google.`,
+      type: "system",
+      sendEmail: true,
+      recipientEmail: email
     });
     executePending();
+    return googleUser;
   };
 
   // 2. Facebook Authentication
-  const loginWithFacebook = async () => {
+  const loginWithFacebook = async (customUser = null) => {
+    const email = customUser?.email || "alex.vance@facebook.com";
+    const name = customUser?.name || (email ? email.split('@')[0].replace(/[._-]/g, ' ') : "Alex Vance");
+    const username = customUser?.username || `${email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_')}_fb`;
+    const avatar = customUser?.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+
     const facebookUser = {
       id: Date.now(),
-      username: "alex_vance_fb",
-      name: "Alex Vance",
-      email: "alex.vance@facebook.com",
+      username,
+      name,
+      email,
       provider: "facebook",
       role: "author",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+      avatar,
       badges: ["Facebook Verified", "Rising Author"],
       isAgeVerified: true,
       hideMature: false,
@@ -790,15 +823,31 @@ export function AppProvider({ children }) {
         language: "en"
       }
     };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_user', JSON.stringify(facebookUser));
+        localStorage.setItem('avora_user_preferences', JSON.stringify(facebookUser.userPreferences));
+        localStorage.setItem('avora_user_onboarding', 'true');
+        document.cookie = `avora_session=${encodeURIComponent(facebookUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch (e) {
+        console.error("Failed to save facebook user to localStorage", e);
+      }
+    }
+
     setUser(facebookUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
+
     sendNotification({
       title: "Facebook Sign-In",
-      message: "Welcome to Avora Library, Alex! Signed in via Facebook.",
-      type: "system"
+      message: `Welcome to Avora Library, ${name}! Signed in via Facebook.`,
+      type: "system",
+      sendEmail: true,
+      recipientEmail: email
     });
     executePending();
+    return facebookUser;
   };
 
   // 3. Email Authentication
@@ -823,10 +872,21 @@ export function AppProvider({ children }) {
         language: "en"
       }
     };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_user', JSON.stringify(emailUser));
+        localStorage.setItem('avora_user_preferences', JSON.stringify(emailUser.userPreferences));
+        localStorage.setItem('avora_user_onboarding', 'true');
+        document.cookie = `avora_session=${encodeURIComponent(emailUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch (e) {}
+    }
+
     setUser(emailUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
+    return emailUser;
   };
 
   const registerWithEmail = ({ username, email, password, birthdate, isAgeConfirmed }) => {
@@ -844,6 +904,14 @@ export function AppProvider({ children }) {
       hideMature: false,
       hasCompletedOnboarding: false
     };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_user', JSON.stringify(newUser));
+        document.cookie = `avora_session=${encodeURIComponent(newUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch (e) {}
+    }
+
     setUser(newUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
@@ -858,6 +926,7 @@ export function AppProvider({ children }) {
       sendEmail: true,
       recipientEmail: email
     });
+    return newUser;
   };
 
   // Logout & Clear Session
@@ -866,6 +935,7 @@ export function AppProvider({ children }) {
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('avora_user');
+        document.cookie = 'avora_session=; path=/; max-age=0';
       } catch (e) {
         console.error("Could not clear user session", e);
       }
