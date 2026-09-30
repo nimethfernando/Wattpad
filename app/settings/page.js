@@ -6,7 +6,17 @@ import { useApp } from '@/context/AppContext';
 import { Settings, ShieldCheck, KeyRound, Bell, CheckCircle, Sparkles, CreditCard, AlertCircle } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, setUser, subscription, cancelSubscription, openPaymentModal, featureFlags, t } = useApp();
+  const { 
+    user, 
+    setUser, 
+    userPreferences, 
+    openOnboardingModal, 
+    subscription, 
+    cancelSubscription, 
+    openPaymentModal, 
+    featureFlags, 
+    t 
+  } = useApp();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,6 +59,61 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-3xl font-black">Account Settings & Security</h1>
           <p className="text-xs text-slate-400 mt-1">Manage your reading preferences, mature content filtering, and password</p>
+        </div>
+
+        {/* Wattpad-Style Personalization & Genre Preferences Card */}
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-brand-500" />
+              <h3 className="font-bold text-base">Reading Feed Personalization</h3>
+            </div>
+            <button
+              onClick={openOnboardingModal}
+              className="px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-brand-500/20 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Customize Genres &amp; Goals
+            </button>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Active Favorite Genres &amp; Tropes</h4>
+                  <p className="text-slate-400 mt-0.5">Your home dashboard dynamically arranges recommendation carousels based on these genres.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                {(userPreferences?.favoriteGenres || ["Romance", "Fantasy", "Werewolf"]).map(genre => (
+                  <span 
+                    key={genre}
+                    className="px-3.5 py-1.5 rounded-full font-bold text-xs bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60 shadow-sm flex items-center gap-1.5"
+                  >
+                    ✨ {genre}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Primary Platform Goal</span>
+                <p className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                  {userPreferences?.goals || "Both reading and writing"}
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Preferred Language</span>
+                <p className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                  {userPreferences?.language === 'hi' ? 'हिन्दी (Hindi)' : userPreferences?.language === 'ka' ? 'ქართული (Georgian)' : userPreferences?.language === 'es' ? 'Español' : 'English (US / UK)'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Content Preferences Card */}

@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import ReadingListModal from '@/components/ReadingListModal';
 import { 
   Flame, 
   BookOpen, 
@@ -13,10 +14,17 @@ import {
   Eye, 
   Heart, 
   Trophy, 
-  BookMarked,
-  ArrowRight,
-  TrendingUp,
-  Star
+  BookMarked, 
+  ArrowRight, 
+  TrendingUp, 
+  Star,
+  MoreVertical,
+  EyeOff,
+  UserCheck,
+  UserPlus,
+  SlidersHorizontal,
+  BookmarkCheck,
+  BookmarkPlus
 } from 'lucide-react';
 
 export default function HomeFeedView() {
@@ -36,12 +44,23 @@ export default function HomeFeedView() {
     }, 
     user, 
     readingLists, 
+    userPreferences,
+    openOnboardingModal,
+    hiddenStoryIds = [],
+    hideStory,
+    followingAuthors = [],
+    followAuthor,
     t 
   } = useApp();
 
-  // Find active story for Continue Reading / Jump Back In
-  const activeStoryId = Object.keys(readingProgress || {})[0] || (library.length > 0 ? library[0] : stories[0]?.id);
-  const activeStory = stories.find(s => s.id === Number(activeStoryId)) || stories[0];
+  const [selectedStoryForList, setSelectedStoryForList] = useState(null);
+
+  // 1. Filter out hidden stories
+  const visibleStories = stories.filter(s => !hiddenStoryIds.includes(s.id));
+
+  // 2. Find active story for Continue Reading / Jump Back In
+  const activeStoryId = Object.keys(readingProgress || {})[0] || (library.length > 0 ? library[0] : visibleStories[0]?.id);
+  const activeStory = visibleStories.find(s => s.id === Number(activeStoryId)) || visibleStories[0];
   const activeProgress = (readingProgress && readingProgress[activeStory?.id]) || {
     chapterNumber: 1,
     chapterTitle: activeStory?.chapters?.[0]?.title || "Chapter 1",
@@ -49,12 +68,42 @@ export default function HomeFeedView() {
     lastReadAt: "Today"
   };
 
-  // Curated Recommendation Shelves
-  const becauseYouRead = stories.filter(s => s.id !== activeStory?.id && (s.genreSlug === activeStory?.genreSlug || s.genreSlug === 'fantasy' || s.genreSlug === 'mystery'));
-  const topRomance = stories.filter(s => s.genreSlug === 'romance');
-  const houseOriginals = stories.filter(s => s.isOriginal);
-  const communityFavorites = stories.filter(s => s.isTrending || s.reads > 50000);
-  const libraryStories = library.map(id => stories.find(s => s.id === id)).filter(Boolean);
+  // 3. User Selected Favorite Genres
+  const favoriteGenres = userPreferences?.favoriteGenres && userPreferences.favoriteGenres.length > 0
+    ? userPreferences.favoriteGenres
+    : ["Romance", "Fantasy", "Werewolf"];
+
+  // Helper: Match story to genre keyword
+  const matchesGenre = (story, targetGenre) => {
+    if (!targetGenre) return false;
+    const g = targetGenre.toLowerCase();
+    const cleanG = g.split('&')[0].trim().replace(/\s+/g, '-');
+    return (
+      story.genre?.toLowerCase().includes(g.split(' ')[0]) ||
+      story.genreSlug?.toLowerCase().includes(cleanG) ||
+      story.tags?.some(tag => tag.toLowerCase().includes(g.split(' ')[0]))
+    );
+  };
+
+  // 4. "Tailored For You" - Stories matching any of the user's selected genres
+  const tailoredStories = visibleStories.filter(story => 
+    favoriteGenres.some(genre => matchesGenre(story, genre))
+  );
+
+  // 5. Stories from Followed Writers
+  const followedAuthorsStories = visibleStories.filter(story =>
+    followingAuthors.some(author => 
+      author.toLowerCase() === story.authorUsername?.toLowerCase() ||
+      author.toLowerCase() === story.author?.toLowerCase().replace(/\s+/g, '')
+    )
+  );
+
+  // 6. Dynamic Genre Shelves: Dedicated shelf for each top favorite genre
+  const topDynamicGenres = favoriteGenres.slice(0, 3);
+
+  // 7. House Originals & Library Stories
+  const libraryStories = library.map(id => visibleStories.find(s => s.id === id)).filter(Boolean);
+  const houseOriginals = visibleStories.filter(s => s.isOriginal);
 
   const streakDays = readingStreak?.dayLabels || ["M", "T", "W", "T", "F", "S", "S"];
   const streakActive = readingStreak?.daysActive || [true, true, true, true, true, false, false];
@@ -67,7 +116,6 @@ export default function HomeFeedView() {
         
         {/* Continue Reading / Jump Back In Bar */}
         <div className="lg:col-span-8 bg-gradient-to-br from-slate-900 via-slate-800 to-brand-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden flex flex-col justify-between">
-          {/* Subtle Ambient Glow */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div>
@@ -195,7 +243,101 @@ export default function HomeFeedView() {
 
       </section>
 
-      {/* 2. MY PERSONAL SHELF / READING LIST (HORIZONTAL SCROLL) */}
+      {/* 2. TAILORED FOR YOU (MAIN WATTPAD ALGORITHMIC HERO SHELF) */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-brand-500" />
+              <h2 className="text-lg sm:text-xl font-black">Tailored For You</h2>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60">
+                Personalized
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Curated from your favorite genres: <strong className="text-slate-700 dark:text-slate-300">{favoriteGenres.join(', ')}</strong>
+            </p>
+          </div>
+
+          <button
+            onClick={openOnboardingModal}
+            className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Customize Genres</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {(tailoredStories.length > 0 ? tailoredStories : visibleStories).slice(0, 4).map(story => (
+            <StoryFeedCard 
+              key={story.id} 
+              story={story} 
+              isInLib={isInLibrary(story.id)}
+              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+              onOpenReadingList={(s) => setSelectedStoryForList(s)}
+              onHideStory={(id) => hideStory(id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* 3. UPDATES FROM WRITERS YOU FOLLOW */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-emerald-500" />
+              <h2 className="text-lg sm:text-xl font-black">Updates From Writers You Follow</h2>
+            </div>
+            <p className="text-xs text-slate-400">Latest serialized chapter drops from authors in your network</p>
+          </div>
+          <Link href="/browse?tab=authors" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
+            <span>Discover Authors</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {followedAuthorsStories.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {followedAuthorsStories.slice(0, 4).map(story => (
+              <StoryFeedCard 
+                key={story.id} 
+                story={story} 
+                isInLib={isInLibrary(story.id)}
+                onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                onOpenReadingList={(s) => setSelectedStoryForList(s)}
+                onHideStory={(id) => hideStory(id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 text-center space-y-3">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+              You haven't followed any authors with new chapters yet.
+            </p>
+            <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+              Follow creators to receive instant notifications when they publish new serialized chapters!
+            </p>
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <button
+                onClick={() => followAuthor('elenavance')}
+                className="px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-200 transition-colors cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Follow Elena Vance
+              </button>
+              <button
+                onClick={() => followAuthor('astraquill')}
+                className="px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-200 transition-colors cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Follow Astra Quill
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 4. MY PERSONAL SHELF / READING LIST (HORIZONTAL SCROLL) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -253,63 +395,47 @@ export default function HomeFeedView() {
         )}
       </section>
 
-      {/* 3. ALGORITHMIC RECOMMENDATION ROW: "BECAUSE YOU READ THE SHADOW ALCHEMIST" */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-500" />
-              <h2 className="text-lg sm:text-xl font-black">Because You Read {activeStory?.title}</h2>
+      {/* 5. DYNAMIC SHELVES GENERATED FROM USER'S ONBOARDING GENRES */}
+      {topDynamicGenres.map((genre) => {
+        const genreStories = visibleStories.filter(s => matchesGenre(s, genre));
+        if (genreStories.length === 0) return null;
+
+        return (
+          <section key={genre} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
+                  <h2 className="text-lg sm:text-xl font-black">Because You Favorite: {genre}</h2>
+                </div>
+                <p className="text-xs text-slate-400">Top-rated serialized novels matching your {genre} reading preference</p>
+              </div>
+              <Link 
+                href={`/browse?genre=${encodeURIComponent(genre.toLowerCase())}`} 
+                className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+              >
+                <span>See More in {genre}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <p className="text-xs text-slate-400">Serialized fiction recommendations based on your recent library choices</p>
-          </div>
-          <Link href="/browse?genre=fantasy" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>Explore More</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {becauseYouRead.slice(0, 4).map(story => (
-            <StoryFeedCard 
-              key={story.id} 
-              story={story} 
-              isInLib={isInLibrary(story.id)}
-              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)} 
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* 4. CURATED GENRE ROW: TRENDING IN ROMANCE */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
-              <h2 className="text-lg sm:text-xl font-black">Top Picks in Romance & Drama</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {genreStories.slice(0, 4).map(story => (
+                <StoryFeedCard 
+                  key={story.id} 
+                  story={story} 
+                  isInLib={isInLibrary(story.id)}
+                  onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                  onOpenReadingList={(s) => setSelectedStoryForList(s)}
+                  onHideStory={(id) => hideStory(id)}
+                />
+              ))}
             </div>
-            <p className="text-xs text-slate-400">Enemies-to-lovers, slow-burn mysteries, and contemporary serialized romance</p>
-          </div>
-          <Link href="/browse?genre=romance" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>See Romance</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+          </section>
+        );
+      })}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {topRomance.slice(0, 4).map(story => (
-            <StoryFeedCard 
-              key={story.id} 
-              story={story} 
-              isInLib={isInLibrary(story.id)}
-              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)} 
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* 5. HOUSE ORIGINALS & WATTY LAUREATES */}
+      {/* 6. HOUSE ORIGINALS & WATTY WINNERS */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -331,48 +457,49 @@ export default function HomeFeedView() {
               key={story.id} 
               story={story} 
               isInLib={isInLibrary(story.id)}
-              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)} 
+              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+              onOpenReadingList={(s) => setSelectedStoryForList(s)}
+              onHideStory={(id) => hideStory(id)}
             />
           ))}
         </div>
       </section>
 
-      {/* 6. COMMUNITY FAVORITES & VIRAL SERIALS */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
-              <h2 className="text-lg sm:text-xl font-black">Community Favorites & Rising Serials</h2>
-            </div>
-            <p className="text-xs text-slate-400">The most discussed weekly chapter drops across the Avora Library reader community</p>
-          </div>
-          <Link href="/browse?sort=trending" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>Explore All</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {communityFavorites.slice(0, 4).map(story => (
-            <StoryFeedCard 
-              key={story.id} 
-              story={story} 
-              isInLib={isInLibrary(story.id)}
-              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)} 
-            />
-          ))}
-        </div>
-      </section>
+      {/* Reading List Modal */}
+      {selectedStoryForList && (
+        <ReadingListModal 
+          isOpen={Boolean(selectedStoryForList)}
+          onClose={() => setSelectedStoryForList(null)}
+          story={selectedStoryForList}
+        />
+      )}
 
     </div>
   );
 }
 
-// Reusable Wattpad-style Card Component for Feed Rows
-function StoryFeedCard({ story, isInLib, onToggleLib }) {
+// Reusable Wattpad-style Card Component with 3-Dot Quick Actions
+function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideStory }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-3.5 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl p-3.5 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group relative">
       <div>
         <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-3">
           <img 
@@ -383,23 +510,89 @@ function StoryFeedCard({ story, isInLib, onToggleLib }) {
 
           {/* Ranking Badge if present */}
           {story.ranking && (
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-950/80 backdrop-blur-md text-amber-400 border border-amber-400/30 flex items-center gap-1">
+            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-950/80 backdrop-blur-md text-amber-400 border border-amber-400/30 flex items-center gap-1 z-10">
               <span>#{story.ranking.rank} in {story.ranking.tag}</span>
             </div>
           )}
 
-          {/* Quick Add to Library Button */}
-          <button
-            onClick={onToggleLib}
-            className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
-              isInLib
-                ? 'bg-emerald-500 text-white shadow-md'
-                : 'bg-black/40 hover:bg-black/70 text-white'
-            }`}
-            title={isInLib ? "Saved in Library" : "Add to Library"}
-          >
-            {isInLib ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          </button>
+          {/* Top Right Actions: Quick Add + 3-Dot Menu */}
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+            {/* Quick Add to Library Button */}
+            <button
+              onClick={onToggleLib}
+              className={`p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                isInLib
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'bg-black/50 hover:bg-black/80 text-white'
+              }`}
+              title={isInLib ? "Saved in Library" : "Add to Library"}
+            >
+              {isInLib ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* 3-Dot Quick Action Dropdown Trigger */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(!menuOpen);
+                }}
+                className="p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all cursor-pointer"
+                title="More story options"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+              </button>
+
+              {/* 3-Dot Menu Popover */}
+              {menuOpen && (
+                <div className="absolute right-0 top-10 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenReadingList(story);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                  >
+                    <BookMarked className="w-3.5 h-3.5 text-brand-500" />
+                    <span>Save to Reading List</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onToggleLib();
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                  >
+                    {isInLib ? (
+                      <>
+                        <BookmarkCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>In Offline Shelf</span>
+                      </>
+                    ) : (
+                      <>
+                        <BookmarkPlus className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Add to Shelf</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onHideStory(story.id);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
+                  >
+                    <EyeOff className="w-3.5 h-3.5" />
+                    <span>Hide / Not Interested</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <Link href={`/story/${story.slug}`}>
@@ -425,4 +618,3 @@ function StoryFeedCard({ story, isInLib, onToggleLib }) {
     </div>
   );
 }
-

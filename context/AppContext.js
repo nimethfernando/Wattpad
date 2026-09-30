@@ -33,7 +33,13 @@ export function AppProvider({ children }) {
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
     badges: ["Top Author", "Rising Writer", "Editorial Member"],
     isAgeVerified: true,
-    hideMature: false
+    hideMature: false,
+    hasCompletedOnboarding: true,
+    userPreferences: {
+      goals: "Both reading and writing",
+      favoriteGenres: ["Romance", "Fantasy", "Werewolf"],
+      language: "en"
+    }
   });
 
   // Stories & Content State
@@ -93,6 +99,15 @@ export function AppProvider({ children }) {
   // Payment Modal State
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState({ mode: 'donate', story: null, author: null, plan: null });
+
+  // Onboarding & Reader Preferences State
+  const [onboardingModalOpen, setOnboardingModalOpen] = useState(false);
+  const [userPreferences, setUserPreferences] = useState({
+    goals: "Both reading and writing",
+    favoriteGenres: ["Romance", "Fantasy", "Werewolf"],
+    language: "en"
+  });
+  const [hiddenStoryIds, setHiddenStoryIds] = useState([]);
 
   // Site Announcements Banner State
   const [announcementBanner, setAnnouncementBanner] = useState({
@@ -179,8 +194,32 @@ export function AppProvider({ children }) {
       } catch (e) {
         console.error("Could not load reading progress from localStorage", e);
       }
+
+      // Sync Reader Preferences & Hidden Stories
+      try {
+        const savedPrefs = localStorage.getItem('avora_user_preferences');
+        if (savedPrefs) {
+          setUserPreferences(JSON.parse(savedPrefs));
+        }
+        const savedHidden = localStorage.getItem('avora_hidden_stories');
+        if (savedHidden) {
+          setHiddenStoryIds(JSON.parse(savedHidden));
+        }
+      } catch (e) {
+        console.error("Could not load user preferences from localStorage", e);
+      }
     }
   }, []);
+
+  // Trigger onboarding modal if user has not completed onboarding
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user && user.hasCompletedOnboarding === false) {
+      const completed = localStorage.getItem('avora_user_onboarding');
+      if (!completed) {
+        setOnboardingModalOpen(true);
+      }
+    }
+  }, [user]);
 
   // Sync Notifications from MariaDB
   useEffect(() => {
@@ -285,6 +324,57 @@ export function AppProvider({ children }) {
     } catch (e) {
       console.error("Failed to mark all read in DB:", e);
     }
+  };
+
+  const hideStory = (storyId) => {
+    setHiddenStoryIds(prev => {
+      const updated = [...new Set([...prev, storyId])];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('avora_hidden_stories', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const unhideStory = (storyId) => {
+    setHiddenStoryIds(prev => {
+      const updated = prev.filter(id => id !== storyId);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('avora_hidden_stories', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const openOnboardingModal = () => {
+    setOnboardingModalOpen(true);
+  };
+
+  const completeOnboarding = (prefs) => {
+    const updatedPreferences = {
+      ...userPreferences,
+      ...prefs
+    };
+    setUserPreferences(updatedPreferences);
+    if (user) {
+      setUser(prev => ({
+        ...prev,
+        hasCompletedOnboarding: true,
+        userPreferences: updatedPreferences
+      }));
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('avora_user_preferences', JSON.stringify(updatedPreferences));
+      localStorage.setItem('avora_user_onboarding', 'true');
+    }
+    setOnboardingModalOpen(false);
+    setHomeFeedViewMode('feed');
+
+    sendNotification({
+      title: "Personal Library Curated! ✨",
+      message: `Your home feed is now customized for ${updatedPreferences.favoriteGenres?.join(', ')}. Enjoy discovering new serialized chapters!`,
+      type: "system"
+    });
   };
 
   const followAuthor = (authorUsername) => {
@@ -727,11 +817,13 @@ export function AppProvider({ children }) {
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
       badges: ["New Creator"],
       isAgeVerified: isAgeConfirmed,
-      hideMature: false
+      hideMature: false,
+      hasCompletedOnboarding: false
     };
     setUser(newUser);
     setAuthModalOpen(false);
     executePending();
+    setOnboardingModalOpen(true);
 
     // Dispatch welcome notification & welcome email
     sendNotification({
@@ -849,7 +941,16 @@ export function AppProvider({ children }) {
       announcementBanner,
       setAnnouncementBanner,
       bannerDismissed,
-      setBannerDismissed
+      setBannerDismissed,
+      onboardingModalOpen,
+      setOnboardingModalOpen,
+      openOnboardingModal,
+      completeOnboarding,
+      userPreferences,
+      setUserPreferences,
+      hiddenStoryIds,
+      hideStory,
+      unhideStory
     }}>
       {children}
     </AppContext.Provider>
