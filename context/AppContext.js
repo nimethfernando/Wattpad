@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { 
   initialGenres, 
   initialStories, 
@@ -111,21 +112,60 @@ export function AppProvider({ children }) {
   const [authModalMessage, setAuthModalMessage] = useState('');
   const [pendingAction, setPendingAction] = useState(null);
 
-  // Dedicated Social OAuth Modal State (Google & Facebook Normal Email Auth Flow)
-  const [socialModalOpen, setSocialModalOpen] = useState(false);
-  const [socialModalProvider, setSocialModalProvider] = useState('google'); // 'google' | 'facebook'
-  const [socialModalCallback, setSocialModalCallback] = useState(null);
+  // NextAuth Session Sync (Automatically populates user from Google OAuth)
+  const { data: session, status: sessionStatus } = useSession();
 
-  const openSocialModal = (provider = 'google', callback = null) => {
-    setSocialModalProvider(provider);
-    setSocialModalCallback(callback ? () => callback : null);
-    setSocialModalOpen(true);
-  };
+  // Automatically sync NextAuth Google/Facebook session to AppContext user
+  useEffect(() => {
+    if (sessionStatus === 'authenticated' && session?.user) {
+      const email = session.user.email;
+      if (email && (!user || user.email !== email)) {
+        const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        const name = session.user.name || email.split('@')[0].replace(/[._-]/g, ' ');
+        const avatar = session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
-  const closeSocialModal = () => {
-    setSocialModalOpen(false);
-    setSocialModalCallback(null);
-  };
+        const authenticatedUser = {
+          id: session.user.id || Date.now(),
+          username,
+          name,
+          email,
+          provider: "google",
+          role: "reader",
+          avatar,
+          badges: ["Google Verified", "Avid Reader"],
+          isAgeVerified: true,
+          hideMature: false,
+          hasCompletedOnboarding: true,
+          userPreferences: {
+            goals: "I'm here to read stories",
+            favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+            language: "en"
+          }
+        };
+
+        setUser(authenticatedUser);
+        setHomeFeedViewMode('feed');
+        setAuthModalOpen(false);
+
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('avora_user', JSON.stringify(authenticatedUser));
+            localStorage.setItem('avora_user_preferences', JSON.stringify(authenticatedUser.userPreferences));
+            localStorage.setItem('avora_user_onboarding', 'true');
+            document.cookie = `avora_session=${encodeURIComponent(email)}; path=/; max-age=2592000; SameSite=Lax`;
+          } catch (e) {
+            console.error("Failed to sync session to localStorage", e);
+          }
+        }
+
+        sendNotification({
+          title: "Google Sign-In Successful",
+          message: `Welcome to Avora Library, ${name}! Signed in via Google.`,
+          type: "system"
+        });
+      }
+    }
+  }, [session, sessionStatus, user]);
 
   // Moderation & Audit Log
   const [reports, setReports] = useState([]);
@@ -762,118 +802,99 @@ export function AppProvider({ children }) {
     }
   };
 
-  // 1. Google Authentication (Requires real Google email)
-  const loginWithGoogle = async (credentials = null) => {
-    const rawEmail = typeof credentials === 'string' ? credentials : credentials?.email;
-    const email = rawEmail?.trim();
-    if (!email) {
-      throw new Error("Please provide your Google email address to sign in.");
-    }
-    const name = credentials?.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
-    const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const avatar = credentials?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+  // 1. Google Authentication (Automatically triggers Google Account Chooser popup via NextAuth)
+  const loginWithGoogle = async (customUser = null) => {
+    if (customUser && customUser.email) {
+      const email = customUser.email.trim();
+      const name = customUser.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
+      const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const avatar = customUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
-    const googleUser = {
-      id: Date.now(),
-      username,
-      name,
-      email,
-      provider: "google",
-      role: "reader",
-      avatar,
-      badges: ["Google Verified", "Avid Reader"],
-      isAgeVerified: true,
-      hideMature: false,
-      hasCompletedOnboarding: true,
-      userPreferences: {
-        goals: "I'm here to read stories",
-        favoriteGenres: ["Romance", "Fantasy", "Mystery"],
-        language: "en"
+      const googleUser = {
+        id: Date.now(),
+        username,
+        name,
+        email,
+        provider: "google",
+        role: "reader",
+        avatar,
+        badges: ["Google Verified", "Avid Reader"],
+        isAgeVerified: true,
+        hideMature: false,
+        hasCompletedOnboarding: true,
+        userPreferences: {
+          goals: "I'm here to read stories",
+          favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+          language: "en"
+        }
+      };
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(googleUser));
+          localStorage.setItem('avora_user_preferences', JSON.stringify(googleUser.userPreferences));
+          localStorage.setItem('avora_user_onboarding', 'true');
+          document.cookie = `avora_session=${encodeURIComponent(googleUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {
+          console.error("Failed to save google user to localStorage", e);
+        }
       }
-    };
 
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('avora_user', JSON.stringify(googleUser));
-        localStorage.setItem('avora_user_preferences', JSON.stringify(googleUser.userPreferences));
-        localStorage.setItem('avora_user_onboarding', 'true');
-        document.cookie = `avora_session=${encodeURIComponent(googleUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
-      } catch (e) {
-        console.error("Failed to save google user to localStorage", e);
-      }
+      setUser(googleUser);
+      setHomeFeedViewMode('feed');
+      setAuthModalOpen(false);
+      executePending();
+      return googleUser;
     }
-
-    setUser(googleUser);
-    setHomeFeedViewMode('feed');
-    setAuthModalOpen(false);
-    setSocialModalOpen(false);
-
-    sendNotification({
-      title: "Google Sign-In",
-      message: `Welcome to Avora Library, ${name}! Signed in via Google (${email}).`,
-      type: "system",
-      sendEmail: true,
-      recipientEmail: email
-    });
-    executePending();
-    return googleUser;
+    // Triggers real Google OAuth which pops up the user's logged in Google account
+    await signIn('google', { callbackUrl: '/home' });
   };
 
-  // 2. Facebook Authentication (Requires real Facebook email/mobile)
-  const loginWithFacebook = async (credentials = null) => {
-    const rawEmail = typeof credentials === 'string' ? credentials : credentials?.email;
-    const email = rawEmail?.trim();
-    if (!email) {
-      throw new Error("Please provide your Facebook email address or phone number to log in.");
-    }
-    const name = credentials?.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
-    const username = `${email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_')}_fb`;
-    const avatar = credentials?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+  // 2. Facebook Authentication
+  const loginWithFacebook = async (customUser = null) => {
+    if (customUser && customUser.email) {
+      const email = customUser.email.trim();
+      const name = customUser.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
+      const username = `${email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_')}_fb`;
+      const avatar = customUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
-    const facebookUser = {
-      id: Date.now(),
-      username,
-      name,
-      email,
-      provider: "facebook",
-      role: "author",
-      avatar,
-      badges: ["Facebook Verified", "Rising Author"],
-      isAgeVerified: true,
-      hideMature: false,
-      hasCompletedOnboarding: true,
-      userPreferences: {
-        goals: "Both reading and writing",
-        favoriteGenres: ["Romance", "Werewolf", "Teen Fiction"],
-        language: "en"
+      const facebookUser = {
+        id: Date.now(),
+        username,
+        name,
+        email,
+        provider: "facebook",
+        role: "author",
+        avatar,
+        badges: ["Facebook Verified", "Rising Author"],
+        isAgeVerified: true,
+        hideMature: false,
+        hasCompletedOnboarding: true,
+        userPreferences: {
+          goals: "Both reading and writing",
+          favoriteGenres: ["Romance", "Werewolf", "Teen Fiction"],
+          language: "en"
+        }
+      };
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(facebookUser));
+          localStorage.setItem('avora_user_preferences', JSON.stringify(facebookUser.userPreferences));
+          localStorage.setItem('avora_user_onboarding', 'true');
+          document.cookie = `avora_session=${encodeURIComponent(facebookUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {
+          console.error("Failed to save facebook user to localStorage", e);
+        }
       }
-    };
 
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('avora_user', JSON.stringify(facebookUser));
-        localStorage.setItem('avora_user_preferences', JSON.stringify(facebookUser.userPreferences));
-        localStorage.setItem('avora_user_onboarding', 'true');
-        document.cookie = `avora_session=${encodeURIComponent(facebookUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
-      } catch (e) {
-        console.error("Failed to save facebook user to localStorage", e);
-      }
+      setUser(facebookUser);
+      setHomeFeedViewMode('feed');
+      setAuthModalOpen(false);
+      executePending();
+      return facebookUser;
     }
-
-    setUser(facebookUser);
-    setHomeFeedViewMode('feed');
-    setAuthModalOpen(false);
-    setSocialModalOpen(false);
-
-    sendNotification({
-      title: "Facebook Sign-In",
-      message: `Welcome to Avora Library, ${name}! Signed in via Facebook (${email}).`,
-      type: "system",
-      sendEmail: true,
-      recipientEmail: email
-    });
-    executePending();
-    return facebookUser;
+    await signIn('facebook', { callbackUrl: '/home' });
   };
 
   // 3. Email Authentication
@@ -966,6 +987,7 @@ export function AppProvider({ children }) {
         console.error("Could not clear user session", e);
       }
     }
+    signOut({ redirect: false });
     setHomeFeedViewMode('landing');
   };
 
@@ -1108,11 +1130,6 @@ export function AppProvider({ children }) {
       loginWithFacebook,
       loginWithEmail,
       registerWithEmail,
-      openSocialModal,
-      closeSocialModal,
-      socialModalOpen,
-      socialModalProvider,
-      socialModalCallback,
       logoutUser,
       userConversations,
       postConversationMessage,

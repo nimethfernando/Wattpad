@@ -6,10 +6,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
 import { BookOpen, Mail, Lock, User, Calendar, AlertCircle } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { openSocialModal, registerWithEmail, t } = useApp();
+  const { registerWithEmail, t } = useApp();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,7 +64,7 @@ export default function RegisterPage() {
             {/* Facebook Button */}
             <button
               type="button"
-              onClick={() => openSocialModal('facebook', () => router.push('/home'))}
+              onClick={() => signIn('facebook', { callbackUrl: '/home' })}
               className="w-full py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-[#1877F2]/20 transition-all cursor-pointer"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -75,7 +76,7 @@ export default function RegisterPage() {
             {/* Google Button */}
             <button
               type="button"
-              onClick={() => openSocialModal('google', () => router.push('/home'))}
+              onClick={() => signIn('google', { callbackUrl: '/home' })}
               className="w-full py-3 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.99] text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-3 shadow-sm transition-all cursor-pointer"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">

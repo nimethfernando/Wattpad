@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { X, BookOpen, Lock, Mail, User, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 
 export default function AuthModal() {
   const { 
@@ -12,8 +13,7 @@ export default function AuthModal() {
     setAuthModalMode, 
     authModalMessage, 
     loginWithEmail, 
-    registerWithEmail,
-    openSocialModal
+    registerWithEmail
   } = useApp();
 
   const [email, setEmail] = useState('');
@@ -116,7 +116,7 @@ export default function AuthModal() {
               type="button"
               onClick={() => {
                 setAuthModalOpen(false);
-                openSocialModal('facebook');
+                signIn('facebook', { callbackUrl: '/home' });
               }}
               disabled={loading}
               className="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/20 transition-all cursor-pointer"
@@ -132,7 +132,7 @@ export default function AuthModal() {
               type="button"
               onClick={() => {
                 setAuthModalOpen(false);
-                openSocialModal('google');
+                signIn('google', { callbackUrl: '/home' });
               }}
               disabled={loading}
               className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 active:scale-[0.99] text-slate-700 dark:text-slate-100 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer"

@@ -2,7 +2,7 @@ import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import AuthModal from '@/components/AuthModal';
 import OnboardingModal from '@/components/OnboardingModal';
-import SocialOAuthModal from '@/components/SocialOAuthModal';
+import AuthProvider from '@/components/AuthProvider';
 
 export const metadata = {
   title: 'Avora Library - Serialized Stories & Community Reading',
@@ -19,12 +19,13 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body>
-        <AppProvider>
-          {children}
-          <AuthModal />
-          <OnboardingModal />
-          <SocialOAuthModal />
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            {children}
+            <AuthModal />
+            <OnboardingModal />
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   );
