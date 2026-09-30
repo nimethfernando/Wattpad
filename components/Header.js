@@ -22,8 +22,6 @@ import {
   Settings,
   BookMarked
 } from 'lucide-react';
-import AuthModal from './AuthModal';
-import OnboardingModal from './OnboardingModal';
 
 export default function Header() {
   const { 
@@ -428,12 +426,6 @@ export default function Header() {
           )}
         </div>
       )}
-
-      {/* Global Auth Modal for Facebook, Google, and Email Logins */}
-      <AuthModal />
-
-      {/* New Reader Onboarding & Dynamic Genre Wizard */}
-      <OnboardingModal />
     </header>
   );
 }

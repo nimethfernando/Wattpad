@@ -149,11 +149,15 @@ export default function OnboardingModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div 
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div 
+      className="fixed inset-0 z-[110] overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={() => setOnboardingModalOpen(false)}
+    >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+        <div 
+          className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] text-left transition-all sm:my-8 animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Top Header & Progress Indicator */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -460,5 +464,6 @@ export default function OnboardingModal() {
 
       </div>
     </div>
+  </div>
   );
 }

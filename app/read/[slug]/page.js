@@ -28,7 +28,6 @@ import {
   Check,
   Plus
 } from 'lucide-react';
-import AuthModal from '@/components/AuthModal';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -500,9 +499,6 @@ export default function ReaderPage() {
         reportedUser={story.authorUsername}
         storyTitle={`${story.title} - Chapter ${chapter.number}`}
       />
-
-      {/* Global Auth Modal for Facebook & Google Logins */}
-      <AuthModal />
 
     </div>
   );

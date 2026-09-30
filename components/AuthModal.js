@@ -95,13 +95,14 @@ export default function AuthModal() {
 
   return (
     <div 
-      className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/75 backdrop-blur-sm p-4 sm:p-6 flex justify-center items-start sm:items-center py-6 sm:py-8 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={() => setAuthModalOpen(false)}
     >
-      <div 
-        className="relative w-full max-w-md my-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-7 max-h-[calc(100vh-2.5rem)] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+        <div 
+          className="relative w-full max-w-md transform rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 text-left shadow-2xl border border-slate-200 dark:border-slate-800 transition-all sm:my-8 animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Close Button */}
         <button 
           onClick={() => setAuthModalOpen(false)}
@@ -305,5 +306,6 @@ export default function AuthModal() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

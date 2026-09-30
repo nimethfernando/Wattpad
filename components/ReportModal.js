@@ -36,13 +36,14 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div 
-        className="w-full max-w-md my-auto bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative max-h-[calc(100vh-2.5rem)] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-h-full items-center justify-center p-4 text-center">
+        <div 
+          className="w-full max-w-md text-left bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
+          onClick={(e) => e.stopPropagation()}
+        >
         <button 
           onClick={onClose}
           className="absolute top-5 right-5 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
@@ -116,5 +117,6 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
         )}
       </div>
     </div>
+  </div>
   );
 }
