@@ -21,7 +21,7 @@ export default function AuthModal() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [birthdate, setBirthdate] = useState('2000-01-01');
-  const [isAgeConfirmed, setIsAgeConfirmed] = useState(true);
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 

@@ -23,24 +23,9 @@ export function AppProvider({ children }) {
   const [lang, setLang] = useState('en');
   const [theme, setTheme] = useState('light');
 
-  // Authenticated User State
-  const [user, setUser] = useState({
-    id: 1,
-    username: "Elena_Author",
-    name: "Elena Vance",
-    email: "elena@avoralibrary.com",
-    role: "admin", // 'reader' | 'author' | 'admin'
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-    badges: ["Top Author", "Rising Writer", "Editorial Member"],
-    isAgeVerified: true,
-    hideMature: false,
-    hasCompletedOnboarding: true,
-    userPreferences: {
-      goals: "Both reading and writing",
-      favoriteGenres: ["Romance", "Fantasy", "Werewolf"],
-      language: "en"
-    }
-  });
+  // Authenticated User State (defaults to null for unauthenticated guests)
+  const [user, setUser] = useState(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Stories & Content State
   const [stories, setStories] = useState(initialStories);
@@ -52,25 +37,22 @@ export function AppProvider({ children }) {
   const [readerReactions, setReaderReactions] = useState(initialReaderReactions);
 
   // Social & Community State
-  const [followingAuthors, setFollowingAuthors] = useState(['elenavance', 'astraquill']);
+  const [followingAuthors, setFollowingAuthors] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
-  const [library, setLibrary] = useState([1, 2]); // Wattpad Personal Library
-  const [readingLists, setReadingLists] = useState([
-    { id: 1, title: "Favorites of 2026", description: "Must-read serialized masterworks", storyIds: [1, 2], isPublic: true },
-    { id: 2, title: "Late Night Atmosphere", description: "Mysterious and supernatural tales", storyIds: [3], isPublic: true }
-  ]);
+  const [library, setLibrary] = useState([]); // Wattpad Personal Library
+  const [readingLists, setReadingLists] = useState([]);
 
   // Reading Progress & Streaks
   const [readingProgress, setReadingProgress] = useState(initialReadingProgress || {});
   const [readingStreak, setReadingStreak] = useState(initialReadingStreak || {
-    currentStreak: 5,
-    chaptersReadThisWeek: 14,
+    currentStreak: 0,
+    chaptersReadThisWeek: 0,
     dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    daysActive: [true, true, true, true, true, false, false]
+    daysActive: [false, false, false, false, false, false, false]
   });
 
-  // Dual-State Home Feed View Mode: 'feed' or 'landing'
-  const [homeFeedViewMode, setHomeFeedViewMode] = useState('feed');
+  // Dual-State Home Feed View Mode: 'landing' (public default) or 'feed' (authenticated)
+  const [homeFeedViewMode, setHomeFeedViewMode] = useState('landing');
 
   // Soft Launch Feature Flags
   const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags || {
@@ -120,25 +102,7 @@ export function AppProvider({ children }) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Wattpad-style Public Conversations Wall per author profile
-  const [userConversations, setUserConversations] = useState({
-    elenavance: [
-      { 
-        id: 1, 
-        author: "BookLover99", 
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80", 
-        text: "Loving Chapter 2 of The Shadow Alchemist! When is Keith's backstory revealed?", 
-        time: "2 hours ago" 
-      },
-      { 
-        id: 2, 
-        author: "Elena Vance", 
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80", 
-        text: "Thank you so much! Chapter 3 drops this Friday with a huge revelation about the grimoire.", 
-        time: "1 hour ago",
-        isAuthorReply: true
-      }
-    ]
-  });
+  const [userConversations, setUserConversations] = useState({});
 
   // Auth Modal State (Facebook, Google, Email)
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -147,28 +111,11 @@ export function AppProvider({ children }) {
   const [pendingAction, setPendingAction] = useState(null);
 
   // Moderation & Audit Log
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      targetType: "comment",
-      reportedUser: "SpamBot99",
-      reason: "Unsolicited promotional links in paragraph reaction",
-      story: "The Shadow Alchemist • Ch. 1",
-      status: "pending",
-      timestamp: "10 mins ago"
-    }
-  ]);
-  const [auditLogs, setAuditLogs] = useState([
-    { id: 1, action: "House Original Assigned", target: "The Shadow Alchemist", admin: "Elena Vance", time: "1 hour ago" },
-    { id: 2, action: "System Initialized", target: "Avora Library Database", admin: "System", time: "Today" }
-  ]);
+  const [reports, setReports] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
 
   // Notifications
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "New Chapter Alert", message: "Elena Vance published Chapter 2 of 'The Shadow Alchemist'", time: "1 hour ago", read: false },
-    { id: 2, title: "Paragraph Reply", message: "LoreHunter replied to your reaction on Chapter 1", time: "3 hours ago", read: false },
-    { id: 3, title: "Contest Announcement", message: "The Golden Quill Awards 2026 submissions are open!", time: "1 day ago", read: true }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   // Theme Syncing to HTML class
   useEffect(() => {
@@ -182,9 +129,20 @@ export function AppProvider({ children }) {
     }
   }, [theme]);
 
-  // Sync Reading Progress from localStorage
+  // Sync User Session, Reading Progress & Preferences from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      try {
+        const savedUser = localStorage.getItem('avora_user');
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          setHomeFeedViewMode('feed');
+        }
+      } catch (e) {
+        console.error("Could not load user from localStorage", e);
+      }
+
       try {
         const saved = localStorage.getItem('avora_reading_progress');
         if (saved) {
@@ -195,7 +153,6 @@ export function AppProvider({ children }) {
         console.error("Could not load reading progress from localStorage", e);
       }
 
-      // Sync Reader Preferences & Hidden Stories
       try {
         const savedPrefs = localStorage.getItem('avora_user_preferences');
         if (savedPrefs) {
@@ -208,8 +165,24 @@ export function AppProvider({ children }) {
       } catch (e) {
         console.error("Could not load user preferences from localStorage", e);
       }
+
+      setIsHydrated(true);
     }
   }, []);
+
+  // Sync User Session to localStorage
+  useEffect(() => {
+    if (!isHydrated || typeof window === 'undefined') return;
+    try {
+      if (user) {
+        localStorage.setItem('avora_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('avora_user');
+      }
+    } catch (e) {
+      console.error("Could not sync user to localStorage", e);
+    }
+  }, [user, isHydrated]);
 
   // Trigger onboarding modal if user has not completed onboarding
   useEffect(() => {
@@ -221,12 +194,16 @@ export function AppProvider({ children }) {
     }
   }, [user]);
 
-  // Sync Notifications from MariaDB
+  // Sync Notifications from MariaDB for authenticated user
   useEffect(() => {
+    if (!user?.email) {
+      setNotifications([]);
+      return;
+    }
     let isMounted = true;
     async function fetchDbNotifications() {
       try {
-        const userEmail = user?.email || 'elena@avoralibrary.com';
+        const userEmail = user.email;
         const res = await fetch(`/api/notifications?email=${encodeURIComponent(userEmail)}`);
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.notifications) && data.notifications.length > 0) {
@@ -259,7 +236,7 @@ export function AppProvider({ children }) {
     storyTitle = null,
     chapterTitle = null 
   }) => {
-    const targetEmail = recipientEmail || user?.email || 'elena@avoralibrary.com';
+    const targetEmail = recipientEmail || user?.email || null;
     const tempId = `notif_${Date.now()}`;
     const newNotif = {
       id: tempId,
@@ -283,7 +260,7 @@ export function AppProvider({ children }) {
           message,
           type,
           link,
-          userEmail: user?.email || 'elena@avoralibrary.com',
+          userEmail: user?.email || null,
           sendEmail,
           recipientEmail: targetEmail,
           authorName,
@@ -319,7 +296,7 @@ export function AppProvider({ children }) {
       await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAll: true, userEmail: user?.email || 'elena@avoralibrary.com' })
+        body: JSON.stringify({ markAll: true, userEmail: user?.email || null })
       });
     } catch (e) {
       console.error("Failed to mark all read in DB:", e);
@@ -743,7 +720,7 @@ export function AppProvider({ children }) {
   // 1. Google Authentication
   const loginWithGoogle = async () => {
     const googleUser = {
-      id: 88,
+      id: Date.now(),
       username: "jordan_reed",
       name: "Jordan Reed",
       email: "jordan.reed@gmail.com",
@@ -752,21 +729,29 @@ export function AppProvider({ children }) {
       avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
       badges: ["Google Verified", "Avid Reader"],
       isAgeVerified: true,
-      hideMature: false
+      hideMature: false,
+      hasCompletedOnboarding: true,
+      userPreferences: {
+        goals: "I'm here to read stories",
+        favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+        language: "en"
+      }
     };
     setUser(googleUser);
+    setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
-    setNotifications(prev => [
-      { id: Date.now(), title: "Google Sign-In", message: "Welcome back, Jordan! Signed in via Google.", time: "Just now", read: false },
-      ...prev
-    ]);
+    sendNotification({
+      title: "Google Sign-In",
+      message: "Welcome to Avora Library, Jordan! Signed in via Google.",
+      type: "system"
+    });
     executePending();
   };
 
   // 2. Facebook Authentication
   const loginWithFacebook = async () => {
     const facebookUser = {
-      id: 99,
+      id: Date.now(),
       username: "alex_vance_fb",
       name: "Alex Vance",
       email: "alex.vance@facebook.com",
@@ -775,32 +760,49 @@ export function AppProvider({ children }) {
       avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
       badges: ["Facebook Verified", "Rising Author"],
       isAgeVerified: true,
-      hideMature: false
+      hideMature: false,
+      hasCompletedOnboarding: true,
+      userPreferences: {
+        goals: "Both reading and writing",
+        favoriteGenres: ["Romance", "Werewolf", "Teen Fiction"],
+        language: "en"
+      }
     };
     setUser(facebookUser);
+    setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
-    setNotifications(prev => [
-      { id: Date.now(), title: "Facebook Sign-In", message: "Welcome back, Alex! Signed in via Facebook.", time: "Just now", read: false },
-      ...prev
-    ]);
+    sendNotification({
+      title: "Facebook Sign-In",
+      message: "Welcome to Avora Library, Alex! Signed in via Facebook.",
+      type: "system"
+    });
     executePending();
   };
 
   // 3. Email Authentication
   const loginWithEmail = (email, password) => {
+    const username = email.split('@')[0];
+    const isAdmin = email.toLowerCase().includes('admin');
     const emailUser = {
       id: Date.now(),
-      username: email.split('@')[0],
-      name: email.split('@')[0],
+      username,
+      name: username,
       email,
       provider: "email",
-      role: email.includes('admin') ? 'admin' : 'author',
+      role: isAdmin ? 'admin' : 'author',
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-      badges: ["Member"],
+      badges: isAdmin ? ["Admin", "Editorial Member"] : ["Member"],
       isAgeVerified: true,
-      hideMature: false
+      hideMature: false,
+      hasCompletedOnboarding: true,
+      userPreferences: {
+        goals: isAdmin ? "Both reading and writing" : "I'm here to read stories",
+        favoriteGenres: ["Romance", "Fantasy", "Werewolf"],
+        language: "en"
+      }
     };
     setUser(emailUser);
+    setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
   };
@@ -821,6 +823,7 @@ export function AppProvider({ children }) {
       hasCompletedOnboarding: false
     };
     setUser(newUser);
+    setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
     setOnboardingModalOpen(true);
@@ -833,6 +836,19 @@ export function AppProvider({ children }) {
       sendEmail: true,
       recipientEmail: email
     });
+  };
+
+  // Logout & Clear Session
+  const logoutUser = () => {
+    setUser(null);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('avora_user');
+      } catch (e) {
+        console.error("Could not clear user session", e);
+      }
+    }
+    setHomeFeedViewMode('landing');
   };
 
   // Public Conversations Wall
@@ -936,6 +952,7 @@ export function AppProvider({ children }) {
       loginWithFacebook,
       loginWithEmail,
       registerWithEmail,
+      logoutUser,
       userConversations,
       postConversationMessage,
       announcementBanner,

@@ -37,10 +37,10 @@ export default function HomeFeedView() {
     readingProgress, 
     getProgress, 
     readingStreak = {
-      currentStreak: 5,
-      chaptersReadThisWeek: 14,
+      currentStreak: 0,
+      chaptersReadThisWeek: 0,
       dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      daysActive: [true, true, true, true, true, false, false]
+      daysActive: [false, false, false, false, false, false, false]
     }, 
     user, 
     readingLists, 
@@ -64,8 +64,8 @@ export default function HomeFeedView() {
   const activeProgress = (readingProgress && readingProgress[activeStory?.id]) || {
     chapterNumber: 1,
     chapterTitle: activeStory?.chapters?.[0]?.title || "Chapter 1",
-    progressPercent: 42,
-    lastReadAt: "Today"
+    progressPercent: 0,
+    lastReadAt: "New"
   };
 
   // 3. User Selected Favorite Genres
@@ -198,20 +198,24 @@ export default function HomeFeedView() {
                 <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />
                 <h3 className="font-black text-sm uppercase tracking-wider">Reading Streak</h3>
               </div>
-              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
-                ACTIVE
+              <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                (readingStreak?.currentStreak ?? 0) > 0 
+                  ? 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400' 
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+              }`}>
+                {(readingStreak?.currentStreak ?? 0) > 0 ? 'ACTIVE' : 'READY'}
               </span>
             </div>
 
             <div className="py-4">
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-black text-slate-900 dark:text-white">
-                  {readingStreak?.currentStreak || 5}
+                  {readingStreak?.currentStreak ?? 0}
                 </span>
                 <span className="text-xs font-bold uppercase text-slate-400">Days in a row</span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                You've read <strong>{readingStreak?.chaptersReadThisWeek || 14} chapters</strong> this week. Keep reading today to maintain your streak!
+                You've read <strong>{readingStreak?.chaptersReadThisWeek ?? 0} chapters</strong> this week. Keep reading today to maintain your streak!
               </p>
             </div>
 

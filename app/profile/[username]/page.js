@@ -61,19 +61,22 @@ export default function ProfilePage() {
     setMsgInput('');
   };
 
+  const matchedStory = stories.find(s => s.authorUsername?.toLowerCase() === username?.toLowerCase());
+  const matchedAuthorName = matchedStory ? matchedStory.author : username;
+  const matchedAuthorAvatar = matchedStory?.authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80";
+
   const profileData = {
-    name: isSelf ? user.name : "Elena Vance",
-    username: username || "elenavance",
-    bio: isSelf ? "Passionate fantasy writer and worldbuilder. Updates 'The Shadow Alchemist' every Tuesday!" : "Author of serialized urban fantasy, speculative fiction, and intricate magic systems.",
-    avatar: isSelf ? user.avatar : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+    name: isSelf ? user.name : matchedAuthorName,
+    username: username || "reader",
+    bio: isSelf ? (user.bio || "Passionate reader and storyteller on Avora Library.") : `Author and community storyteller on Avora Library. Check out serialized chapters and reading lists!`,
+    avatar: isSelf ? user.avatar : matchedAuthorAvatar,
     banner: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    followers: 4890,
-    following: 120,
-    badges: ["Top Author", "Rising Writer", "Editorial Member"],
+    followers: userStories.length > 0 ? 1200 + userStories.length * 450 : 24,
+    following: isSelf ? followingAuthors.length : 12,
+    badges: isSelf ? (user.badges || ["Avora Member"]) : (userStories.length > 0 ? ["Author", "Storyteller"] : ["Member"]),
     activities: [
-      { id: 1, action: "Published a new chapter in 'The Shadow Alchemist'", time: "2 days ago" },
-      { id: 2, action: "Created public reading list 'Favorites of 2026'", time: "1 week ago" },
-      { id: 3, action: "Earned badge 'Top Author' for 100K reads", time: "2 weeks ago" }
+      ...(userStories.length > 0 ? [{ id: 1, action: `Published serialized chapter in '${userStories[0].title}'`, time: "Recently" }] : []),
+      { id: 2, action: "Joined the Avora Library storytelling community", time: "Active" }
     ]
   };
 

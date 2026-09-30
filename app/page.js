@@ -32,7 +32,7 @@ export default function HomePage() {
     testimonials, 
     readerReactions, 
     user,
-    homeFeedViewMode = 'feed',
+    homeFeedViewMode = 'landing',
     setHomeFeedViewMode
   } = useApp();
   const [installPromptShown, setInstallPromptShown] = useState(false);

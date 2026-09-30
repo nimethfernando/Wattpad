@@ -10,7 +10,7 @@ import { sendNotificationEmail, sendChapterAlertEmail } from '@/lib/email';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email') || 'elena@avoralibrary.com';
+    const email = searchParams.get('email') || null;
     const limit = searchParams.get('limit') || 25;
 
     const notifications = await getNotificationsFromDb(email, limit);
@@ -29,7 +29,7 @@ export async function POST(request) {
       message, 
       type = 'system', 
       link = null, 
-      userEmail = 'elena@avoralibrary.com',
+      userEmail = null,
       sendEmail = false,
       recipientEmail = null,
       authorName = null,
@@ -99,7 +99,7 @@ export async function POST(request) {
 export async function PATCH(request) {
   try {
     const body = await request.json();
-    const { id, markAll = false, userEmail = 'elena@avoralibrary.com' } = body;
+    const { id, markAll = false, userEmail = null } = body;
 
     if (markAll) {
       await markAllNotificationsReadInDb(userEmail);

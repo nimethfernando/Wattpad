@@ -51,10 +51,10 @@ export default function ReaderPage() {
     t 
   } = useApp();
 
-  const story = stories.find(s => s.slug === slug) || stories[0];
-  const inLib = isInLibrary(story.id);
+  const story = stories.find(s => s.slug === slug);
+  const inLib = story ? isInLibrary(story.id) : false;
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const chapter = story.chapters[currentChapterIndex] || story.chapters[0];
+  const chapter = story?.chapters?.[currentChapterIndex] || story?.chapters?.[0];
 
   // Reader Customization State
   const [readerTheme, setReaderTheme] = useState('sepia'); // 'light' | 'dark' | 'sepia'
@@ -75,8 +75,32 @@ export default function ReaderPage() {
 
   // Sync reading progress
   useEffect(() => {
-    saveReadingProgress(story.id, chapter.id, 0);
-  }, [story.id, chapter.id]);
+    if (story && chapter) {
+      saveReadingProgress(story.id, chapter.id, 0);
+    }
+  }, [story?.id, chapter?.id]);
+
+  if (!story || !chapter) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-6">
+            <BookOpen className="w-10 h-10 text-slate-400" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">Chapter Not Found</h1>
+          <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm max-w-md">
+            This story or chapter could not be located. It may have been unpublished or moved.
+          </p>
+          <Link 
+            href="/browse" 
+            className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-md shadow-brand-500/25 transition-all"
+          >
+            Browse Other Stories →
+          </Link>
+        </main>
+      </div>
+    );
+  }
 
   const handleVote = () => {
     if (!user) {

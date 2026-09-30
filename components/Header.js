@@ -34,6 +34,7 @@ export default function Header() {
     t, 
     user, 
     setUser, 
+    logoutUser,
     notifications, 
     setNotifications, 
     markAllNotificationsRead,
@@ -338,8 +339,11 @@ export default function Header() {
                   </div>
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
                     <button 
-                      onClick={() => setUser(null)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        logoutUser();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" /> {t.logout}
                     </button>
@@ -387,7 +391,26 @@ export default function Header() {
           {user?.role === 'admin' && (
             <Link href="/admin" className="block py-2 text-sm font-semibold text-purple-600">{t.adminPanel}</Link>
           )}
-          {!user && (
+          {user ? (
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 px-2 py-1">
+                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
+                <span className="text-xs font-bold truncate text-slate-900 dark:text-white">{user.name} (@{user.username})</span>
+              </div>
+              <Link href={`/profile/${user.username}`} className="block py-1.5 px-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                {t.profile}
+              </Link>
+              <Link href="/settings" className="block py-1.5 px-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                Account Settings
+              </Link>
+              <button
+                onClick={() => { setMobileMenuOpen(false); logoutUser(); }}
+                className="w-full text-left py-1.5 px-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
+              >
+                {t.logout}
+              </button>
+            </div>
+          ) : (
             <div className="pt-2 flex flex-col gap-2">
               <button 
                 onClick={() => { setMobileMenuOpen(false); openAuthModal('login'); }}

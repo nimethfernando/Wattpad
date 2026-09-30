@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [birthdate, setBirthdate] = useState('2000-01-01');
-  const [isAgeConfirmed, setIsAgeConfirmed] = useState(true);
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -150,7 +150,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="elena@example.com"
+                  placeholder="you@example.com"
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>

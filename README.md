@@ -104,13 +104,15 @@ Open [http://localhost:3000](http://localhost:3000) to view the platform.
    ```
 2. Go to **[Vercel](https://vercel.com)** and click **Add New > Project**.
 3. Select your repository and click **Import**.
-4. In **Environment Variables**, add the variables from `.env`:
-   - `DB_HOST`: `162.241.148.163`
+4. In **Environment Variables**, configure the production variables documented in `.env.example`:
+   - `DB_HOST`: Host address of your MariaDB/MySQL server
    - `DB_PORT`: `3306`
-   - `DB_USER`: `ditya0a7_yourcpaneluser_admin`
-   - `DB_PASSWORD`: `supersecretadminpassword123`
-   - `DB_NAME`: `ditya0a7_yourcpaneluser_gbncircle`
-   - `ADMIN_JWT_SECRET`: `ditya-group-jwt-secret-key-at-least-32-chars-random-production`
-   - `EMAIL_USER`: `gnbmailsender@gmail.com`
-   - `EMAIL_PASS`: `akkjqlnhkgbudmxe`
+   - `DB_USER`: Your database username
+   - `DB_PASSWORD`: Your database password
+   - `DB_NAME`: Your database name
+   - `ADMIN_JWT_SECRET`: 32+ character random secret for JWT signing
+   - `EMAIL_USER`: Your SMTP sender email address
+   - `EMAIL_PASS`: Your SMTP or Gmail App Password
+   - `NEXT_PUBLIC_APP_NAME`: `Avora Library`
+   - `NEXT_PUBLIC_APP_URL`: Your Vercel or custom domain URL
 5. Click **Deploy**. Vercel will build and serve your app globally on an SSL domain with CDN edge caching!

@@ -49,7 +49,32 @@ export default function StoryDetailPage() {
   const [showListDropdown, setShowListDropdown] = useState(false);
   const [showReadingListModal, setShowReadingListModal] = useState(false);
 
-  const story = stories.find(s => s.slug === slug) || stories[0];
+  const story = stories.find(s => s.slug === slug);
+
+  if (!story) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-6">
+            <BookOpen className="w-10 h-10 text-slate-400" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">Story Not Found</h1>
+          <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm max-w-md">
+            The serialized story you are looking for does not exist or may have been unpublished by the author.
+          </p>
+          <Link 
+            href="/browse" 
+            className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-md shadow-brand-500/25 transition-all"
+          >
+            Browse Stories Library →
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   const isFollowing = followingAuthors.includes(story.authorUsername);
   const inLib = isInLibrary(story.id);
 
