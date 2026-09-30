@@ -107,20 +107,12 @@ export default function Header() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* Brand Logo: Separate Light & Dark Logos (Scope 9) */}
+        {/* Brand Logo */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            {theme === 'dark' ? (
-              // Dark Theme Logo: Electric Amber/Violet glowing crest with high-contrast white glyph
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 via-amber-400 to-yellow-300 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/30">
-                <BookOpen className="w-5 h-5 stroke-[2.5]" />
-              </div>
-            ) : (
-              // Light Theme Logo: Deep Crimson/Brand-600 with warm amber
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform">
-                <BookOpen className="w-5 h-5 stroke-[2.5]" />
-              </div>
-            )}
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/40 shrink-0 bg-slate-950">
+              <img src="/tab-icon.png" alt="Avora Library Logo" className="w-full h-full object-cover" />
+            </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
                 Avora<span className="text-brand-500 dark:text-amber-400">Library</span>

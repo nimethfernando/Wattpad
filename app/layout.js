@@ -5,19 +5,38 @@ import OnboardingModal from '@/components/OnboardingModal';
 import AgeVerificationModal from '@/components/AgeVerificationModal';
 import AuthProvider from '@/components/AuthProvider';
 
+export const viewport = {
+  themeColor: '#ea580c',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata = {
   title: 'Avora Library - Serialized Stories & Community Reading',
   description: 'Read and publish serialized fiction, interact with paragraph-level comments, and join passionate fandoms on mobile or desktop.',
   manifest: '/manifest.json',
-  themeColor: '#ea580c',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/tab-icon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/tab-icon.png" />
+        <link rel="alternate icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
       <body>
         <AuthProvider>

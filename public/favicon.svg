@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="avora-flame" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+    <linearGradient id="avora-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="50%" stop-color="#e11d48" />
+      <stop offset="100%" stop-color="#9f1239" />
+    </linearGradient>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0b0f19" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Dark Rounded App Icon Container -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#bg-grad)" stroke="#334155" stroke-width="2.5" />
+
+  <!-- Background Ambient Glow -->
+  <circle cx="64" cy="62" r="32" fill="#ea580c" opacity="0.25" filter="url(#glow)" />
+
+  <!-- Open Book Base Geometry -->
+  <path d="M26 84 C38 78 52 79 64 85 C76 79 90 78 102 84 L102 91 C90 85 76 86 64 92 C52 86 38 85 26 91 Z" fill="url(#avora-accent)" opacity="0.95" />
+  
+  <path d="M26 76 C40 70 52 71 64 77 C76 71 88 70 102 76 L100 81 C88 76 76 77 64 82 C52 77 40 76 28 81 Z" fill="url(#avora-flame)" />
+
+  <path d="M28 67 C42 62 52 63 64 69 C76 63 86 62 100 67 L98 71 C86 67 76 68 64 73 C52 68 42 67 30 71 Z" fill="#fef08a" opacity="0.9" />
+
+  <!-- Central Spine / Pen Nib Body -->
+  <path d="M64 56 L69 66 L64 91 L59 66 Z" fill="url(#avora-accent)" />
+  <circle cx="64" cy="69" r="2.5" fill="#fef08a" />
+  <line x1="64" y1="71" x2="64" y2="87" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Phoenix Flame Quill Feather (Icon Crest) -->
+  <path d="M64 20 C64 20 74 30 75 42 C75 48 72 53 69 56 C74 50 78 44 76 34 C82 42 81 53 74 61 C85 52 84 39 79 28 C87 36 86 52 76 65 C81 60 84 52 84 46 C87 55 81 67 70 73 L64 62 L58 73 C47 67 41 55 44 46 C44 52 47 60 52 65 C42 52 41 36 49 28 C44 39 43 52 54 61 C47 53 46 42 52 34 C50 44 54 50 59 56 C56 53 53 48 53 42 C54 30 64 20 64 20 Z" fill="url(#avora-flame)" filter="url(#glow)" />
+</svg>

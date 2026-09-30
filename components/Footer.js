@@ -67,9 +67,9 @@ export default function Footer() {
           
           {/* Brand & Language Column */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white font-bold">
-                <BookOpen className="w-4 h-4" />
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg overflow-hidden shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 shrink-0 bg-slate-950">
+                <img src="/tab-icon.png" alt="Avora Library Logo" className="w-full h-full object-cover" />
               </div>
               <span className="font-black text-lg text-slate-900 dark:text-white">
                 Avora<span className="text-brand-500">Library</span>
