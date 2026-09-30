@@ -190,8 +190,22 @@ export default function BrowsePage() {
             </div>
           </div>
 
-          {/* Trope, Mood, Length & Sorting Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Language, Trope, Mood, Length & Sorting Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {/* Language Filter */}
+            <div>
+              <select 
+                value={selectedLanguage}
+                onChange={(e) => { setSelectedLanguage(e.target.value); setCurrentPage(1); }}
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+              >
+                <option value="all">🌐 All Languages</option>
+                <option value="en">English (EN)</option>
+                <option value="ka">ქართული (KA)</option>
+                <option value="hi">हिन्दी (HI)</option>
+              </select>
+            </div>
+
             {/* Mood */}
             <div>
               <select 
@@ -335,6 +349,9 @@ export default function BrowsePage() {
                             18+
                           </span>
                         )}
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                          🌐 {story.language?.toUpperCase() || 'EN'}
+                        </span>
                       </div>
 
                       <Link href={`/story/${story.slug}`}>
@@ -392,6 +409,7 @@ export default function BrowsePage() {
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             pageSizeOptions={[6, 9, 12, 24]}
+            syncToUrl={true}
           />
         </div>
 

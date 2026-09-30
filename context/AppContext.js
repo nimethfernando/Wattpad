@@ -94,6 +94,16 @@ export function AppProvider({ children }) {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState({ mode: 'donate', story: null, author: null, plan: null });
 
+  // Site Announcements Banner State
+  const [announcementBanner, setAnnouncementBanner] = useState({
+    active: true,
+    text: "🎉 The Golden Quill Annual Writing Awards 2026 are officially open for submissions!",
+    linkText: "Submit Novel",
+    linkUrl: "/contests",
+    dismissible: true
+  });
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   // Wattpad-style Public Conversations Wall per author profile
   const [userConversations, setUserConversations] = useState({
     elenavance: [
@@ -725,7 +735,11 @@ export function AppProvider({ children }) {
       loginWithEmail,
       registerWithEmail,
       userConversations,
-      postConversationMessage
+      postConversationMessage,
+      announcementBanner,
+      setAnnouncementBanner,
+      bannerDismissed,
+      setBannerDismissed
     }}>
       {children}
     </AppContext.Provider>

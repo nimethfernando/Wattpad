@@ -51,6 +51,8 @@ export default function AdminPanel() {
     featureFlags, 
     togglePaidFeatures, 
     updateFeatureFlags,
+    announcementBanner,
+    setAnnouncementBanner,
     user, 
     t 
   } = useApp();
@@ -953,6 +955,84 @@ export default function AdminPanel() {
                   <option value={12}>12 cards</option>
                   <option value={20}>20 cards</option>
                 </select>
+              </div>
+
+              {/* Site Announcements Banner Manager */}
+              <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-brand-500" />
+                    <h4 className="font-bold text-sm">Site Announcements Banner Manager</h4>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-[11px] font-bold text-slate-400">Display:</span>
+                    <input 
+                      type="checkbox"
+                      checked={announcementBanner?.active || false}
+                      onChange={(e) => setAnnouncementBanner(prev => ({ ...prev, active: e.target.checked }))}
+                      className="w-4 h-4 accent-brand-500 cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 mb-1">Banner Announcement Text</label>
+                    <input 
+                      type="text" 
+                      value={announcementBanner?.text || ''}
+                      onChange={(e) => setAnnouncementBanner(prev => ({ ...prev, text: e.target.value }))}
+                      placeholder="e.g. 🏆 Annual Watty Writing Awards are now live!"
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">Link Label</label>
+                      <input 
+                        type="text" 
+                        value={announcementBanner?.linkText || ''}
+                        onChange={(e) => setAnnouncementBanner(prev => ({ ...prev, linkText: e.target.value }))}
+                        placeholder="e.g. Learn More →"
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">Link URL</label>
+                      <input 
+                        type="text" 
+                        value={announcementBanner?.linkUrl || ''}
+                        onChange={(e) => setAnnouncementBanner(prev => ({ ...prev, linkUrl: e.target.value }))}
+                        placeholder="e.g. /contests"
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={announcementBanner?.dismissible || false}
+                        onChange={(e) => setAnnouncementBanner(prev => ({ ...prev, dismissible: e.target.checked }))}
+                        className="w-4 h-4 accent-brand-500 cursor-pointer"
+                      />
+                      <span className="text-[11px] text-slate-400">Allow users to dismiss the banner</span>
+                    </label>
+
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        addAuditLog("Announcement Banner Updated", announcementBanner?.text || 'Updated');
+                        alert('Announcement banner updated and published live!');
+                      }}
+                      className="px-4 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs cursor-pointer"
+                    >
+                      Publish Banner
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

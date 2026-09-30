@@ -38,7 +38,10 @@ export default function Header() {
     stories, 
     readingLists,
     library,
-    openAuthModal
+    openAuthModal,
+    announcementBanner,
+    bannerDismissed,
+    setBannerDismissed
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,6 +70,30 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+      {/* 0. Site-Wide Announcement Banner */}
+      {announcementBanner?.active && !bannerDismissed && (
+        <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 px-4 text-center relative flex items-center justify-center gap-2 shadow-sm">
+          <span>{announcementBanner.text}</span>
+          {announcementBanner.linkUrl && (
+            <Link 
+              href={announcementBanner.linkUrl} 
+              className="underline font-bold hover:text-white/80 transition-colors ml-1"
+            >
+              {announcementBanner.linkText || 'Learn More →'}
+            </Link>
+          )}
+          {announcementBanner.dismissible && (
+            <button 
+              onClick={() => setBannerDismissed(true)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/80 hover:text-white cursor-pointer"
+              aria-label="Dismiss announcement banner"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo: Separate Light & Dark Logos (Scope 9) */}

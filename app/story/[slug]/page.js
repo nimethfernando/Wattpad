@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ReportModal from '@/components/ReportModal';
+import ReadingListModal from '@/components/ReadingListModal';
 import { useApp } from '@/context/AppContext';
 import { 
   Eye, 
@@ -46,6 +47,7 @@ export default function StoryDetailPage() {
   const [copiedShare, setCopiedShare] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [showListDropdown, setShowListDropdown] = useState(false);
+  const [showReadingListModal, setShowReadingListModal] = useState(false);
 
   const story = stories.find(s => s.slug === slug) || stories[0];
   const isFollowing = followingAuthors.includes(story.authorUsername);
@@ -246,23 +248,45 @@ export default function StoryDetailPage() {
 
                 {showListDropdown && (
                   <div className="absolute left-0 bottom-14 sm:bottom-auto sm:top-14 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs">
-                    <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px] px-2 py-1">
-                      Save to Reading List
-                    </p>
-                    <div className="space-y-1 my-1">
+                    <div className="flex items-center justify-between px-2 py-1">
+                      <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
+                        Save to Reading List
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setShowListDropdown(false);
+                          setShowReadingListModal(true);
+                        }}
+                        className="text-[11px] font-bold text-brand-500 hover:underline flex items-center gap-0.5 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" /> New
+                      </button>
+                    </div>
+                    <div className="space-y-1 my-1 max-h-48 overflow-y-auto">
                       {readingLists.map((list) => {
                         const isContained = list.storyIds.includes(story.id);
                         return (
                           <button
                             key={list.id}
                             onClick={() => handleToggleReadingList(list.id)}
-                            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold"
+                            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold cursor-pointer"
                           >
                             <span className="truncate">{list.title}</span>
                             {isContained && <Check className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
                           </button>
                         );
                       })}
+                    </div>
+                    <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setShowListDropdown(false);
+                          setShowReadingListModal(true);
+                        }}
+                        className="w-full py-1.5 text-center font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors cursor-pointer"
+                      >
+                        Manage All Lists
+                      </button>
                     </div>
                   </div>
                 )}
@@ -345,6 +369,13 @@ export default function StoryDetailPage() {
         targetType="story"
         reportedUser={story.authorUsername}
         storyTitle={story.title}
+      />
+
+      {/* Reading List Management Modal */}
+      <ReadingListModal 
+        isOpen={showReadingListModal}
+        onClose={() => setShowReadingListModal(false)}
+        story={story}
       />
 
       <Footer />
