@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { 
   BookMarked, 
@@ -37,8 +38,20 @@ export default function LibraryPage() {
   const [newListDesc, setNewListDesc] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Pagination states
+  const [libraryPage, setLibraryPage] = useState(1);
+  const [libraryPageSize, setLibraryPageSize] = useState(6);
+
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(4);
+
   // Filter stories in user library
   const libraryStories = stories.filter(s => library.includes(s.id));
+  const totalLibraryPages = Math.ceil(libraryStories.length / libraryPageSize) || 1;
+  const paginatedLibraryStories = libraryStories.slice((libraryPage - 1) * libraryPageSize, libraryPage * libraryPageSize);
+
+  const totalListPages = Math.ceil(readingLists.length / listPageSize) || 1;
+  const paginatedLists = readingLists.slice((listPage - 1) * listPageSize, listPage * listPageSize);
 
   const handleCreateList = (e) => {
     e.preventDefault();
@@ -133,84 +146,97 @@ export default function LibraryPage() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {libraryStories.map((story) => {
-                  const progress = readingProgress[story.id] || { chapterId: story.chapters[0]?.id, paragraphIndex: 0 };
-                  const chapterIndex = story.chapters.findIndex(c => c.id === progress.chapterId);
-                  const currentChNum = chapterIndex >= 0 ? chapterIndex + 1 : 1;
-                  const totalCh = story.chapters.length || 1;
-                  const percent = Math.min(100, Math.round((currentChNum / totalCh) * 100));
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedLibraryStories.map((story) => {
+                    const progress = readingProgress[story.id] || { chapterId: story.chapters[0]?.id, paragraphIndex: 0 };
+                    const chapterIndex = story.chapters.findIndex(c => c.id === progress.chapterId);
+                    const currentChNum = chapterIndex >= 0 ? chapterIndex + 1 : 1;
+                    const totalCh = story.chapters.length || 1;
+                    const percent = Math.min(100, Math.round((currentChNum / totalCh) * 100));
 
-                  return (
-                    <div 
-                      key={story.id}
-                      className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group"
-                    >
-                      <div className="flex gap-4">
-                        <Link href={`/story/${story.slug}`} className="shrink-0">
-                          <img 
-                            src={story.cover} 
-                            alt={story.title}
-                            className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-2xl shadow-md group-hover:scale-105 transition-transform"
-                          />
-                        </Link>
+                    return (
+                      <div 
+                        key={story.id} 
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group"
+                      >
+                        <div className="flex gap-4">
+                          <Link href={`/story/${story.slug}`} className="shrink-0">
+                            <img 
+                              src={story.cover} 
+                              alt={story.title} 
+                              className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-2xl shadow-md group-hover:scale-105 transition-transform" 
+                            />
+                          </Link>
 
-                        <div className="flex-1 flex flex-col justify-between py-0.5">
-                          <div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
-                                {story.genre}
-                              </span>
-                              {story.ranking && (
-                                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
-                                  #{story.ranking.rank} in {story.ranking.tag}
+                          <div className="flex-1 flex flex-col justify-between py-0.5">
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
+                                  {story.genre}
                                 </span>
-                              )}
+                                {story.ranking && (
+                                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
+                                    #{story.ranking.rank} in {story.ranking.tag}
+                                  </span>
+                                )}
+                              </div>
+                              <Link href={`/story/${story.slug}`}>
+                                <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
+                                  {story.title}
+                                </h3>
+                              </Link>
+                              <p className="text-xs text-slate-400">By {story.author}</p>
                             </div>
-                            <Link href={`/story/${story.slug}`}>
-                              <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
-                                {story.title}
-                              </h3>
-                            </Link>
-                            <p className="text-xs text-slate-400">By {story.author}</p>
-                          </div>
 
-                          {/* Reading Progress Indicator */}
-                          <div className="space-y-1.5 pt-2">
-                            <div className="flex justify-between text-[11px] font-bold">
-                              <span className="text-slate-500">Ch. {currentChNum} of {totalCh}</span>
-                              <span className="text-brand-600 dark:text-brand-400">{percent}%</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-brand-500 rounded-full transition-all duration-300"
-                                style={{ width: `${percent}%` }}
-                              />
+                            {/* Reading Progress Indicator */}
+                            <div className="space-y-1.5 pt-2">
+                              <div className="flex justify-between text-[11px] font-bold">
+                                <span className="text-slate-500">Ch. {currentChNum} of {totalCh}</span>
+                                <span className="text-brand-600 dark:text-brand-400">{percent}%</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-brand-500 rounded-full transition-all duration-300"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Card Actions */}
-                      <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-                        <Link 
-                          href={`/read/${story.slug}`}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20"
-                        >
-                          <BookOpen className="w-3.5 h-3.5" /> Continue Reading
-                        </Link>
+                        {/* Card Actions */}
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                          <Link 
+                            href={`/read/${story.slug}`}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" /> Continue Reading
+                          </Link>
 
-                        <button
-                          onClick={() => removeFromLibrary(story.id)}
-                          className="p-2 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                          title="Remove from Library"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          <button 
+                            onClick={() => removeFromLibrary(story.id)}
+                            className="p-2 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                            title="Remove from Library"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {/* Library Pagination */}
+                <Pagination
+                  currentPage={libraryPage}
+                  totalPages={totalLibraryPages}
+                  onPageChange={setLibraryPage}
+                  totalItems={libraryStories.length}
+                  itemsPerPage={libraryPageSize}
+                  onItemsPerPageChange={setLibraryPageSize}
+                  pageSizeOptions={[6, 9, 12]}
+                />
               </div>
             )}
           </div>
@@ -220,11 +246,11 @@ export default function LibraryPage() {
         {activeTab === 'lists' && (
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
-              {readingLists.map((list) => {
+              {paginatedLists.map((list) => {
                 const listStories = stories.filter(s => list.storyIds.includes(s.id));
                 return (
                   <div 
-                    key={list.id}
+                    key={list.id} 
                     className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
                   >
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -259,6 +285,17 @@ export default function LibraryPage() {
                 );
               })}
             </div>
+
+            {/* Reading Lists Pagination */}
+            <Pagination
+              currentPage={listPage}
+              totalPages={totalListPages}
+              onPageChange={setListPage}
+              totalItems={readingLists.length}
+              itemsPerPage={listPageSize}
+              onItemsPerPageChange={setListPageSize}
+              pageSizeOptions={[4, 8, 12]}
+            />
           </div>
         )}
 

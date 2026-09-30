@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { Trophy, Calendar, Award, CheckCircle, Clock, ArrowRight, Sparkles, Star } from 'lucide-react';
 
@@ -11,6 +12,12 @@ export default function ContestsPage() {
   const [selectedContest, setSelectedContest] = useState(contests[0]);
   const [submissionStoryId, setSubmissionStoryId] = useState(stories[0]?.id || '');
   const [submitted, setSubmitted] = useState(false);
+
+  // Pagination states
+  const [contestPage, setContestPage] = useState(1);
+  const [contestPageSize, setContestPageSize] = useState(2);
+  const [winnerPage, setWinnerPage] = useState(1);
+  const [winnerPageSize, setWinnerPageSize] = useState(2);
 
   const handleSubmitEntry = (e) => {
     e.preventDefault();
@@ -68,7 +75,7 @@ export default function ContestsPage() {
             <div className="lg:col-span-8 space-y-6">
               <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Open & Active Competitions</h3>
               
-              {contests.map((c) => (
+              {contests.slice((contestPage - 1) * contestPageSize, contestPage * contestPageSize).map((c) => (
                 <div 
                   key={c.id} 
                   className={`bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border transition-all ${
@@ -120,6 +127,18 @@ export default function ContestsPage() {
                   </div>
                 </div>
               ))}
+
+              <Pagination
+                currentPage={contestPage}
+                totalItems={contests.length}
+                pageSize={contestPageSize}
+                onPageChange={setContestPage}
+                onPageSizeChange={(newSize) => {
+                  setContestPageSize(newSize);
+                  setContestPage(1);
+                }}
+                pageSizeOptions={[2, 4, 8]}
+              />
             </div>
 
             {/* Submission Form Sidebar */}
@@ -183,7 +202,9 @@ export default function ContestsPage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {contests.filter(c => c.winners && c.winners.length > 0).map(c => (
+              {contests.filter(c => c.winners && c.winners.length > 0)
+                .slice((winnerPage - 1) * winnerPageSize, winnerPage * winnerPageSize)
+                .map(c => (
                 <div key={c.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                     <h3 className="font-black text-base">{c.title}</h3>
@@ -207,6 +228,18 @@ export default function ContestsPage() {
                 </div>
               ))}
             </div>
+
+            <Pagination
+              currentPage={winnerPage}
+              totalItems={contests.filter(c => c.winners && c.winners.length > 0).length}
+              pageSize={winnerPageSize}
+              onPageChange={setWinnerPage}
+              onPageSizeChange={(newSize) => {
+                setWinnerPageSize(newSize);
+                setWinnerPage(1);
+              }}
+              pageSizeOptions={[2, 4, 8]}
+            />
           </div>
         )}
 

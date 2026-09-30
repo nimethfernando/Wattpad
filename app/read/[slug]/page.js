@@ -45,6 +45,8 @@ export default function ReaderPage() {
     removeFromLibrary,
     isInLibrary,
     openAuthModal,
+    openPaymentModal,
+    featureFlags,
     t 
   } = useApp();
 
@@ -350,19 +352,42 @@ export default function ReaderPage() {
           </div>
         </div>
 
-        {/* CHAPTER VOTE & PROGRESS FOOTER */}
+        {/* CHAPTER VOTE & TIP AUTHOR FOOTER */}
         <div className="mt-6 flex flex-col items-center gap-6">
-          <button 
-            onClick={handleVote}
-            className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-xl ${
-              hasVoted 
-                ? 'bg-rose-500 text-white shadow-rose-500/30' 
-                : 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/30 hover:scale-[1.02]'
-            }`}
-          >
-            <Heart className={`w-5 h-5 ${hasVoted ? 'fill-white' : ''}`} />
-            <span>{hasVoted ? t.voted : t.vote} ({chapter.votes + (hasVoted ? 1 : 0)})</span>
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button 
+              onClick={handleVote}
+              className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-xl ${
+                hasVoted 
+                  ? 'bg-rose-500 text-white shadow-rose-500/30' 
+                  : 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/30 hover:scale-[1.02]'
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${hasVoted ? 'fill-white' : ''}`} />
+              <span>{hasVoted ? t.voted : t.vote} ({chapter.votes + (hasVoted ? 1 : 0)})</span>
+            </button>
+
+            {featureFlags?.enablePaidFeatures && (
+              <button 
+                onClick={() => {
+                  if (!user) {
+                    openAuthModal('login', `Sign in to tip ${story.author} and support their serialized story!`);
+                    return;
+                  }
+                  openPaymentModal({
+                    type: 'tip',
+                    authorName: story.author,
+                    storyTitle: story.title
+                  });
+                }}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
+                title="Send a tip to the author"
+              >
+                <Sparkles className="w-4 h-4 text-amber-200" />
+                <span>Tip {story.author}</span>
+              </button>
+            )}
+          </div>
 
           {/* Chapter Next / Previous Navigation */}
           <div className="flex items-center justify-between w-full pt-4">

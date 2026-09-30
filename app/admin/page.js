@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { 
   ShieldCheck, 
@@ -22,12 +23,61 @@ import {
   History,
   Mail,
   UserX,
-  UserCheck
+  UserCheck,
+  CreditCard,
+  RefreshCw,
+  DollarSign,
+  Search,
+  Sparkles
 } from 'lucide-react';
 
 export default function AdminPanel() {
-  const { stories, setStories, genres, setGenres, reports, setReports, auditLogs, addAuditLog, user, t } = useApp();
-  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'moderation' | 'genres' | 'authors' | 'audit' | 'settings'
+  const { 
+    stories, 
+    setStories, 
+    genres, 
+    setGenres, 
+    reports, 
+    setReports, 
+    auditLogs, 
+    addAuditLog, 
+    registeredUsers, 
+    updateUserRole, 
+    toggleUserStatus, 
+    deleteUser, 
+    addUser, 
+    transactions, 
+    refundTransaction, 
+    featureFlags, 
+    togglePaidFeatures, 
+    updateFeatureFlags,
+    user, 
+    t 
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings'
+
+  // Pagination States
+  const [storyPage, setStoryPage] = useState(1);
+  const [storyPageSize, setStoryPageSize] = useState(6);
+  const [storySearch, setStorySearch] = useState('');
+
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(5);
+  const [userSearch, setUserSearch] = useState('');
+
+  const [reportPage, setReportPage] = useState(1);
+  const [reportPageSize, setReportPageSize] = useState(5);
+
+  const [txPage, setTxPage] = useState(1);
+  const [txPageSize, setTxPageSize] = useState(5);
+  const [txSearch, setTxSearch] = useState('');
+
+  const [genrePage, setGenrePage] = useState(1);
+  const [genrePageSize, setGenrePageSize] = useState(8);
+
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(6);
 
   // Settings State
   const [authorSelfPublishing, setAuthorSelfPublishing] = useState(true);
@@ -39,16 +89,22 @@ export default function AdminPanel() {
   const [newGenreName, setNewGenreName] = useState('');
   const [newGenreSlug, setNewGenreSlug] = useState('');
 
-  // Author Profile Creator (without login)
+  // Author Profile Creator (editorial persona)
   const [fakeAuthorName, setFakeAuthorName] = useState('');
   const [fakeAuthorBio, setFakeAuthorBio] = useState('');
   const [authorCreatedNotice, setAuthorCreatedNotice] = useState(false);
+
+  // New User Creation Modal
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState('reader');
 
   // Reassign story modal / state
   const [selectedStoryToReassign, setSelectedStoryToReassign] = useState(null);
   const [newAuthorName, setNewAuthorName] = useState('');
 
-  // Actions
+  // Story Actions
   const toggleFeatureStory = (storyId) => {
     setStories(prev => prev.map(s => {
       if (s.id === storyId) {
@@ -121,13 +177,54 @@ export default function AdminPanel() {
     }, 2500);
   };
 
+  const handleCreateUser = (e) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim()) return;
+    addUser({
+      name: newUserName.trim(),
+      email: newUserEmail.trim(),
+      role: newUserRole
+    });
+    setNewUserName('');
+    setNewUserEmail('');
+    setShowAddUserModal(false);
+  };
+
+  // Filtered & Paginated Lists
+  const filteredStories = stories.filter(s => 
+    s.title.toLowerCase().includes(storySearch.toLowerCase()) || 
+    s.author.toLowerCase().includes(storySearch.toLowerCase()) ||
+    s.genre.toLowerCase().includes(storySearch.toLowerCase())
+  );
+  const paginatedStories = filteredStories.slice((storyPage - 1) * storyPageSize, storyPage * storyPageSize);
+
+  const filteredUsers = (registeredUsers || []).filter(u => 
+    u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.username?.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.role?.toLowerCase().includes(userSearch.toLowerCase())
+  );
+  const paginatedUsers = filteredUsers.slice((userPage - 1) * userPageSize, userPage * userPageSize);
+
+  const filteredTransactions = (transactions || []).filter(t =>
+    t.description?.toLowerCase().includes(txSearch.toLowerCase()) ||
+    t.author?.toLowerCase().includes(txSearch.toLowerCase()) ||
+    t.cardBrand?.toLowerCase().includes(txSearch.toLowerCase()) ||
+    t.type?.toLowerCase().includes(txSearch.toLowerCase())
+  );
+  const paginatedTransactions = filteredTransactions.slice((txPage - 1) * txPageSize, txPage * txPageSize);
+
+  const paginatedReports = reports.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize);
+  const paginatedGenres = genres.slice((genrePage - 1) * genrePageSize, genrePage * genrePageSize);
+  const paginatedAuditLogs = auditLogs.slice((auditPage - 1) * auditPageSize, auditPage * auditPageSize);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Admin Header */}
+        {/* Admin Header Banner */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-lg shadow-purple-500/25">
@@ -135,12 +232,22 @@ export default function AdminPanel() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Avora Library Admin Console</h1>
-              <p className="text-xs text-slate-400">Content moderation, author masquerading, originals curation, and audit logging</p>
+              <p className="text-xs text-slate-400">Content moderation, financial transactions, user roles, feature flags, and audit ledger</p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${
+              featureFlags?.enablePaidFeatures 
+                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' 
+                : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+            }`}>
+              Soft-Launch: {featureFlags?.enablePaidFeatures ? 'Paid Features Enabled' : '100% Free Mode'}
+            </span>
           </div>
         </div>
 
-        {/* Tab Controls */}
+        {/* Tab Navigation Controls */}
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mt-6 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('stories')}
@@ -148,7 +255,15 @@ export default function AdminPanel() {
               activeTab === 'stories' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Stories & House Originals ({stories.length})
+            Stories & Originals ({stories.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            User Moderation ({registeredUsers?.length || 0})
           </button>
           <button 
             onClick={() => setActiveTab('moderation')}
@@ -156,7 +271,15 @@ export default function AdminPanel() {
               activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Moderation Reports ({reports.length})
+            Reports Queue ({reports.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('payments')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              activeTab === 'payments' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            Payments & VIP Ledger ({transactions?.length || 0})
           </button>
           <button 
             onClick={() => setActiveTab('genres')}
@@ -172,7 +295,7 @@ export default function AdminPanel() {
               activeTab === 'authors' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Author Persona Creator
+            Author Persona
           </button>
           <button 
             onClick={() => setActiveTab('audit')}
@@ -180,7 +303,7 @@ export default function AdminPanel() {
               activeTab === 'audit' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Admin Audit Log ({auditLogs.length})
+            Audit Log ({auditLogs.length})
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
@@ -188,16 +311,28 @@ export default function AdminPanel() {
               activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Platform Settings & Email Alerts
+            Platform Settings & Feature Flags
           </button>
         </div>
 
         {/* TAB 1: STORIES & ORIGINALS MANAGEMENT */}
         {activeTab === 'stories' && (
           <div className="mt-8 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base">Published Serial Novels</h3>
-              <Link href="/write" className="px-4 py-2 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search by title, author, genre..." 
+                  value={storySearch} 
+                  onChange={(e) => {
+                    setStorySearch(e.target.value);
+                    setStoryPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold outline-none"
+                />
+              </div>
+              <Link href="/write" className="px-4 py-2 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 transition-colors">
                 + Write Editorial Story
               </Link>
             </div>
@@ -215,59 +350,63 @@ export default function AdminPanel() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {stories.map(story => (
+                    {paginatedStories.map(story => (
                       <tr key={story.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <img src={story.cover} alt={story.title} className="w-8 h-11 object-cover rounded-lg" />
+                            <img src={story.cover} alt={story.title} className="w-10 h-14 object-cover rounded-lg shadow-sm" />
                             <div>
-                              <p className="font-bold text-slate-900 dark:text-white">{story.title}</p>
-                              <p className="text-[11px] text-slate-400">By {story.author}</p>
+                              <Link href={`/story/${story.slug}`} className="font-bold text-slate-900 dark:text-white hover:text-brand-500 line-clamp-1">
+                                {story.title}
+                              </Link>
+                              <span className="text-[11px] text-slate-400 block">By {story.author}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 font-semibold">{story.genre}</td>
-                        <td className="p-4">
-                          <p>{story.reads.toLocaleString()} reads</p>
-                          <p className="text-[11px] text-slate-400">{story.votes.toLocaleString()} votes</p>
+                        <td className="p-4 font-semibold text-slate-600 dark:text-slate-300">
+                          {story.genre}
+                        </td>
+                        <td className="p-4 text-slate-500">
+                          <div>{(story.reads || 0).toLocaleString()} reads</div>
+                          <div className="text-[10px] text-slate-400">{(story.votes || 0).toLocaleString()} votes</div>
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="flex flex-wrap gap-1.5">
                             {story.isOriginal && (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-100 text-purple-600">
-                                House Original
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                Original
                               </span>
                             )}
                             {story.isEditorsPick && (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-100 text-amber-600">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                                 Editor's Pick
                               </span>
                             )}
                           </div>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             <button 
                               onClick={() => setSelectedStoryToReassign(story)}
-                              className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                             >
                               Move Author
                             </button>
                             <button 
                               onClick={() => toggleHouseOriginal(story.id)}
-                              className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                             >
-                              {story.isOriginal ? 'Remove Original' : 'Make Original'}
+                              {story.isOriginal ? 'Revoke Original' : 'Make Original'}
                             </button>
                             <button 
                               onClick={() => toggleFeatureStory(story.id)}
-                              className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                             >
                               {story.isEditorsPick ? 'Unfeature' : 'Feature'}
                             </button>
                             <button 
                               onClick={() => removeStory(story.id)}
-                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                               title="Delete Story"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -279,11 +418,147 @@ export default function AdminPanel() {
                   </tbody>
                 </table>
               </div>
+
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <Pagination
+                  currentPage={storyPage}
+                  totalItems={filteredStories.length}
+                  pageSize={storyPageSize}
+                  onPageChange={setStoryPage}
+                  onPageSizeChange={(newSize) => {
+                    setStoryPageSize(newSize);
+                    setStoryPage(1);
+                  }}
+                  pageSizeOptions={[6, 12, 24]}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: MODERATION REPORTS */}
+        {/* TAB 2: USER & AUTHOR MODERATION */}
+        {activeTab === 'users' && (
+          <div className="mt-8 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search users by name, username, email..." 
+                  value={userSearch} 
+                  onChange={(e) => {
+                    setUserSearch(e.target.value);
+                    setUserPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold outline-none"
+                />
+              </div>
+              <button 
+                onClick={() => setShowAddUserModal(true)}
+                className="px-4 py-2 rounded-full bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                + Register New User
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Stories</th>
+                      <th className="p-4">Joined</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {paginatedUsers.map(u => (
+                      <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-4">
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">{u.name}</span>
+                            <span className="text-[11px] text-slate-400 block">@{u.username} • {u.email}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <select 
+                            value={u.role}
+                            onChange={(e) => updateUserRole(u.id, e.target.value)}
+                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs outline-none cursor-pointer"
+                          >
+                            <option value="reader">Reader</option>
+                            <option value="author">Author</option>
+                            <option value="moderator">Moderator</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td className="p-4">
+                          <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                            u.status === 'active' 
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' 
+                              : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400'
+                          }`}>
+                            {u.status}
+                          </span>
+                        </td>
+                        <td className="p-4 font-semibold text-slate-600 dark:text-slate-300">
+                          {u.storiesCount || 0}
+                        </td>
+                        <td className="p-4 text-slate-400 text-[11px]">
+                          {u.joinedDate || 'Recently'}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button 
+                              onClick={() => toggleUserStatus(u.id)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                                u.status === 'active' 
+                                  ? 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40' 
+                                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                              }`}
+                            >
+                              {u.status === 'active' ? 'Suspend' : 'Reactivate'}
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to permanently delete user ${u.name}?`)) {
+                                  deleteUser(u.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <Pagination
+                  currentPage={userPage}
+                  totalItems={filteredUsers.length}
+                  pageSize={userPageSize}
+                  onPageChange={setUserPage}
+                  onPageSizeChange={(newSize) => {
+                    setUserPageSize(newSize);
+                    setUserPage(1);
+                  }}
+                  pageSizeOptions={[5, 10, 20]}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: MODERATION REPORTS */}
         {activeTab === 'moderation' && (
           <div className="mt-8 space-y-4">
             <h3 className="font-bold text-base">Flagged Content & User Reports Queue</h3>
@@ -295,7 +570,7 @@ export default function AdminPanel() {
               </div>
             ) : (
               <div className="space-y-4">
-                {reports.map(report => (
+                {paginatedReports.map(report => (
                   <div key={report.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -311,31 +586,153 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
                       <button 
                         onClick={() => handleResolveReport(report.id, "Dismissed")}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200"
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200 cursor-pointer"
                       >
                         Dismiss
                       </button>
                       <button 
                         onClick={() => handleResolveReport(report.id, "Warned User")}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600"
+                        className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 cursor-pointer"
                       >
                         Warn User
                       </button>
                       <button 
                         onClick={() => handleResolveReport(report.id, "Banned User & Removed Content")}
-                        className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold"
+                        className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold cursor-pointer"
                       >
                         Ban User & Take Down
                       </button>
                     </div>
                   </div>
                 ))}
+
+                <Pagination
+                  currentPage={reportPage}
+                  totalItems={reports.length}
+                  pageSize={reportPageSize}
+                  onPageChange={setReportPage}
+                  onPageSizeChange={(newSize) => {
+                    setReportPageSize(newSize);
+                    setReportPage(1);
+                  }}
+                  pageSizeOptions={[5, 10, 20]}
+                />
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 3: GENRE MANAGEMENT */}
+        {/* TAB 4: PAYMENTS & VIP LEDGER */}
+        {activeTab === 'payments' && (
+          <div className="mt-8 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search transactions by author, card, type..." 
+                  value={txSearch} 
+                  onChange={(e) => {
+                    setTxSearch(e.target.value);
+                    setTxPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Total Processed:</span>
+                <span className="text-xs font-extrabold text-emerald-500">
+                  ${(transactions || []).filter(t => t.status === 'succeeded').reduce((sum, t) => sum + (t.amount || 0), 0).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                      <th className="p-4">Transaction ID</th>
+                      <th className="p-4">Description</th>
+                      <th className="p-4">Payment Method</th>
+                      <th className="p-4">Amount</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Date</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {paginatedTransactions.map(tx => (
+                      <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-4 font-mono text-[11px] text-slate-500">
+                          {tx.id}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-slate-900 dark:text-white block">{tx.description}</span>
+                          {tx.author && <span className="text-[11px] text-slate-400">Recipient: {tx.author}</span>}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-1.5 font-mono text-xs capitalize">
+                            <CreditCard className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{tx.cardBrand || 'Card'} •••• {tx.cardLast4 || '4242'}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-extrabold text-slate-900 dark:text-white">
+                          ${tx.amount?.toFixed(2)}
+                        </td>
+                        <td className="p-4">
+                          <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                            tx.status === 'succeeded' 
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' 
+                              : tx.status === 'refunded'
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-slate-400 text-[11px]">
+                          {tx.date}
+                        </td>
+                        <td className="p-4 text-right">
+                          {tx.status === 'succeeded' && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Issue full refund of $${tx.amount.toFixed(2)} for ${tx.id}?`)) {
+                                  refundTransaction(tx.id);
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-[10px] font-bold cursor-pointer"
+                            >
+                              Refund
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <Pagination
+                  currentPage={txPage}
+                  totalItems={filteredTransactions.length}
+                  pageSize={txPageSize}
+                  onPageChange={setTxPage}
+                  onPageSizeChange={(newSize) => {
+                    setTxPageSize(newSize);
+                    setTxPage(1);
+                  }}
+                  pageSizeOptions={[5, 10, 20]}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: GENRE MANAGEMENT */}
         {activeTab === 'genres' && (
           <div className="mt-8 space-y-6">
             <form onSubmit={handleAddGenre} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-end gap-4">
@@ -350,7 +747,7 @@ export default function AdminPanel() {
                 />
               </div>
               <div className="flex-1 w-full">
-                <label className="block text-xs font-bold text-slate-400 mb-1">Slug URL</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Slug (URL Path)</label>
                 <input 
                   type="text" 
                   placeholder="e.g. cyberpunk"
@@ -361,24 +758,53 @@ export default function AdminPanel() {
               </div>
               <button 
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shrink-0"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shrink-0 cursor-pointer"
               >
                 + Add Genre
               </button>
             </form>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {genres.map(g => (
-                <div key={g.id} className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                  <span className="font-bold">{g.name}</span>
-                  <span className="text-[10px] text-slate-400">{g.count} titles</span>
-                </div>
-              ))}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6">
+              <h3 className="font-bold text-sm mb-4">Current Genre Catalog ({genres.length})</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {paginatedGenres.map(g => (
+                  <div key={g.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 block">{g.name}</span>
+                      <span className="text-[10px] text-slate-400">/{g.slug}</span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setGenres(prev => prev.filter(item => item.id !== g.id));
+                        addAuditLog("Genre Deleted", g.name);
+                      }}
+                      className="text-slate-400 hover:text-rose-500 cursor-pointer"
+                      title="Delete Genre"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-6">
+                <Pagination
+                  currentPage={genrePage}
+                  totalItems={genres.length}
+                  pageSize={genrePageSize}
+                  onPageChange={setGenrePage}
+                  onPageSizeChange={(newSize) => {
+                    setGenrePageSize(newSize);
+                    setGenrePage(1);
+                  }}
+                  pageSizeOptions={[8, 16, 24]}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 4: AUTHOR PERSONA CREATOR */}
+        {/* TAB 6: AUTHOR PERSONA CREATOR */}
         {activeTab === 'authors' && (
           <div className="mt-8 max-w-2xl bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
             <h3 className="font-black text-lg">Create Author Profile (Editorial Persona)</h3>
@@ -418,7 +844,7 @@ export default function AdminPanel() {
 
               <button 
                 type="submit"
-                className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
               >
                 Create Author Persona
               </button>
@@ -426,7 +852,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 5: ADMIN AUDIT LOG (Scope 7) */}
+        {/* TAB 7: ADMIN AUDIT LOG */}
         {activeTab === 'audit' && (
           <div className="mt-8 space-y-4">
             <div className="flex items-center gap-2">
@@ -434,7 +860,7 @@ export default function AdminPanel() {
               <h3 className="font-bold text-base">Security & Admin Audit Trail</h3>
             </div>
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-              {auditLogs.map(log => (
+              {paginatedAuditLogs.map(log => (
                 <div key={log.id} className="p-4 flex items-center justify-between">
                   <div>
                     <span className="font-bold text-purple-600 block">{log.action}</span>
@@ -447,15 +873,46 @@ export default function AdminPanel() {
                 </div>
               ))}
             </div>
+
+            <Pagination
+              currentPage={auditPage}
+              totalItems={auditLogs.length}
+              pageSize={auditPageSize}
+              onPageChange={setAuditPage}
+              onPageSizeChange={(newSize) => {
+                setAuditPageSize(newSize);
+                setAuditPage(1);
+              }}
+              pageSizeOptions={[6, 12, 24]}
+            />
           </div>
         )}
 
-        {/* TAB 6: SITE SETTINGS */}
+        {/* TAB 8: SITE SETTINGS & FEATURE FLAGS */}
         {activeTab === 'settings' && (
           <div className="mt-8 max-w-2xl bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs">
-            <h3 className="font-black text-lg">Site Settings & Policies</h3>
+            <h3 className="font-black text-lg">Site Settings & Soft-Launch Feature Flags</h3>
 
             <div className="space-y-4">
+              {/* Soft Launch Paid Features Toggle */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-amber-500/20">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <h4 className="font-bold text-sm">Enable Paid Features & VIP Passes</h4>
+                  </div>
+                  <p className="text-slate-400 text-[11px] mt-0.5">
+                    When off, the platform is 100% free with no paywalls or donation gates. When enabled, tipping and VIP subscription passes become accessible.
+                  </p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={featureFlags?.enablePaidFeatures || false}
+                  onChange={togglePaidFeatures}
+                  className="w-5 h-5 accent-amber-500 cursor-pointer"
+                />
+              </div>
+
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                 <div>
                   <h4 className="font-bold text-sm">Author Self-Publishing</h4>
@@ -490,7 +947,7 @@ export default function AdminPanel() {
                 <select 
                   value={defaultItemsPerPage}
                   onChange={(e) => setDefaultItemsPerPage(Number(e.target.value))}
-                  className="p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none"
+                  className="p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none cursor-pointer"
                 >
                   <option value={9}>9 cards</option>
                   <option value={12}>12 cards</option>
@@ -505,7 +962,7 @@ export default function AdminPanel() {
                   addAuditLog("Site Settings Updated", "Author Approval & Items Per Page");
                   alert('Settings updated successfully!');
                 }}
-                className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
               >
                 Save Platform Settings
               </button>
@@ -537,15 +994,76 @@ export default function AdminPanel() {
                 <button 
                   type="button" 
                   onClick={() => setSelectedStoryToReassign(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700"
+                  className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 cursor-pointer"
                 >
                   Confirm Reassignment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 className="font-black text-lg">Register New Platform User</h3>
+            <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-400 mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Rachel Adams"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  required
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-400 mb-1">Email Address</label>
+                <input 
+                  type="email" 
+                  placeholder="e.g. rachel@example.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  required
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-400 mb-1">Platform Role</label>
+                <select 
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none cursor-pointer"
+                >
+                  <option value="reader">Reader</option>
+                  <option value="author">Author</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddUserModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 cursor-pointer"
+                >
+                  Register User
                 </button>
               </div>
             </form>

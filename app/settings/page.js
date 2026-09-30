@@ -3,10 +3,10 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { Settings, ShieldCheck, KeyRound, Bell, CheckCircle } from 'lucide-react';
+import { Settings, ShieldCheck, KeyRound, Bell, CheckCircle, Sparkles, CreditCard, AlertCircle } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, setUser, t } = useApp();
+  const { user, setUser, subscription, cancelSubscription, openPaymentModal, featureFlags, t } = useApp();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -98,6 +98,84 @@ export default function SettingsPage() {
               Save Preferences
             </button>
           </div>
+        </div>
+
+        {/* VIP Membership & Billing Management Card */}
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <h3 className="font-bold text-base">VIP Membership & Billing</h3>
+            </div>
+            {subscription?.active ? (
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 border border-emerald-500/20">
+                Active VIP Pass
+              </span>
+            ) : (
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                Standard Free Tier
+              </span>
+            )}
+          </div>
+
+          {subscription?.active ? (
+            <div className="space-y-4 text-xs">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm text-amber-600 dark:text-amber-400 capitalize">
+                    {subscription.plan} VIP Member
+                  </span>
+                  <span className="text-[11px] text-slate-500">Renews: {subscription.renewDate || 'Next month'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <CreditCard className="w-4 h-4 text-amber-500" />
+                  <span className="font-mono capitalize font-bold">{subscription.cardBrand || 'Card'} ending in •••• {subscription.cardLast4 || '4242'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 text-slate-500 text-[11px]">
+                <p className="font-bold text-slate-700 dark:text-slate-300 text-xs">Active Benefits:</p>
+                <p>✓ Unlimited serialized novels reading with zero ad interruptions</p>
+                <p>✓ Exclusive Gold Patron badge displayed on your profile and comments</p>
+                <p>✓ Early access to newly published serialized chapters</p>
+                <p>✓ Direct contribution to serialized authors and platform servers</p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel your VIP subscription? You will continue with free access.')) {
+                      cancelSubscription();
+                    }
+                  }}
+                  className="px-5 py-2.5 rounded-full border border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel VIP Membership
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 text-xs">
+              <p className="text-slate-500 leading-relaxed">
+                Enjoy an enhanced storytelling experience with Avora Library VIP. Read with zero interruptions, get exclusive profile badges, and directly support independent authors.
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  onClick={() => openPaymentModal({ type: 'subscribe', plan: 'monthly' })}
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+                >
+                  Upgrade to Monthly VIP ($5.99/mo)
+                </button>
+                <button
+                  onClick={() => openPaymentModal({ type: 'subscribe', plan: 'annual' })}
+                  className="px-6 py-2.5 rounded-full border border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-bold text-xs transition-all cursor-pointer"
+                >
+                  Annual Pass ($49.99/yr • Save 30%)
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Change Password Card */}

@@ -1,12 +1,19 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { BookOpen, Calendar, Clock, ArrowRight } from 'lucide-react';
 
 export default function BlogPage() {
   const { blogPosts, t } = useApp();
+  const [blogPage, setBlogPage] = useState(1);
+  const [blogPageSize, setBlogPageSize] = useState(4);
+
+  const totalPages = Math.ceil(blogPosts.length / blogPageSize) || 1;
+  const paginatedBlogPosts = blogPosts.slice((blogPage - 1) * blogPageSize, blogPage * blogPageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -25,7 +32,7 @@ export default function BlogPage() {
 
         {/* Blog Articles Grid */}
         <div className="grid md:grid-cols-2 gap-8">
-          {blogPosts.map((post) => (
+          {paginatedBlogPosts.map((post) => (
             <article 
               key={post.id}
               className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between"
@@ -67,6 +74,19 @@ export default function BlogPage() {
               </div>
             </article>
           ))}
+        </div>
+
+        {/* Blog Pagination */}
+        <div className="pt-8">
+          <Pagination
+            currentPage={blogPage}
+            totalPages={totalPages}
+            onPageChange={setBlogPage}
+            totalItems={blogPosts.length}
+            itemsPerPage={blogPageSize}
+            onItemsPerPageChange={setBlogPageSize}
+            pageSizeOptions={[2, 4, 8]}
+          />
         </div>
 
       </main>

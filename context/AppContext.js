@@ -7,7 +7,12 @@ import {
   initialContests, 
   initialBlogPosts, 
   initialCommunitySpaces,
-  initialReaderReactions
+  initialReaderReactions,
+  initialRegisteredUsers,
+  initialTransactions,
+  initialReadingStreak,
+  initialReadingProgress,
+  initialFeatureFlags
 } from '@/lib/data';
 import { translations } from '@/lib/translations';
 
@@ -43,12 +48,51 @@ export function AppProvider({ children }) {
   // Social & Community State
   const [followingAuthors, setFollowingAuthors] = useState(['elenavance', 'astraquill']);
   const [blockedUsers, setBlockedUsers] = useState([]);
-  const [library, setLibrary] = useState([1, 2]); // Wattpad Personal Library (Scope 2 & 5)
+  const [library, setLibrary] = useState([1, 2]); // Wattpad Personal Library
   const [readingLists, setReadingLists] = useState([
     { id: 1, title: "Favorites of 2026", description: "Must-read serialized masterworks", storyIds: [1, 2], isPublic: true },
     { id: 2, title: "Late Night Atmosphere", description: "Mysterious and supernatural tales", storyIds: [3], isPublic: true }
   ]);
-  const [readingProgress, setReadingProgress] = useState({ 1: { chapterId: 101, paragraphIndex: 3 } });
+
+  // Reading Progress & Streaks
+  const [readingProgress, setReadingProgress] = useState(initialReadingProgress || {});
+  const [readingStreak, setReadingStreak] = useState(initialReadingStreak || {
+    currentStreak: 5,
+    chaptersReadThisWeek: 14,
+    dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    daysActive: [true, true, true, true, true, false, false]
+  });
+
+  // Dual-State Home Feed View Mode: 'feed' or 'landing'
+  const [homeFeedViewMode, setHomeFeedViewMode] = useState('feed');
+
+  // Soft Launch Feature Flags
+  const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags || {
+    enablePaidFeatures: false,
+    authorSelfPublishing: true,
+    requireStoryApproval: false,
+    ageGateEnforced: true,
+    defaultItemsPerPage: 9
+  });
+
+  // VIP Subscription & Billing
+  const [subscription, setSubscription] = useState({
+    active: false,
+    plan: null,
+    renewDate: null,
+    cardBrand: null,
+    cardLast4: null
+  });
+
+  // Financial Ledger Transactions
+  const [transactions, setTransactions] = useState(initialTransactions || []);
+
+  // Registered Users (Moderation & Roles)
+  const [registeredUsers, setRegisteredUsers] = useState(initialRegisteredUsers || []);
+
+  // Payment Modal State
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState({ mode: 'donate', story: null, author: null, plan: null });
 
   // Wattpad-style Public Conversations Wall per author profile
   const [userConversations, setUserConversations] = useState({
@@ -112,6 +156,21 @@ export function AppProvider({ children }) {
       }
     }
   }, [theme]);
+
+  // Sync Reading Progress from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_reading_progress');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setReadingProgress(prev => ({ ...prev, ...parsed }));
+        }
+      } catch (e) {
+        console.error("Could not load reading progress from localStorage", e);
+      }
+    }
+  }, []);
 
   // Translation Dictionary
   const t = translations[lang] || translations.en;
@@ -250,10 +309,50 @@ export function AppProvider({ children }) {
     if (target) addAuditLog("Story Deleted", target.title);
   };
 
-  const saveReadingProgress = (storyId, chapterId, paragraphIndex) => {
-    setReadingProgress(prev => ({
+  const saveReadingProgress = (storyId, chapterId, paragraphIndex = 0, scrollOffset = 0) => {
+    const targetStory = stories.find(s => s.id === storyId);
+    const targetChapter = targetStory?.chapters?.find(c => c.id === chapterId) || targetStory?.chapters?.[0];
+    const totalChapters = targetStory?.chapters?.length || 1;
+    const chapterNum = targetChapter?.number || 1;
+    const progressPercent = Math.min(100, Math.max(10, Math.round((chapterNum / totalChapters) * 100)));
+
+    const newProgress = {
+      storyId,
+      chapterId,
+      chapterNumber: chapterNum,
+      chapterTitle: targetChapter?.title || `Chapter ${chapterNum}`,
+      paragraphIndex,
+      scrollOffset,
+      progressPercent,
+      lastReadAt: "Just now"
+    };
+
+    setReadingProgress(prev => {
+      const updated = { ...prev, [storyId]: newProgress };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_reading_progress', JSON.stringify(updated));
+        } catch (e) {
+          console.error("Could not save reading progress", e);
+        }
+      }
+      return updated;
+    });
+
+    if (user && !library.includes(storyId)) {
+      setLibrary(prev => [...prev, storyId]);
+    }
+  };
+
+  const getProgress = (storyId) => {
+    return readingProgress[storyId] || null;
+  };
+
+  const recordChapterRead = (storyId, chapterId) => {
+    saveReadingProgress(storyId, chapterId);
+    setReadingStreak(prev => ({
       ...prev,
-      [storyId]: { chapterId, paragraphIndex }
+      chaptersReadThisWeek: (prev?.chaptersReadThisWeek || 0) + 1
     }));
   };
 
@@ -298,6 +397,132 @@ export function AppProvider({ children }) {
     return library.includes(storyId);
   };
 
+  // Financial & Payment Operations
+  const openPaymentModal = ({ mode = 'donate', story = null, author = null, plan = null }) => {
+    setPaymentModalData({ mode, story, author, plan });
+    setPaymentModalOpen(true);
+  };
+
+  const addTransaction = ({ type, amount, plan = null, cardBrand = 'visa', cardLast4 = '4242', author, authorUsername, storyTitle }) => {
+    const newTx = {
+      id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date().toISOString().split('T')[0],
+      type,
+      plan,
+      amount: Number(amount) || 0,
+      cardBrand,
+      cardLast4,
+      user: user?.name || "Anonymous Reader",
+      author: author || "Platform",
+      authorUsername: authorUsername || "avoralibrary",
+      storyTitle: storyTitle || "Platform VIP",
+      status: "Completed"
+    };
+
+    setTransactions(prev => [newTx, ...prev]);
+    addAuditLog(type === 'subscription' ? 'VIP Pass Subscribed' : 'Author Tip Sent', `$${amount} to ${author || 'Platform'}`);
+    return newTx;
+  };
+
+  const refundTransaction = (txId) => {
+    setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'Refunded' } : tx));
+    addAuditLog('Transaction Refunded', `Transaction ID: ${txId}`);
+  };
+
+  const subscribe = (plan, cardDetails) => {
+    const amount = plan.includes('Annual') ? 49.99 : 5.99;
+    addTransaction({
+      type: 'subscription',
+      amount,
+      plan,
+      cardBrand: cardDetails?.brand || 'visa',
+      cardLast4: cardDetails?.last4 || '4242',
+      author: 'Platform',
+      authorUsername: 'avoralibrary',
+      storyTitle: 'Avora VIP Membership'
+    });
+    setSubscription({
+      active: true,
+      plan,
+      renewDate: 'April 30, 2026',
+      cardBrand: cardDetails?.brand || 'visa',
+      cardLast4: cardDetails?.last4 || '4242'
+    });
+  };
+
+  const cancelSubscription = () => {
+    setSubscription({
+      active: false,
+      plan: null,
+      renewDate: null,
+      cardBrand: null,
+      cardLast4: null
+    });
+    setNotifications(prev => [
+      {
+        id: Date.now(),
+        title: 'Subscription Cancelled',
+        message: 'Your VIP subscription has been cancelled. You will continue to have standard free access.',
+        time: 'Just now',
+        read: false
+      },
+      ...prev
+    ]);
+    addAuditLog('VIP Subscription Cancelled', user?.name || 'Reader');
+  };
+
+  const togglePaidFeatures = () => {
+    setFeatureFlags(prev => {
+      const next = !prev.enablePaidFeatures;
+      addAuditLog('Feature Flag Changed', `enablePaidFeatures: ${next ? 'ENABLED' : 'DISABLED'}`);
+      return { ...prev, enablePaidFeatures: next };
+    });
+  };
+
+  const updateFeatureFlags = (updates) => {
+    setFeatureFlags(prev => ({ ...prev, ...updates }));
+    addAuditLog('Platform Settings Updated', 'Feature flags modified');
+  };
+
+  // User Management
+  const updateUserRole = (userId, newRole) => {
+    setRegisteredUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    addAuditLog('User Role Updated', `User ID ${userId} assigned role: ${newRole}`);
+  };
+
+  const toggleUserStatus = (userId) => {
+    setRegisteredUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const nextStatus = u.status === 'active' ? 'suspended' : 'active';
+        addAuditLog('User Status Changed', `${u.name} status: ${nextStatus}`);
+        return { ...u, status: nextStatus };
+      }
+      return u;
+    }));
+  };
+
+  const deleteUser = (userId) => {
+    const target = registeredUsers.find(u => u.id === userId);
+    setRegisteredUsers(prev => prev.filter(u => u.id !== userId));
+    if (target) addAuditLog('User Deleted', target.name);
+  };
+
+  const addUser = ({ name, username, email, role = 'reader' }) => {
+    const newUser = {
+      id: Date.now(),
+      name,
+      username: username || name.toLowerCase().replace(/\s+/g, ''),
+      email,
+      role,
+      status: 'active',
+      joinedDate: new Date().toISOString().split('T')[0],
+      storiesCount: 0
+    };
+    setRegisteredUsers(prev => [newUser, ...prev]);
+    addAuditLog('User Registered by Admin', `${name} (@${newUser.username})`);
+    return newUser;
+  };
+
   // Auth Modal & OAuth methods
   const openAuthModal = (mode = 'login', message = '', action = null) => {
     setAuthModalMode(mode);
@@ -319,7 +544,6 @@ export function AppProvider({ children }) {
 
   // 1. Google Authentication
   const loginWithGoogle = async () => {
-    // Simulated Google OAuth Flow with authentic profile
     const googleUser = {
       id: 88,
       username: "jordan_reed",
@@ -343,7 +567,6 @@ export function AppProvider({ children }) {
 
   // 2. Facebook Authentication
   const loginWithFacebook = async () => {
-    // Simulated Facebook OAuth Flow with authentic profile
     const facebookUser = {
       id: 99,
       username: "alex_vance_fb",
@@ -459,6 +682,30 @@ export function AppProvider({ children }) {
       createReadingList,
       readingProgress,
       saveReadingProgress,
+      getProgress,
+      readingStreak,
+      recordChapterRead,
+      homeFeedViewMode,
+      setHomeFeedViewMode,
+      featureFlags,
+      togglePaidFeatures,
+      updateFeatureFlags,
+      subscription,
+      subscribe,
+      cancelSubscription,
+      transactions,
+      addTransaction,
+      refundTransaction,
+      registeredUsers,
+      updateUserRole,
+      toggleUserStatus,
+      deleteUser,
+      addUser,
+      paymentModalOpen,
+      setPaymentModalOpen,
+      paymentModalData,
+      setPaymentModalData,
+      openPaymentModal,
       notifications,
       setNotifications,
       voteChapter,

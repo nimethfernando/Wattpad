@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ReportModal from '@/components/ReportModal';
+import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { 
   Users, 
@@ -25,6 +26,12 @@ import {
 export default function CommunityPage() {
   const { communitySpaces, readingLists, setReadingLists, createReadingList, stories, user, t } = useApp();
   const [activeTab, setActiveTab] = useState('spaces'); // 'spaces' | 'lists' | 'badges'
+
+  // Pagination states
+  const [threadPage, setThreadPage] = useState(1);
+  const [threadPageSize, setThreadPageSize] = useState(4);
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(4);
   
   // Discussion thread creation state
   const [selectedSpace, setSelectedSpace] = useState(communitySpaces[0]);
@@ -213,7 +220,7 @@ export default function CommunityPage() {
               </div>
 
               <div className="space-y-4">
-                {threads.map((thread) => (
+                {threads.slice((threadPage - 1) * threadPageSize, threadPage * threadPageSize).map((thread) => (
                   <div key={thread.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 space-y-3 hover:shadow-md transition-all">
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <span className="font-bold text-slate-700 dark:text-slate-200">@{thread.author}</span>
@@ -241,6 +248,18 @@ export default function CommunityPage() {
                   </div>
                 ))}
               </div>
+
+              <Pagination
+                currentPage={threadPage}
+                totalItems={threads.length}
+                pageSize={threadPageSize}
+                onPageChange={setThreadPage}
+                onPageSizeChange={(newSize) => {
+                  setThreadPageSize(newSize);
+                  setThreadPage(1);
+                }}
+                pageSizeOptions={[2, 4, 8]}
+              />
             </div>
           </div>
         )}
@@ -262,7 +281,7 @@ export default function CommunityPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6">
-              {readingLists.map((list) => (
+              {readingLists.slice((listPage - 1) * listPageSize, listPage * listPageSize).map((list) => (
                 <div key={list.id} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4 hover:shadow-lg transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-100 dark:bg-brand-950 text-brand-600 px-2 py-0.5 rounded-full">
@@ -306,6 +325,18 @@ export default function CommunityPage() {
                 </div>
               ))}
             </div>
+
+            <Pagination
+              currentPage={listPage}
+              totalItems={readingLists.length}
+              pageSize={listPageSize}
+              onPageChange={setListPage}
+              onPageSizeChange={(newSize) => {
+                setListPageSize(newSize);
+                setListPage(1);
+              }}
+              pageSizeOptions={[2, 4, 8]}
+            />
           </div>
         )}
 
