@@ -23,7 +23,7 @@ export function AppProvider({ children }) {
     id: 1,
     username: "Elena_Author",
     name: "Elena Vance",
-    email: "elena@storyvault.com",
+    email: "elena@avoralibrary.com",
     role: "admin", // 'reader' | 'author' | 'admin'
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
     badges: ["Top Author", "Rising Writer", "Editorial Member"],
@@ -91,7 +91,7 @@ export function AppProvider({ children }) {
   ]);
   const [auditLogs, setAuditLogs] = useState([
     { id: 1, action: "House Original Assigned", target: "The Shadow Alchemist", admin: "Elena Vance", time: "1 hour ago" },
-    { id: 2, action: "System Initialized", target: "StoryVault Database", admin: "System", time: "Today" }
+    { id: 2, action: "System Initialized", target: "Avora Library Database", admin: "System", time: "Today" }
   ]);
 
   // Notifications
@@ -147,7 +147,7 @@ export function AppProvider({ children }) {
       reportedUser: reportedUser || "Unknown",
       reason,
       details: details || "",
-      story: storyTitle || "StoryVault General",
+      story: storyTitle || "Avora Library General",
       status: "pending",
       timestamp: "Just now"
     };

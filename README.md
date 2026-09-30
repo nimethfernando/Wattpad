@@ -1,4 +1,4 @@
-# StoryVault — Serialized Storytelling & Community Reading Platform
+# Avora Library — Serialized Storytelling & Community Reading Platform
 
 > A responsive, multilingual web platform and Progressive Web App (PWA) built with **Next.js 14 (App Router)**, **React 18**, and **Tailwind CSS**. Optimized for seamless deployment on **Vercel** with full integration for remote **MariaDB / MySQL** databases.
 
@@ -99,7 +99,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the platform.
 1. **Commit and Push to GitHub**:
    ```bash
    git add .
-   git commit -m "feat: complete StoryVault Next.js platform with all 11 scope areas, PWA, and Vercel setup"
+   git commit -m "feat: complete Avora Library Next.js platform with all 11 scope areas, PWA, and Vercel setup"
    git push origin main
    ```
 2. Go to **[Vercel](https://vercel.com)** and click **Add New > Project**.

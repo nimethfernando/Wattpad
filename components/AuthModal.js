@@ -101,7 +101,7 @@ export default function AuthModal() {
             <BookOpen className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {authModalMode === 'login' ? 'Welcome Back' : 'Join StoryVault'}
+            {authModalMode === 'login' ? 'Welcome Back' : 'Join Avora Library'}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {authModalMessage || (authModalMode === 'login' 
@@ -188,7 +188,7 @@ export default function AuthModal() {
                 type={authModalMode === 'login' ? 'text' : 'email'} 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={authModalMode === 'login' ? 'reader@storyvault.com' : 'you@example.com'}
+                placeholder={authModalMode === 'login' ? 'reader@avoralibrary.com' : 'you@example.com'}
                 required
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
               />
@@ -257,7 +257,7 @@ export default function AuthModal() {
             disabled={loading}
             className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-md shadow-brand-500/25 transition-all cursor-pointer mt-2"
           >
-            {loading ? 'Processing...' : (authModalMode === 'login' ? 'Log In to StoryVault' : 'Create Free Account')}
+            {loading ? 'Processing...' : (authModalMode === 'login' ? 'Log In to Avora Library' : 'Create Free Account')}
           </button>
         </form>
 

@@ -16,8 +16,8 @@ export default function HelpCenterPage() {
       a: "While reading any chapter, hover or tap on any paragraph. You'll see an orange speech bubble indicating the number of reader reactions. Tapping it opens a live sidebar drawer where you can view discussions, reply to other readers, and add your own line-by-line reactions."
     },
     {
-      q: "How do I install StoryVault as a Web App (PWA)?",
-      a: "On your mobile device (iOS Safari or Android Chrome), open StoryVault and tap your browser's Share/Options menu, then select 'Add to Home Screen'. StoryVault will install instantly as a lightweight standalone web application with offline progress caching."
+      q: "How do I install Avora Library as a Web App (PWA)?",
+      a: "On your mobile device (iOS Safari or Android Chrome), open Avora Library and tap your browser's Share/Options menu, then select 'Add to Home Screen'. Avora Library will install instantly as a lightweight standalone web application with offline progress caching."
     },
     {
       q: "Can anyone publish serialized novels?",

@@ -85,10 +85,10 @@ export default function Header() {
             )}
             <div className="flex flex-col">
               <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
-                Story<span className="text-brand-500 dark:text-amber-400">Vault</span>
+                Avora<span className="text-brand-500 dark:text-amber-400">Library</span>
               </span>
               <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5">
-                {theme === 'dark' ? 'Night Reader' : 'Serial Fiction'}
+                {theme === 'dark' ? 'Night Reader' : 'Serialized Fiction'}
               </span>
             </div>
           </Link>

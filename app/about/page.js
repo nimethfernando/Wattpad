@@ -18,7 +18,7 @@ export default function AboutPage() {
           </div>
           <h1 className="text-3xl sm:text-4xl font-black">{t.about}</h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
-            StoryVault is a modern, responsive, and multilingual serialized storytelling platform built for community reading and creator empowerment.
+            Avora Library is a modern, responsive, and multilingual serialized storytelling platform built for community reading and creator empowerment.
           </p>
         </div>
 
@@ -26,14 +26,14 @@ export default function AboutPage() {
           <section className="space-y-2">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Our Mission</h3>
             <p>
-              We believe great storytelling thrives in the open air of community. By enabling line-by-line paragraph reactions, reader badges, and author followings, StoryVault transforms solitary reading into a shared cultural experience.
+              We believe great storytelling thrives in the open air of community. By enabling line-by-line paragraph reactions, reader badges, and author followings, Avora Library transforms solitary reading into a shared cultural experience.
             </p>
           </section>
 
           <section className="space-y-2">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Mobile-First Progressive Web App</h3>
             <p>
-              Rather than locking readers behind hefty app store downloads, StoryVault is built from the ground up as a high-performance Progressive Web App (PWA). Readers in Georgia, India, the United States, and across the globe can install it directly to their phones with one tap and read seamlessly anywhere.
+              Rather than locking readers behind hefty app store downloads, Avora Library is built from the ground up as a high-performance Progressive Web App (PWA). Readers in Georgia, India, the United States, and across the globe can install it directly to their phones with one tap and read seamlessly anywhere.
             </p>
           </section>
         </div>

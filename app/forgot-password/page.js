@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="author@storyvault.com"
+                  placeholder="author@avoralibrary.com"
                   className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>

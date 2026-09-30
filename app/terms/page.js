@@ -17,14 +17,14 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">1. Acceptance of Terms</h3>
             <p>
-              By accessing and using StoryVault (including as an installed Progressive Web App), you agree to comply with and be bound by these terms. If you do not agree, please discontinue using the service.
+              By accessing and using Avora Library (including as an installed Progressive Web App), you agree to comply with and be bound by these terms. If you do not agree, please discontinue using the service.
             </p>
           </section>
 
           <section className="space-y-2">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">2. Serialized Author Publishing Rights</h3>
             <p>
-              Authors retain 100% full copyright ownership over all original works, chapters, and storylines published on StoryVault. Authors grant StoryVault a non-exclusive license to host, format, and display the works across web and mobile browsers.
+              Authors retain 100% full copyright ownership over all original works, chapters, and storylines published on Avora Library. Authors grant Avora Library a non-exclusive license to host, format, and display the works across web and mobile browsers.
             </p>
           </section>
 

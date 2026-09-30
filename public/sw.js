@@ -1,5 +1,5 @@
-// StoryVault PWA Service Worker for Offline Reading & Progress Caching
-const CACHE_NAME = 'storyvault-v1';
+// Avora Library PWA Service Worker for Offline Reading & Progress Caching
+const CACHE_NAME = 'avora-library-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',

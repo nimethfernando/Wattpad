@@ -19,7 +19,7 @@ export default function PressPage() {
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
           <p>
-            For press inquiries, author interviews, or brand assets, please contact our media team at <span className="font-mono text-brand-500">press@storyvault.com</span>.
+            For press inquiries, author interviews, or brand assets, please contact our media team at <span className="font-mono text-brand-500">press@avoralibrary.com</span>.
           </p>
         </div>
       </main>

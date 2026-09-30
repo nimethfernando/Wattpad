@@ -134,7 +134,7 @@ export default function AdminPanel() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">StoryVault Admin Console</h1>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Avora Library Admin Console</h1>
               <p className="text-xs text-slate-400">Content moderation, author masquerading, originals curation, and audit logging</p>
             </div>
           </div>
@@ -526,7 +526,7 @@ export default function AdminPanel() {
                 <label className="block font-bold text-slate-400 mb-1">New Author Name / Editorial House</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. StoryVault Editorial Desk"
+                  placeholder="e.g. Avora Library Editorial Desk"
                   value={newAuthorName}
                   onChange={(e) => setNewAuthorName(e.target.value)}
                   required

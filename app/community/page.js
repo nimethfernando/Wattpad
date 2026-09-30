@@ -118,7 +118,7 @@ export default function CommunityPage() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
               <Users className="w-3.5 h-3.5" /> Fandom Spaces & Discussion
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">The StoryVault Community</h1>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">The Avora Library Community</h1>
             <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
               Connect with fellow serialized readers, curate public reading lists, debate character theories in fandom spaces, and earn achievement badges.
             </p>

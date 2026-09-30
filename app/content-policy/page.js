@@ -17,7 +17,7 @@ export default function ContentPolicyPage() {
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <section className="space-y-2">
             <h3 className="font-bold text-base text-slate-900 dark:text-white">Prohibited Content</h3>
-            <p>StoryVault maintains strict community safety guidelines. The following are strictly disallowed:</p>
+            <p>Avora Library maintains strict community safety guidelines. The following are strictly disallowed:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Non-consensual sexual depictions or exploitation of minors (zero tolerance).</li>
               <li>Hate speech or violence incitement against protected groups.</li>

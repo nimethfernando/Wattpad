@@ -50,7 +50,7 @@ export default function WritersPage() {
       id: 4,
       title: "Copyright, Creative Commons & Rights",
       category: "Legal & Publishing",
-      desc: "Understanding copyright options on StoryVault and retaining 100% intellectual property ownership.",
+      desc: "Understanding copyright options on Avora Library and retaining 100% intellectual property ownership.",
       readTime: "7 min read",
       icon: BookmarkCheck
     }
@@ -66,7 +66,7 @@ export default function WritersPage() {
         <div className="rounded-3xl bg-gradient-to-r from-brand-600 via-amber-600 to-rose-600 p-8 sm:p-14 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="max-w-2xl space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> StoryVault Writer Resources & Hub
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Avora Library Writer Resources & Hub
             </span>
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
               Turn Your Serial Fiction Into a Global Phenomenon

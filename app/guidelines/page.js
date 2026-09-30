@@ -17,7 +17,7 @@ export default function GuidelinesPage() {
           <Feather className="w-10 h-10 text-brand-500 mx-auto" />
           <h1 className="text-3xl sm:text-4xl font-black">{t.guidelines} & Writer Resources</h1>
           <p className="text-xs sm:text-sm text-slate-500">
-            How to craft serialized novels that build passionate audiences on StoryVault.
+            How to craft serialized novels that build passionate audiences on Avora Library.
           </p>
         </div>
 
@@ -27,7 +27,7 @@ export default function GuidelinesPage() {
               <Sparkles className="w-5 h-5 text-brand-500" /> 1. The Power of Paragraph Hooks
             </h3>
             <p>
-              On StoryVault, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!
+              On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!
             </p>
           </section>
 

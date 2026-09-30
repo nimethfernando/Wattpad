@@ -28,7 +28,7 @@ export default function ContestsPage() {
         <div className="rounded-3xl bg-gradient-to-r from-amber-600 via-brand-600 to-purple-700 p-8 sm:p-12 text-white shadow-xl mb-10">
           <div className="max-w-2xl space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <Trophy className="w-3.5 h-3.5 text-amber-300" /> StoryVault Awards & Competitions
+              <Trophy className="w-3.5 h-3.5 text-amber-300" /> Avora Library Awards & Competitions
             </span>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight">The Watty-Style Annual Writing Contests</h1>
             <p className="text-white/90 text-xs sm:text-sm leading-relaxed">

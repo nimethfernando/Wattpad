@@ -71,7 +71,7 @@ export default function RegisterPage() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/25">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-black">Create Your Free Account</h1>
+            <h1 className="text-2xl font-black">Create Your Free Avora Library Account</h1>
             <p className="text-xs text-slate-400">
               Join thousands of serialized readers, follow authors, and start your own stories.
             </p>
@@ -208,7 +208,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer mt-2"
             >
-              Complete Registration & Start Reading
+              Complete Registration & Join Avora Library
             </button>
           </form>
 

@@ -18,7 +18,7 @@ export default function Footer() {
                 <BookOpen className="w-4 h-4" />
               </div>
               <span className="font-black text-lg text-slate-900 dark:text-white">
-                Story<span className="text-brand-500">Vault</span>
+                Avora<span className="text-brand-500">Library</span>
               </span>
             </Link>
             <p className="max-w-sm text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -85,7 +85,7 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="/about" className="hover:text-brand-500">About StoryVault</Link></li>
+              <li><Link href="/about" className="hover:text-brand-500">About Avora Library</Link></li>
               <li><Link href="/careers" className="hover:text-brand-500">Careers</Link></li>
               <li><Link href="/press" className="hover:text-brand-500">Press Kit</Link></li>
               <li><Link href="/partnerships" className="hover:text-brand-500">Brand Partnerships</Link></li>
@@ -110,7 +110,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400">
-          <p>© {new Date().getFullYear()} StoryVault Platform. All original rights reserved.</p>
+          <p>© {new Date().getFullYear()} Avora Library Platform. All original rights reserved.</p>
           <p className="flex items-center gap-1">
             Built with <Heart className="w-3 h-3 text-rose-500 fill-rose-500" /> for serialized storytelling & PWA readers worldwide
           </p>

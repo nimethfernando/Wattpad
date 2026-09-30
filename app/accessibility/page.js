@@ -12,7 +12,7 @@ export default function AccessibilityPage() {
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p>
-            StoryVault is committed to digital accessibility for individuals with diverse abilities. We adhere to WCAG 2.1 AA standards across mobile, tablet, and desktop interfaces.
+            Avora Library is committed to digital accessibility for individuals with diverse abilities. We adhere to WCAG 2.1 AA standards across mobile, tablet, and desktop interfaces.
           </p>
 
           <section className="space-y-2">

@@ -2,7 +2,7 @@ import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 
 export const metadata = {
-  title: 'StoryVault - Serialized Stories & Community Reading',
+  title: 'Avora Library - Serialized Stories & Community Reading',
   description: 'Read and publish serialized fiction, interact with paragraph-level comments, and join passionate fandoms on mobile or desktop.',
   manifest: '/manifest.json',
   themeColor: '#ea580c',

@@ -1,7 +1,7 @@
-# Robots.txt for StoryVault Platform
+# Robots.txt for Avora Library Platform
 User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://storyvault.vercel.app/sitemap.xml
+Sitemap: https://avoralibrary.vercel.app/sitemap.xml

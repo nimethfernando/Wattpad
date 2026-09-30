@@ -18,7 +18,7 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
       reportedUser: reportedUser || "Unknown",
       reason,
       details,
-      storyTitle: storyTitle || "StoryVault Content"
+      storyTitle: storyTitle || "Avora Library Content"
     });
     setIsSuccess(true);
     setTimeout(() => {

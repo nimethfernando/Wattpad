@@ -12,7 +12,7 @@ export default function PaymentPolicyPage() {
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p>
-            StoryVault is currently 100% free for all readers and serialized authors. There are no paid coin gates, subscriptions, or paywalled chapters required to read our catalog.
+            Avora Library is currently 100% free for all readers and serialized authors. There are no paid coin gates, subscriptions, or paywalled chapters required to read our catalog.
           </p>
           <p>
             Writing contest cash grants and editorial prizes are funded directly through official sponsorships and platform partnerships with zero deduction from authors.

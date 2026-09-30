@@ -11,7 +11,7 @@ export default function CareersPage() {
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-12">
         <div className="text-center space-y-2 mb-10">
           <Briefcase className="w-10 h-10 text-brand-500 mx-auto" />
-          <h1 className="text-3xl sm:text-4xl font-black">Careers at StoryVault</h1>
+          <h1 className="text-3xl sm:text-4xl font-black">Careers at Avora Library</h1>
           <p className="text-xs sm:text-sm text-slate-500">
             Join our mission to empower the next generation of serialized writers and digital readers.
           </p>
@@ -23,7 +23,7 @@ export default function CareersPage() {
               <h4 className="font-bold text-sm">Senior Editorial Curator</h4>
               <p className="text-xs text-slate-400">Remote • Full-time</p>
             </div>
-            <a href="mailto:careers@storyvault.com" className="px-4 py-2 rounded-xl bg-brand-500 text-white font-bold text-xs hover:bg-brand-600">
+            <a href="mailto:careers@avoralibrary.com" className="px-4 py-2 rounded-xl bg-brand-500 text-white font-bold text-xs hover:bg-brand-600">
               Apply Now
             </a>
           </div>
@@ -33,7 +33,7 @@ export default function CareersPage() {
               <h4 className="font-bold text-sm">Community Safety Moderator (Multilingual)</h4>
               <p className="text-xs text-slate-400">Remote (US / Georgia / India) • Full-time</p>
             </div>
-            <a href="mailto:careers@storyvault.com" className="px-4 py-2 rounded-xl bg-brand-500 text-white font-bold text-xs hover:bg-brand-600">
+            <a href="mailto:careers@avoralibrary.com" className="px-4 py-2 rounded-xl bg-brand-500 text-white font-bold text-xs hover:bg-brand-600">
               Apply Now
             </a>
           </div>

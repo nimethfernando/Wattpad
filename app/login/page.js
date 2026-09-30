@@ -63,7 +63,7 @@ export default function LoginPage() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/25">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-black">Welcome Back to StoryVault</h1>
+            <h1 className="text-2xl font-black">Welcome Back to Avora Library</h1>
             <p className="text-xs text-slate-400">
               Sign in to sync your serialized library, vote on chapters, and engage with authors.
             </p>
@@ -127,7 +127,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="reader@storyvault.com"
+                  placeholder="reader@avoralibrary.com"
                   className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -162,7 +162,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer"
             >
-              Sign In to StoryVault
+              Sign In to Avora Library
             </button>
           </form>
 
