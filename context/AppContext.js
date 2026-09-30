@@ -111,6 +111,22 @@ export function AppProvider({ children }) {
   const [authModalMessage, setAuthModalMessage] = useState('');
   const [pendingAction, setPendingAction] = useState(null);
 
+  // Dedicated Social OAuth Modal State (Google & Facebook Normal Email Auth Flow)
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [socialModalProvider, setSocialModalProvider] = useState('google'); // 'google' | 'facebook'
+  const [socialModalCallback, setSocialModalCallback] = useState(null);
+
+  const openSocialModal = (provider = 'google', callback = null) => {
+    setSocialModalProvider(provider);
+    setSocialModalCallback(callback ? () => callback : null);
+    setSocialModalOpen(true);
+  };
+
+  const closeSocialModal = () => {
+    setSocialModalOpen(false);
+    setSocialModalCallback(null);
+  };
+
   // Moderation & Audit Log
   const [reports, setReports] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -746,12 +762,16 @@ export function AppProvider({ children }) {
     }
   };
 
-  // 1. Google Authentication
-  const loginWithGoogle = async (customUser = null) => {
-    const email = customUser?.email || "jordan.reed@gmail.com";
-    const name = customUser?.name || (email ? email.split('@')[0].replace(/[._-]/g, ' ') : "Jordan Reed");
-    const username = customUser?.username || email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const avatar = customUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
+  // 1. Google Authentication (Requires real Google email)
+  const loginWithGoogle = async (credentials = null) => {
+    const rawEmail = typeof credentials === 'string' ? credentials : credentials?.email;
+    const email = rawEmail?.trim();
+    if (!email) {
+      throw new Error("Please provide your Google email address to sign in.");
+    }
+    const name = credentials?.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
+    const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const avatar = credentials?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
     const googleUser = {
       id: Date.now(),
@@ -786,10 +806,11 @@ export function AppProvider({ children }) {
     setUser(googleUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
+    setSocialModalOpen(false);
 
     sendNotification({
       title: "Google Sign-In",
-      message: `Welcome to Avora Library, ${name}! Signed in via Google.`,
+      message: `Welcome to Avora Library, ${name}! Signed in via Google (${email}).`,
       type: "system",
       sendEmail: true,
       recipientEmail: email
@@ -798,12 +819,16 @@ export function AppProvider({ children }) {
     return googleUser;
   };
 
-  // 2. Facebook Authentication
-  const loginWithFacebook = async (customUser = null) => {
-    const email = customUser?.email || "alex.vance@facebook.com";
-    const name = customUser?.name || (email ? email.split('@')[0].replace(/[._-]/g, ' ') : "Alex Vance");
-    const username = customUser?.username || `${email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_')}_fb`;
-    const avatar = customUser?.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+  // 2. Facebook Authentication (Requires real Facebook email/mobile)
+  const loginWithFacebook = async (credentials = null) => {
+    const rawEmail = typeof credentials === 'string' ? credentials : credentials?.email;
+    const email = rawEmail?.trim();
+    if (!email) {
+      throw new Error("Please provide your Facebook email address or phone number to log in.");
+    }
+    const name = credentials?.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
+    const username = `${email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_')}_fb`;
+    const avatar = credentials?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
     const facebookUser = {
       id: Date.now(),
@@ -838,10 +863,11 @@ export function AppProvider({ children }) {
     setUser(facebookUser);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
+    setSocialModalOpen(false);
 
     sendNotification({
       title: "Facebook Sign-In",
-      message: `Welcome to Avora Library, ${name}! Signed in via Facebook.`,
+      message: `Welcome to Avora Library, ${name}! Signed in via Facebook (${email}).`,
       type: "system",
       sendEmail: true,
       recipientEmail: email
@@ -1082,6 +1108,11 @@ export function AppProvider({ children }) {
       loginWithFacebook,
       loginWithEmail,
       registerWithEmail,
+      openSocialModal,
+      closeSocialModal,
+      socialModalOpen,
+      socialModalProvider,
+      socialModalCallback,
       logoutUser,
       userConversations,
       postConversationMessage,

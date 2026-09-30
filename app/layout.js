@@ -2,6 +2,7 @@ import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import AuthModal from '@/components/AuthModal';
 import OnboardingModal from '@/components/OnboardingModal';
+import SocialOAuthModal from '@/components/SocialOAuthModal';
 
 export const metadata = {
   title: 'Avora Library - Serialized Stories & Community Reading',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
           {children}
           <AuthModal />
           <OnboardingModal />
+          <SocialOAuthModal />
         </AppProvider>
       </body>
     </html>
