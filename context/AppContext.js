@@ -182,9 +182,14 @@ export function AppProvider({ children }) {
         setHomeFeedViewMode('feed');
         setAuthModalOpen(false);
 
-        if (!isAgeVerified) {
-          // Immediately prompt for DOB if account does not have a verified DOB yet
-          setAgeVerificationModalOpen(true);
+        // Only prompt for DOB if this authentication was explicitly triggered by user registration
+        if (typeof window !== 'undefined') {
+          const isRegistrationPending = sessionStorage.getItem('avora_registration_pending') === 'true';
+          sessionStorage.removeItem('avora_registration_pending');
+
+          if (isRegistrationPending && !isAgeVerified) {
+            setAgeVerificationModalOpen(true);
+          }
         }
 
         if (typeof window !== 'undefined') {
@@ -251,10 +256,6 @@ export function AppProvider({ children }) {
           }
           setUser(parsedUser);
           setHomeFeedViewMode('feed');
-
-          if (!parsedUser.birthdate) {
-            setAgeVerificationModalOpen(true);
-          }
         }
       } catch (e) {
         console.error("Could not load user from localStorage", e);
