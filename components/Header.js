@@ -130,7 +130,7 @@ export default function Header() {
               <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
             </Link>
             <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-              <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> Library
+              <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
               {library.length > 0 && (
                 <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
                   {library.length}
@@ -257,6 +257,7 @@ export default function Header() {
               <option value="en">EN</option>
               <option value="ka">KA</option>
               <option value="hi">HI</option>
+              <option value="es">ES</option>
             </select>
           </div>
 
@@ -590,7 +591,7 @@ export default function Header() {
                   className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <span className="flex items-center gap-3">
-                    <BookMarked className="w-4 h-4 text-brand-500" /> My Library
+                    <BookMarked className="w-4 h-4 text-brand-500" /> {t.myPersonalShelf || t.library || 'My Library'}
                   </span>
                   {library.length > 0 && (
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-500 text-white">
@@ -666,6 +667,7 @@ export default function Header() {
                   <option value="en">English (EN)</option>
                   <option value="ka">ქართული (KA)</option>
                   <option value="hi">हिन्दी (HI)</option>
+                  <option value="es">Español (ES)</option>
                 </select>
               </div>
 

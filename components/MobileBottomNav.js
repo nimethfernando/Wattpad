@@ -13,7 +13,7 @@ import {
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { user, library = [], openAuthModal } = useApp();
+  const { user, library = [], openAuthModal, t = {} } = useApp();
 
   // Hide bottom nav inside full-screen reading mode to give readers maximum canvas
   if (pathname?.startsWith('/read/')) {
@@ -22,32 +22,32 @@ export default function MobileBottomNav() {
 
   const navItems = [
     {
-      label: 'Home',
+      label: t.home || 'Home',
       href: '/',
       icon: Home,
       isActive: pathname === '/' || pathname === '/home'
     },
     {
-      label: 'Browse',
+      label: t.browse || 'Browse',
       href: '/browse',
       icon: Compass,
       isActive: pathname === '/browse'
     },
     {
-      label: 'Write',
+      label: t.write || 'Write',
       href: '/write',
       icon: PenTool,
       isActive: pathname === '/write'
     },
     {
-      label: 'Library',
+      label: t.library || 'Library',
       href: '/library',
       icon: BookMarked,
       badge: library.length > 0 ? library.length : null,
       isActive: pathname === '/library'
     },
     {
-      label: user ? 'Profile' : 'Log In',
+      label: user ? (t.profile || 'Profile') : (t.logIn || 'Log In'),
       href: user ? `/profile/${user.username}` : '#',
       icon: UserIcon,
       onClick: !user ? () => openAuthModal('login') : null,

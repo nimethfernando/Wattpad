@@ -3,6 +3,7 @@ import { AppProvider } from '@/context/AppContext';
 import AuthModal from '@/components/AuthModal';
 import OnboardingModal from '@/components/OnboardingModal';
 import AgeVerificationModal from '@/components/AgeVerificationModal';
+import EmergingGenreModal from '@/components/EmergingGenreModal';
 import AuthProvider from '@/components/AuthProvider';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
             <AuthModal />
             <OnboardingModal />
             <AgeVerificationModal />
+            <EmergingGenreModal />
           </AppProvider>
         </AuthProvider>
       </body>

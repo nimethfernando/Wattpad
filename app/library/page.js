@@ -92,7 +92,7 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <BookOpen className="w-4 h-4" /> Current Reads ({libraryStories.length})
+              <BookOpen className="w-4 h-4" /> {t.currentReads || 'Current Reads'} ({libraryStories.length})
             </button>
             <button
               onClick={() => setActiveTab('lists')}
@@ -102,7 +102,7 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <BookMarked className="w-4 h-4" /> Reading Lists ({readingLists.length})
+              <BookMarked className="w-4 h-4" /> {t.readingLists || 'Reading Lists'} ({readingLists.length})
             </button>
             <button
               onClick={() => setActiveTab('archive')}
@@ -112,7 +112,7 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <CheckCircle className="w-4 h-4" /> Archive / Finished
+              <CheckCircle className="w-4 h-4" /> {t.archive || 'Archive / Finished'}
             </button>
           </div>
 
@@ -121,7 +121,7 @@ export default function LibraryPage() {
               onClick={() => setShowCreateModal(true)}
               className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" /> New Reading List
+              <Plus className="w-3.5 h-3.5" /> {t.createReadingList || 'New Reading List'}
             </button>
           )}
         </div>
@@ -134,15 +134,15 @@ export default function LibraryPage() {
                 <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-950/60 flex items-center justify-center text-brand-500 mx-auto">
                   <BookOpen className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-black">Your Library is Empty</h3>
+                <h3 className="text-xl font-black">{t.emptyShelf || 'Your Library is Empty'}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  Explore trending serialized stories and tap "Add to Library" to save them here with automated chapter update alerts!
+                  {t.emptyShelfDesc || 'Explore trending serialized stories and tap "Add to Library" to save them here with automated chapter update alerts!'}
                 </p>
                 <Link
                   href="/browse"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-brand-500 text-white font-bold text-xs shadow-md shadow-brand-500/25 hover:bg-brand-600"
                 >
-                  Explore Trending Novels <ArrowRight className="w-3.5 h-3.5" />
+                  {t.browse || 'Explore Trending Novels'} <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             ) : (

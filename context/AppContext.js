@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { 
   initialGenres, 
@@ -103,6 +103,11 @@ export function AppProvider({ children }) {
     language: "en"
   });
   const [hiddenStoryIds, setHiddenStoryIds] = useState([]);
+
+  // Adaptive Taste Discovery State (Emerging Genres)
+  const [genreEngagement, setGenreEngagement] = useState({});
+  const [dismissedEmergingGenres, setDismissedEmergingGenres] = useState([]);
+  const [emergingGenrePrompt, setEmergingGenrePrompt] = useState(null);
 
   // Site Announcements Banner State
   const [announcementBanner, setAnnouncementBanner] = useState({
@@ -278,11 +283,32 @@ export function AppProvider({ children }) {
       try {
         const savedPrefs = localStorage.getItem('avora_user_preferences');
         if (savedPrefs) {
-          setUserPreferences(JSON.parse(savedPrefs));
+          const parsed = JSON.parse(savedPrefs);
+          setUserPreferences(parsed);
+          if (parsed?.language && ['en', 'ka', 'hi', 'es'].includes(parsed.language)) {
+            setLang(parsed.language);
+          }
+        }
+        const savedLang = localStorage.getItem('avora_lang');
+        if (savedLang && ['en', 'ka', 'hi', 'es'].includes(savedLang)) {
+          setLang(savedLang);
+          if (typeof document !== 'undefined') {
+            document.documentElement.lang = savedLang;
+          }
         }
         const savedHidden = localStorage.getItem('avora_hidden_stories');
         if (savedHidden) {
           setHiddenStoryIds(JSON.parse(savedHidden));
+        }
+
+        const savedEngagement = localStorage.getItem('avora_genre_engagement');
+        if (savedEngagement) {
+          setGenreEngagement(JSON.parse(savedEngagement));
+        }
+
+        const savedDismissed = localStorage.getItem('avora_dismissed_emerging_genres');
+        if (savedDismissed) {
+          setDismissedEmergingGenres(JSON.parse(savedDismissed));
         }
       } catch (e) {
         console.error("Could not load user preferences from localStorage", e);
@@ -389,8 +415,29 @@ export function AppProvider({ children }) {
     return () => { isMounted = false; };
   }, [user?.email]);
 
-  // Translation Dictionary
-  const t = translations[lang] || translations.en;
+  // Persistent Language Changer
+  const changeLanguage = (newLang) => {
+    if (['en', 'ka', 'hi', 'es'].includes(newLang)) {
+      setLang(newLang);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('avora_lang', newLang);
+        document.documentElement.lang = newLang;
+      }
+      setUserPreferences(prev => {
+        const updated = { ...prev, language: newLang };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('avora_user_preferences', JSON.stringify(updated));
+        }
+        return updated;
+      });
+    }
+  };
+
+  // Safe Fallback Translation Dictionary (merges requested language over English default)
+  const t = useMemo(() => {
+    const activeDict = translations[lang] || translations.en;
+    return { ...translations.en, ...activeDict };
+  }, [lang]);
 
   // Actions
   const toggleTheme = () => {
@@ -523,6 +570,118 @@ export function AppProvider({ children }) {
       title: "Personal Library Curated! ✨",
       message: `Your home feed is now customized for ${updatedPreferences.favoriteGenres?.join(', ')}. Enjoy discovering new serialized chapters!`,
       type: "system"
+    });
+  };
+
+  // Adaptive Taste Discovery Engine
+  // Computes emerging genres (read by user but not in their initial favorite genres)
+  const emergingGenres = useMemo(() => {
+    const userFavs = (userPreferences?.favoriteGenres || []).map(g => (g || '').toLowerCase());
+    const dismissed = dismissedEmergingGenres.map(g => (g || '').toLowerCase());
+    return Object.keys(genreEngagement)
+      .filter(genre => {
+        if (!genre) return false;
+        const gLower = genre.toLowerCase();
+        const isFav = userFavs.some(fav => fav.includes(gLower) || gLower.includes(fav));
+        const isDismissed = dismissed.includes(gLower);
+        const reads = genreEngagement[genre]?.reads || 0;
+        return !isFav && !isDismissed && reads >= 1;
+      })
+      .sort((a, b) => (genreEngagement[b]?.reads || 0) - (genreEngagement[a]?.reads || 0));
+  }, [genreEngagement, userPreferences?.favoriteGenres, dismissedEmergingGenres]);
+
+  const recordGenreInteraction = (genre) => {
+    if (!genre) return;
+    setGenreEngagement(prev => {
+      const current = prev[genre] || { reads: 0, lastRead: Date.now() };
+      const newCount = current.reads + 1;
+      const updated = {
+        ...prev,
+        [genre]: {
+          reads: newCount,
+          lastRead: Date.now()
+        }
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_genre_engagement', JSON.stringify(updated));
+        } catch (e) {}
+      }
+
+      // Check if this genre is NOT in user's favorites and NOT dismissed
+      const userFavs = (userPreferences?.favoriteGenres || []).map(g => (g || '').toLowerCase());
+      const isFav = userFavs.some(f => f.includes(genre.toLowerCase()) || genre.toLowerCase().includes(f));
+      const isDismissed = dismissedEmergingGenres.map(d => (d || '').toLowerCase()).includes(genre.toLowerCase());
+
+      // If user has read this unselected genre at least twice, pop up the discovery modal!
+      if (!isFav && !isDismissed && newCount >= 2) {
+        setEmergingGenrePrompt({
+          open: true,
+          genre,
+          reads: newCount
+        });
+      }
+
+      return updated;
+    });
+  };
+
+  const addGenreToFavorites = (genre) => {
+    if (!genre) return;
+    setUserPreferences(prev => {
+      const currentFavs = prev?.favoriteGenres || [];
+      const alreadyHas = currentFavs.some(g => g.toLowerCase() === genre.toLowerCase());
+      const updatedFavs = alreadyHas ? currentFavs : [...currentFavs, genre];
+      const updated = {
+        ...prev,
+        favoriteGenres: updatedFavs
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user_preferences', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    if (user) {
+      setUser(prev => ({
+        ...prev,
+        userPreferences: {
+          ...(prev?.userPreferences || {}),
+          favoriteGenres: [...new Set([...(prev?.userPreferences?.favoriteGenres || []), genre])]
+        }
+      }));
+    }
+
+    setEmergingGenrePrompt(null);
+    sendNotification({
+      title: `${genre} Added to Favorites! ✨`,
+      message: `Your home feed and recommendations will now feature popular ${genre} serialized stories!`,
+      type: 'system'
+    });
+  };
+
+  const dismissEmergingGenre = (genre) => {
+    if (genre) {
+      setDismissedEmergingGenres(prev => {
+        const updated = [...new Set([...prev, genre])];
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('avora_dismissed_emerging_genres', JSON.stringify(updated));
+          } catch (e) {}
+        }
+        return updated;
+      });
+    }
+    setEmergingGenrePrompt(null);
+  };
+
+  const triggerEmergingModal = (genre = 'Romance') => {
+    setEmergingGenrePrompt({
+      open: true,
+      genre,
+      reads: (genreEngagement[genre]?.reads || 2)
     });
   };
 
@@ -720,6 +879,9 @@ export function AppProvider({ children }) {
     }
 
     const targetStory = stories.find(s => s.id === storyId);
+    if (targetStory?.genre) {
+      recordGenreInteraction(targetStory.genre);
+    }
     const targetChapter = targetStory?.chapters?.find(c => c.id === chapterId) || targetStory?.chapters?.[0];
     const totalChapters = targetStory?.chapters?.length || 1;
     const chapterNum = targetChapter?.number || 1;
@@ -1356,7 +1518,8 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       lang,
-      setLang,
+      setLang: changeLanguage,
+      changeLanguage,
       theme,
       setTheme,
       toggleTheme,
@@ -1464,7 +1627,15 @@ export function AppProvider({ children }) {
       updateUserAgeAndDob,
       toggleExperienceMode,
       canAccessStory,
-      EXPERIENCE_MODES
+      EXPERIENCE_MODES,
+      genreEngagement,
+      emergingGenres,
+      emergingGenrePrompt,
+      setEmergingGenrePrompt,
+      addGenreToFavorites,
+      dismissEmergingGenre,
+      triggerEmergingModal,
+      recordGenreInteraction
     }}>
       {children}
     </AppContext.Provider>

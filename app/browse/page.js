@@ -136,7 +136,7 @@ export default function BrowsePage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              All Stories
+              {t.allStories || 'All Stories'}
             </button>
             <button
               onClick={() => { setSpecialFilter('originals'); setCurrentPage(1); }}
@@ -146,7 +146,7 @@ export default function BrowsePage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              ⭐ House Originals
+              ⭐ {t.houseOriginals || 'House Originals'}
             </button>
             <button
               onClick={() => { setSpecialFilter('picks'); setCurrentPage(1); }}
@@ -156,7 +156,7 @@ export default function BrowsePage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              ✨ Editor’s Picks
+              ✨ {t.mustRead || 'Editor’s Picks'}
             </button>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function BrowsePage() {
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500'
             }`}
           >
-            All Genres
+            {t.allGenres || 'All Genres'}
           </button>
           {accessibleGenres.map(g => (
             <button

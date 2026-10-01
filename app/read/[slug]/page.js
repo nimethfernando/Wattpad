@@ -27,7 +27,8 @@ import {
   BookMarked,
   Check,
   Plus,
-  ImageIcon
+  ImageIcon,
+  Eye
 } from 'lucide-react';
 import { canUserAccessContent } from '@/lib/agePolicy';
 

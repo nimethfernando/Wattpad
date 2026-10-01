@@ -51,7 +51,11 @@ export default function HomeFeedView() {
     hideStory,
     followingAuthors = [],
     followAuthor,
-    t 
+    t,
+    emergingGenres = [],
+    genreEngagement = {},
+    addGenreToFavorites,
+    triggerEmergingModal
   } = useApp();
 
   const [selectedStoryForList, setSelectedStoryForList] = useState(null);
@@ -265,23 +269,34 @@ export default function HomeFeedView() {
           <div>
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-brand-500" />
-              <h2 className="text-lg sm:text-xl font-black">Tailored For You</h2>
+              <h2 className="text-lg sm:text-xl font-black">{t.tailoredForYou || 'Tailored For You'}</h2>
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60">
-                Personalized
+                {t.personalizedFeed ? 'Personalized' : 'Personalized'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Curated from your favorite genres: <strong className="text-slate-700 dark:text-slate-300">{favoriteGenres.join(', ')}</strong>
+              {t.personalizedFeed || 'Curated from your favorite genres'}: <strong className="text-slate-700 dark:text-slate-300">{favoriteGenres.join(', ')}</strong>
             </p>
           </div>
 
-          <button
-            onClick={openOnboardingModal}
-            className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Customize Genres</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => triggerEmergingModal && triggerEmergingModal('Romance')}
+              className="self-start sm:self-auto text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+              title="Simulate Taste Pop-up (e.g. user started reading Romance)"
+            >
+              <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+              <span>⚡ Test Taste Pop-up</span>
+            </button>
+
+            <button
+              onClick={openOnboardingModal}
+              className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{t.filterGenre || 'Customize Genres'}</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -298,15 +313,75 @@ export default function HomeFeedView() {
         </div>
       </section>
 
+      {/* 2B. ADAPTIVE TASTE DISCOVERY: SEPARATELY POPPING OUT NEWLY LIKED GENRES */}
+      {emergingGenres.map((genre) => {
+        const genreStories = visibleStories
+          .filter(s => matchesGenre(s, genre))
+          .sort((a, b) => (b.reads || 0) - (a.reads || 0));
+        if (genreStories.length === 0) return null;
+        const readCount = genreEngagement?.[genre]?.reads || 2;
+
+        return (
+          <section key={`emerging-${genre}`} className="space-y-4 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-rose-500/5 via-pink-500/5 to-purple-500/5 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-purple-950/30 border border-rose-200/70 dark:border-rose-900/50 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-rose-500 fill-rose-500 animate-pulse" />
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+                    {t.trendingInRecentReading || 'Trending In Your Recent Reading'}: {genre}
+                  </h2>
+                  <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300/60 dark:border-rose-800">
+                    ⚡ {t.newlyDetectedTaste || 'Auto-Detected Taste'} • {readCount} {t.reads || 'Reads'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {t.detectedTasteDesc || "Because you've been reading this lately, here are popular stories curated separately for you!"}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => addGenreToFavorites(genre)}
+                  className="text-xs font-bold px-3.5 py-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-md shadow-rose-500/20 flex items-center gap-1.5 transition-all hover:scale-[1.02] cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{t.addToFavorites || 'Add to My Favorites'}</span>
+                </button>
+                <Link 
+                  href={`/browse?genre=${encodeURIComponent(genre.toLowerCase())}`} 
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 px-3 py-1.5 rounded-full border border-rose-200 dark:border-rose-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                >
+                  <span>{t.exploreAll || 'Explore All'} {genre}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 pt-1">
+              {genreStories.slice(0, 4).map(story => (
+                <StoryFeedCard 
+                  key={story.id} 
+                  story={story} 
+                  isInLib={isInLibrary(story.id)}
+                  onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                  onOpenReadingList={(s) => setSelectedStoryForList(s)}
+                  onHideStory={(id) => hideStory(id)}
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
       {/* 2B. TOP READING LEADERBOARD (Strictly sorted by reads descending: #1, #2, #3...) */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
-              <h2 className="text-lg sm:text-xl font-black">Top Reading Leaderboard</h2>
+              <h2 className="text-lg sm:text-xl font-black">{t.topReadingLeaderboard || 'Top Reading Leaderboard'}</h2>
               <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800">
-                ⚡ Auto-Ranked by Reads
+                ⚡ {t.autoRankedByReads || 'Auto-Ranked by Reads'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -318,7 +393,7 @@ export default function HomeFeedView() {
             href="/browse?sort=most_read"
             className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
           >
-            <span>Full Leaderboard</span>
+            <span>{t.fullLeaderboard || 'Full Leaderboard'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -343,12 +418,12 @@ export default function HomeFeedView() {
           <div>
             <div className="flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-emerald-500" />
-              <h2 className="text-lg sm:text-xl font-black">Updates From Writers You Follow</h2>
+              <h2 className="text-lg sm:text-xl font-black">{t.updatesFromFollowed || 'Updates From Writers You Follow'}</h2>
             </div>
             <p className="text-xs text-slate-400">Latest serialized chapter drops from authors in your network</p>
           </div>
           <Link href="/browse?tab=authors" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>Discover Authors</span>
+            <span>{t.discoverAuthors || 'Discover Authors'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -397,11 +472,11 @@ export default function HomeFeedView() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-brand-500" />
-            <h2 className="text-lg sm:text-xl font-black">My Personal Shelf</h2>
-            <span className="text-xs text-slate-400 font-bold">({libraryStories.length} books)</span>
+            <h2 className="text-lg sm:text-xl font-black">{t.myPersonalShelf || 'My Personal Shelf'}</h2>
+            <span className="text-xs text-slate-400 font-bold">({libraryStories.length} {t.library || 'books'})</span>
           </div>
           <Link href="/library" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>View All</span>
+            <span>{t.viewAll || 'View All'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -409,8 +484,8 @@ export default function HomeFeedView() {
         {libraryStories.length === 0 ? (
           <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-2">
             <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-            <p className="text-xs font-bold text-slate-500">Your personal library is empty.</p>
-            <p className="text-[11px] text-slate-400">Save books to your shelf to read offline and receive chapter updates!</p>
+            <p className="text-xs font-bold text-slate-500">{t.emptyShelf || 'Your personal library is empty.'}</p>
+            <p className="text-[11px] text-slate-400">{t.emptyShelfDesc || 'Save books to your shelf to read offline and receive chapter updates!'}</p>
           </div>
         ) : (
           <div className="flex items-stretch gap-4 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x">
@@ -425,7 +500,7 @@ export default function HomeFeedView() {
                     <button
                       onClick={() => removeFromLibrary(story.id)}
                       className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 text-white hover:bg-rose-500 transition-colors cursor-pointer"
-                      title="Remove from Shelf"
+                      title={t.removeFromLibrary || 'Remove from Shelf'}
                     >
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
                     </button>
@@ -439,9 +514,9 @@ export default function HomeFeedView() {
                 </div>
 
                 <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>{story.chapters?.length || 1} Ch.</span>
+                  <span>{story.chapters?.length || 1} {t.chapters || 'Ch.'}</span>
                   <Link href={`/read/${story.slug}`} className="font-extrabold text-brand-600 dark:text-brand-400 hover:underline">
-                    Read →
+                    {t.readNow || 'Read'} →
                   </Link>
                 </div>
               </div>
@@ -463,7 +538,7 @@ export default function HomeFeedView() {
               <div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
-                  <h2 className="text-lg sm:text-xl font-black">Because You Favorite: {genre}</h2>
+                  <h2 className="text-lg sm:text-xl font-black">{t.becauseYouFavorite || 'Because You Favorite'}: {genre}</h2>
                 </div>
                 <p className="text-xs text-slate-400">Top-rated serialized novels matching your {genre} reading preference</p>
               </div>
@@ -471,7 +546,7 @@ export default function HomeFeedView() {
                 href={`/browse?genre=${encodeURIComponent(genre.toLowerCase())}`} 
                 className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
               >
-                <span>See More in {genre}</span>
+                <span>{t.exploreAll || 'See More in'} {genre}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -498,12 +573,12 @@ export default function HomeFeedView() {
           <div>
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-500" />
-              <h2 className="text-lg sm:text-xl font-black">Avora House Originals & Watty Winners</h2>
+              <h2 className="text-lg sm:text-xl font-black">{t.houseOriginalsShelf || t.houseOriginals || 'Avora House Originals & Watty Winners'}</h2>
             </div>
-            <p className="text-xs text-slate-400">Flagship serialized masterworks produced in collaboration with our editorial studio</p>
+            <p className="text-xs text-slate-400">{t.houseOriginalsDesc || t.houseOriginalsSub || 'Flagship serialized masterworks produced in collaboration with our editorial studio'}</p>
           </div>
           <Link href="/browse?filter=originals" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>All Originals</span>
+            <span>{t.viewAll || 'All Originals'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -639,7 +714,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                     className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                   >
                     <BookMarked className="w-3.5 h-3.5 text-brand-500" />
-                    <span>Save to Reading List</span>
+                    <span>{t.saveToReadingList || 'Save to Reading List'}</span>
                   </button>
 
                   <button
@@ -652,12 +727,12 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                     {isInLib ? (
                       <>
                         <BookmarkCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>In Offline Shelf</span>
+                        <span>{t.inOfflineShelf || 'In Offline Shelf'}</span>
                       </>
                     ) : (
                       <>
                         <BookmarkPlus className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Add to Shelf</span>
+                        <span>{t.addToShelf || 'Add to Shelf'}</span>
                       </>
                     )}
                   </button>
@@ -672,7 +747,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                     className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
                   >
                     <EyeOff className="w-3.5 h-3.5" />
-                    <span>Hide / Not Interested</span>
+                    <span>{t.hideStory || 'Hide / Not Interested'}</span>
                   </button>
                 </div>
               )}

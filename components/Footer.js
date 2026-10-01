@@ -111,6 +111,7 @@ export default function Footer() {
                   <option value="en">English (US)</option>
                   <option value="ka">ქართული (GE)</option>
                   <option value="hi">हिन्दी (IN)</option>
+                  <option value="es">Español (ES)</option>
                 </select>
               </div>
             )}
