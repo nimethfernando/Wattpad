@@ -51,6 +51,7 @@ export default function Header() {
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -268,6 +269,15 @@ export default function Header() {
             {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
+          {/* Mobile Search Toggle Button */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="md:hidden p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           {/* Notification Center */}
           <div className="relative">
             <button 
@@ -283,7 +293,7 @@ export default function Header() {
 
             {/* Notification Drawer */}
             {showNotifications && (
-              <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50">
+              <div className="absolute right-0 top-12 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                   <h4 className="font-bold text-sm">Notifications</h4>
                   {unreadCount > 0 && (
@@ -329,7 +339,7 @@ export default function Header() {
 
               {/* Profile Dropdown */}
               {showProfileMenu && (
-                <div className="absolute right-0 top-12 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 text-xs">
+                <div className="absolute right-0 top-12 w-56 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 text-xs">
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
                     <p className="font-bold truncate text-slate-900 dark:text-white">{user.name}</p>
                     <p className="text-slate-400 text-[11px] truncate">@{user.username}</p>
@@ -426,73 +436,272 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Search Expandable Bar */}
+      {mobileSearchOpen && (
+        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-lg">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search stories, authors, tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="w-full pl-9 pr-9 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-semibold text-slate-900 dark:text-white"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {searchQuery && (
+            <div className="mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-xl max-h-72 overflow-y-auto">
+              {filteredStories.map(s => (
+                <Link
+                  key={s.id}
+                  href={`/story/${s.slug}`}
+                  onClick={() => setMobileSearchOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <img src={s.cover} alt={s.title} className="w-8 aspect-[3/4] object-cover rounded" />
+                  <div className="min-w-0 flex-1 text-xs">
+                    <p className="font-bold truncate text-slate-900 dark:text-white">{s.title}</p>
+                    <p className="text-[10px] text-slate-400">By {s.author} • {s.genre}</p>
+                  </div>
+                </Link>
+              ))}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-1">
+                <Link
+                  href={`/browse?q=${encodeURIComponent(searchQuery)}`}
+                  onClick={() => setMobileSearchOpen(false)}
+                  className="block text-center text-xs font-bold text-brand-500 py-1 hover:underline"
+                >
+                  View all results for "{searchQuery}" →
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mobile Slide-Over Drawer with Backdrop Blur */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 px-4 py-4 bg-white dark:bg-slate-900 space-y-3">
-          <Link href="/browse" className="block py-2 text-sm font-semibold">{t.browse}</Link>
-          <Link href="/library" className="block py-2 text-sm font-semibold">My Library ({library.length})</Link>
-          <Link href="/community" className="block py-2 text-sm font-semibold">{t.community}</Link>
-          <Link href="/contests" className="block py-2 text-sm font-semibold">{t.contests}</Link>
-          <Link href="/write" className="block py-2 text-sm font-semibold">{t.write}</Link>
-          {user?.role === 'admin' && (
-            <Link href="/admin" className="block py-2 text-sm font-semibold text-purple-600">{t.adminPanel}</Link>
-          )}
-          {user ? (
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-              <div className="flex items-center gap-2 px-2 py-1">
-                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
-                <span className="text-xs font-bold truncate text-slate-900 dark:text-white">{user.name} (@{user.username})</span>
-              </div>
-              <div className="px-2.5 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-semibold">Verified Age:</span>
-                  <span className="font-bold">{user.age !== undefined ? `${user.age} yrs` : 'Unverified'}</span>
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Backdrop Overlay */}
+          <div 
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Container */}
+          <div className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-80 bg-white dark:bg-slate-900 shadow-2xl p-5 overflow-y-auto flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-200">
+            <div>
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-950 shrink-0">
+                    <img src="/tab-icon.png" alt="Logo" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Avora<span className="text-brand-500">Menu</span>
+                  </span>
                 </div>
-                <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
-                  <span className="text-slate-500 font-semibold">Experience:</span>
-                  {user.age !== undefined && user.age < 18 ? (
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">
-                      Kids Only <Lock className="w-3 h-3" />
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* User Account Card if Logged In */}
+              {user ? (
+                <div className="py-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-500/30" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm truncate text-slate-900 dark:text-white">{user.name}</p>
+                      <p className="text-slate-400 text-xs truncate">@{user.username}</p>
+                    </div>
+                  </div>
+
+                  {/* DOB Verified Age & Experience Switcher in Mobile Drawer */}
+                  <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-semibold">Verified Age:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {user.age !== undefined ? `${user.age} yrs` : 'Unverified'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                      <span className="text-slate-500 font-semibold">Mode:</span>
+                      {user.age !== undefined && user.age < 18 ? (
+                        <span className="font-bold text-emerald-600 flex items-center gap-1">
+                          Kids Only <Lock className="w-3 h-3" />
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => toggleExperienceMode()}
+                          className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                        >
+                          {user.experienceMode === 'kids' ? '🧒 Kids (Switch)' : '🔥 18+ (Switch)'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                  <button 
+                    onClick={() => { setMobileMenuOpen(false); openAuthModal('login'); }}
+                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    {t.login}
+                  </button>
+                  <button 
+                    onClick={() => { setMobileMenuOpen(false); openAuthModal('register'); }}
+                    className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold shadow-md shadow-brand-500/25 hover:bg-brand-600 transition-colors cursor-pointer"
+                  >
+                    {t.signup} Free
+                  </button>
+                </div>
+              )}
+
+              {/* Navigation Links */}
+              <nav className="py-4 space-y-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <Link 
+                  href="/browse" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <Compass className="w-4 h-4 text-brand-500" /> {t.browse}
+                </Link>
+                <Link 
+                  href="/library" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <BookMarked className="w-4 h-4 text-brand-500" /> My Library
+                  </span>
+                  {library.length > 0 && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-500 text-white">
+                      {library.length}
                     </span>
-                  ) : (
-                    <button
-                      onClick={() => toggleExperienceMode()}
-                      className="font-bold text-brand-500 hover:underline"
-                    >
-                      {user.experienceMode === 'kids' ? '🧒 Kids (Switch)' : '🔥 18+ (Switch)'}
-                    </button>
                   )}
-                </div>
+                </Link>
+                <Link 
+                  href="/community" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <Users className="w-4 h-4 text-indigo-500" /> {t.community}
+                </Link>
+                <Link 
+                  href="/contests" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <Trophy className="w-4 h-4 text-amber-500" /> {t.contests}
+                </Link>
+                <Link 
+                  href="/write" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <PenTool className="w-4 h-4 text-brand-500" /> {t.write}
+                </Link>
+
+                {user && (
+                  <>
+                    <Link 
+                      href={`/profile/${user.username}`} 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <User className="w-4 h-4 text-slate-500" /> {t.profile}
+                    </Link>
+                    <Link 
+                      href="/settings" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-slate-500" /> Settings
+                    </Link>
+                  </>
+                )}
+
+                {user?.role === 'admin' && (
+                  <Link 
+                    href="/admin" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 font-bold transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4" /> {t.adminPanel}
+                  </Link>
+                )}
+              </nav>
+            </div>
+
+            {/* Drawer Bottom Controls: Language, Theme, & Logout */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              {/* Language Switcher in Drawer */}
+              <div className="flex items-center justify-between text-xs px-2">
+                <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" /> Language:
+                </span>
+                <select 
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
+                >
+                  <option value="en">English (EN)</option>
+                  <option value="ka">ქართული (KA)</option>
+                  <option value="hi">हिन्दी (HI)</option>
+                </select>
               </div>
-              <Link href={`/profile/${user.username}`} className="block py-1.5 px-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                {t.profile}
-              </Link>
-              <Link href="/settings" className="block py-1.5 px-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                Account Settings
-              </Link>
-              <button
-                onClick={() => { setMobileMenuOpen(false); logoutUser(); }}
-                className="w-full text-left py-1.5 px-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
-              >
-                {t.logout}
-              </button>
+
+              {/* Theme Toggle in Drawer */}
+              <div className="flex items-center justify-between text-xs px-2">
+                <span className="text-slate-400 font-semibold">Appearance:</span>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold cursor-pointer"
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Dark Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Light Mode</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Logout Button */}
+              {user && (
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logoutUser();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" /> Log Out
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="pt-2 flex flex-col gap-2">
-              <button 
-                onClick={() => { setMobileMenuOpen(false); openAuthModal('login'); }}
-                className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold"
-              >
-                {t.login}
-              </button>
-              <button 
-                onClick={() => { setMobileMenuOpen(false); openAuthModal('register'); }}
-                className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold"
-              >
-                {t.signup}
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       )}
     </header>
