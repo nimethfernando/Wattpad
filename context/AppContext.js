@@ -347,6 +347,23 @@ export function AppProvider({ children }) {
         console.error("Could not load wishlist/library from localStorage", e);
       }
 
+      // Sync Custom Stories from localStorage
+      try {
+        const savedCustomStories = localStorage.getItem('avora_custom_stories');
+        if (savedCustomStories) {
+          const custom = JSON.parse(savedCustomStories);
+          if (Array.isArray(custom) && custom.length > 0) {
+            setStories(prev => {
+              const existingIds = new Set(prev.map(s => s.id));
+              const newItems = custom.filter(s => !existingIds.has(s.id));
+              return computeStoryRankings([...newItems, ...prev]);
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Could not load custom stories from localStorage", e);
+      }
+
       // Sync story read counts from localStorage and dynamically re-rank
       try {
         const savedReads = localStorage.getItem('avora_story_reads');
@@ -891,13 +908,35 @@ export function AppProvider({ children }) {
   };
 
   const publishStory = (newStory) => {
-    setStories(prev => computeStoryRankings([newStory, ...prev]));
+    setStories(prev => {
+      const updated = computeStoryRankings([newStory, ...prev]);
+      if (typeof window !== 'undefined') {
+        try {
+          const savedCustom = localStorage.getItem('avora_custom_stories');
+          const list = savedCustom ? JSON.parse(savedCustom) : [];
+          localStorage.setItem('avora_custom_stories', JSON.stringify([newStory, ...list]));
+        } catch (e) {}
+      }
+      return updated;
+    });
     addAuditLog("Story Published", newStory.title);
   };
 
   const deleteStory = (storyId) => {
     const target = stories.find(s => s.id === storyId);
-    setStories(prev => computeStoryRankings(prev.filter(s => s.id !== storyId)));
+    setStories(prev => {
+      const updated = computeStoryRankings(prev.filter(s => s.id !== storyId));
+      if (typeof window !== 'undefined') {
+        try {
+          const savedCustom = localStorage.getItem('avora_custom_stories');
+          if (savedCustom) {
+            const list = JSON.parse(savedCustom);
+            localStorage.setItem('avora_custom_stories', JSON.stringify(list.filter(s => s.id !== storyId)));
+          }
+        } catch (e) {}
+      }
+      return updated;
+    });
     if (target) addAuditLog("Story Deleted", target.title);
   };
 

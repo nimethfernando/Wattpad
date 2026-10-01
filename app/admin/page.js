@@ -7,7 +7,8 @@ import Pagination from '@/components/Pagination';
 import { useApp } from '@/context/AppContext';
 import { initialCmsConfig } from '@/lib/data';
 import { 
-  ShieldCheck, 
+  ShieldCheck,
+  X, 
   BookOpen, 
   Users, 
   Flag, 
@@ -49,7 +50,9 @@ import {
 export default function AdminPanel() {
   const { 
     stories, 
-    setStories, 
+    setStories,
+    publishStory,
+    deleteStory, 
     genres, 
     setGenres, 
     reports, 
@@ -251,7 +254,180 @@ export default function AdminPanel() {
   const [fakeAuthorBio, setFakeAuthorBio] = useState('');
   const [authorCreatedNotice, setAuthorCreatedNotice] = useState(false);
 
-  // New User Creation Modal
+  // Direct Admin Story Publishing State
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishSuccessNotice, setPublishSuccessNotice] = useState(null);
+
+  const [pubTitle, setPubTitle] = useState('');
+  const [pubSlug, setPubSlug] = useState('');
+  const [pubAuthor, setPubAuthor] = useState(user?.name || 'Avora Editorial Desk');
+  const [pubAuthorUsername, setPubAuthorUsername] = useState('avora_editorial');
+  const [pubAuthorAvatar, setPubAuthorAvatar] = useState('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80');
+  const [pubGenre, setPubGenre] = useState('Fantasy');
+  const [pubCover, setPubCover] = useState('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80');
+  const [pubDescription, setPubDescription] = useState('');
+  const [pubAgeRating, setPubAgeRating] = useState('13+');
+  const [pubContentType, setPubContentType] = useState('story'); // 'story' | 'picture_book'
+  const [pubLanguage, setPubLanguage] = useState('en');
+  const [pubStatus, setPubStatus] = useState('ongoing'); // 'ongoing' | 'completed'
+  const [pubMood, setPubMood] = useState('Adventurous');
+  const [pubTrope, setPubTrope] = useState('Enemies to Lovers');
+  const [pubTags, setPubTags] = useState('fantasy, magic, serialized');
+  const [pubIsOriginal, setPubIsOriginal] = useState(true);
+  const [pubIsEditorsPick, setPubIsEditorsPick] = useState(false);
+  const [pubIsTrending, setPubIsTrending] = useState(false);
+
+  // Initial Chapter / Pages State
+  const [pubChapterTitle, setPubChapterTitle] = useState('Chapter 1: The Beginning');
+  const [pubChapterBody, setPubChapterBody] = useState('');
+  const [pubPages, setPubPages] = useState([
+    { id: 1, image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80', text: 'The chronicle begins in an era of myth and forgotten power...', caption: 'Page 1' }
+  ]);
+
+  const coverPresets = [
+    { label: 'Fantasy / Magic', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Romance / Drama', url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Sci-Fi / Space', url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Kids / Illustrated', url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Mystery / Detective', url: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Adventure / Quest', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80' },
+  ];
+
+  const handleTitleChange = (e) => {
+    const val = e.target.value;
+    setPubTitle(val);
+    const generated = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    setPubSlug(generated);
+  };
+
+  const getMinAgeFromRating = (rating) => {
+    switch (rating) {
+      case '3+': return 3;
+      case '7+': return 7;
+      case '13+': return 13;
+      case '16+': return 16;
+      case '18+': return 18;
+      default: return 13;
+    }
+  };
+
+  const getTargetAudienceFromRating = (rating) => {
+    switch (rating) {
+      case '3+': return 'Kids (3-6)';
+      case '7+': return 'Middle Grade (7-12)';
+      case '13+': return 'Teen & YA';
+      case '16+': return 'Young Adult (16+)';
+      case '18+': return 'Adult (18+)';
+      default: return 'General Audience';
+    }
+  };
+
+  const handleAdminPublishStory = (e) => {
+    e.preventDefault();
+    if (!pubTitle.trim() || !pubDescription.trim()) {
+      alert("Please provide at least a Title and Synopsis for the story.");
+      return;
+    }
+
+    const newId = Date.now();
+    const finalSlug = (pubSlug.trim() || pubTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + Math.floor(100 + Math.random() * 900);
+    const minAge = getMinAgeFromRating(pubAgeRating);
+    const targetAudience = getTargetAudienceFromRating(pubAgeRating);
+    const maturity = pubAgeRating === '18+' ? 'mature' : 'everyone';
+
+    let initialChapterObj;
+    if (pubContentType === 'picture_book') {
+      initialChapterObj = {
+        id: 1,
+        number: 1,
+        title: pubChapterTitle.trim() || "Illustrated Edition",
+        reads: 0,
+        votes: 0,
+        emojis: { '🔥': 0, '❤️': 0, '😭': 0, '👏': 0, '😱': 0 },
+        pages: pubPages.length > 0 ? pubPages : [
+          { id: 1, image: pubCover, text: pubChapterBody || "The illustrated chronicle begins here.", caption: "Page 1" }
+        ]
+      };
+    } else {
+      const paragraphTexts = pubChapterBody.trim() 
+        ? pubChapterBody.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+        : ["The story begins in silence, waiting for the first word to breathe life into its world..."];
+
+      initialChapterObj = {
+        id: 1,
+        number: 1,
+        title: pubChapterTitle.trim() || "Chapter 1: The Beginning",
+        reads: 0,
+        votes: 0,
+        emojis: { '🔥': 0, '❤️': 0, '😭': 0, '👏': 0, '😱': 0 },
+        paragraphs: paragraphTexts.map((text, idx) => ({
+          id: 100 + idx + 1,
+          text,
+          comments: []
+        }))
+      };
+    }
+
+    const parsedTags = pubTags.split(',').map(t => t.trim().toLowerCase().replace(/^#/, '')).filter(Boolean);
+
+    const newStory = {
+      id: newId,
+      slug: finalSlug,
+      title: pubTitle.trim(),
+      author: pubAuthor.trim() || (user?.name || "Avora Editorial Desk"),
+      authorUsername: pubAuthorUsername.trim() || "avora_editorial",
+      authorAvatar: pubAuthorAvatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      genre: pubGenre,
+      genreSlug: pubGenre.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      cover: pubCover.trim() || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+      description: pubDescription.trim(),
+      status: pubStatus,
+      language: pubLanguage,
+      maturity,
+      ageRating: pubAgeRating,
+      minAge,
+      contentType: pubContentType,
+      targetAudience,
+      mood: pubMood,
+      trope: pubTrope,
+      length: "Serialized Novel",
+      isOriginal: pubIsOriginal,
+      isEditorsPick: pubIsEditorsPick,
+      isTrending: pubIsTrending,
+      isFanfiction: false,
+      reads: 0,
+      votes: 0,
+      commentsCount: 0,
+      lastUpdated: "Just now",
+      tags: parsedTags.length > 0 ? parsedTags : [pubGenre.toLowerCase()],
+      ranking: { rank: 1, tag: pubGenre, totalInTag: "1.2K stories" },
+      copyright: "All Rights Reserved (Published via Avora Admin)",
+      chapters: [initialChapterObj]
+    };
+
+    if (typeof publishStory === 'function') {
+      publishStory(newStory);
+    } else {
+      setStories(prev => [newStory, ...prev]);
+      addAuditLog("Admin Published Story", newStory.title);
+    }
+
+    setPublishSuccessNotice({
+      title: newStory.title,
+      slug: newStory.slug,
+      genre: newStory.genre,
+      ageRating: newStory.ageRating,
+      author: newStory.author
+    });
+
+    // Reset editable text fields
+    setPubTitle('');
+    setPubSlug('');
+    setPubDescription('');
+    setPubChapterBody('');
+  };
+
+    // New User Creation Modal
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -475,6 +651,18 @@ export default function AdminPanel() {
             Stories & Originals ({stories.length})
           </button>
           <button 
+            onClick={() => {
+              setActiveTab('publish');
+              setPublishSuccessNotice(null);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === 'publish' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 font-extrabold'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            + Publish Story
+          </button>
+          <button 
             onClick={() => setActiveTab('users')}
             className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -570,9 +758,20 @@ export default function AdminPanel() {
                   className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold outline-none"
                 />
               </div>
-              <Link href="/write" className="px-4 py-2 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 transition-colors">
-                + Write Editorial Story
-              </Link>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    setShowPublishModal(true);
+                    setPublishSuccessNotice(null);
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md shadow-brand-500/25 cursor-pointer hover:scale-105"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Publish New Story
+                </button>
+                <Link href="/write" className="px-3.5 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors">
+                  Writer Studio ↗
+                </Link>
+              </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
@@ -674,7 +873,521 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* TAB 2: USER & AUTHOR MODERATION */}
+
+        {/* TAB: DIRECT ADMIN STORY PUBLISHER */}
+        {activeTab === 'publish' && (
+          <div className="mt-8 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-purple-700 via-brand-600 to-amber-600 text-white p-6 sm:p-8 rounded-3xl shadow-xl">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/20 backdrop-blur-md mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-200" /> In-Dashboard Publishing
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black">Direct Admin Story Publishing Suite</h2>
+                <p className="text-xs sm:text-sm text-white/90 max-w-xl mt-1">
+                  Populate the Avora Library catalog directly with customized age ratings, tropes, serial chapters, and illustrated picture books.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('stories')}
+                className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold backdrop-blur-md transition-all cursor-pointer whitespace-nowrap"
+              >
+                ← Back to Stories
+              </button>
+            </div>
+
+            
+        {/* PUBLISH SUCCESS NOTIFICATION BANNER */}
+        {publishSuccessNotice && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700/60 rounded-3xl p-6 sm:p-8 space-y-4 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-200/60 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full">
+                  Published to Production
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
+                  "{publishSuccessNotice.title}" is Live on Avora Library!
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  By {publishSuccessNotice.author} • {publishSuccessNotice.genre} • Rating: {publishSuccessNotice.ageRating}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Link
+                href={`/story/${publishSuccessNotice.slug}`}
+                className="px-5 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> View Story Page
+              </Link>
+              <Link
+                href={`/read/${publishSuccessNotice.slug}`}
+                className="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open Reader View
+              </Link>
+              <button
+                type="button"
+                onClick={() => setPublishSuccessNotice(null)}
+                className="px-4 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer"
+              >
+                + Publish Another Story
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ADMIN QUICK PUBLISHING SUITE */}
+        <form onSubmit={handleAdminPublishStory} className="space-y-8">
+          
+          {/* Section 1: Core Story Metadata */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-brand-500" /> Story Information &amp; Taxonomy
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Define core catalog details, age access policy, and content formats.</p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
+                Editorial CMS
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Story Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. The Kingdom of Starlight"
+                  value={pubTitle}
+                  onChange={handleTitleChange}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  URL Slug: <span className="font-mono text-brand-600 dark:text-brand-400">/story/{pubSlug || 'story-title'}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Primary Genre <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={pubGenre}
+                  onChange={(e) => setPubGenre(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                >
+                  {genres.map(g => (
+                    <option key={g.id} value={g.name}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Age Rating & Format Selector */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Content Age Rating (Strict Backend Policy)
+                </label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {['3+', '7+', '13+', '16+', '18+'].map(rating => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setPubAgeRating(rating)}
+                      className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        pubAgeRating === rating
+                          ? rating === '18+'
+                            ? 'bg-rose-500 text-white ring-2 ring-rose-500 shadow-md'
+                            : rating === '16+'
+                            ? 'bg-amber-500 text-white ring-2 ring-amber-500 shadow-md'
+                            : 'bg-emerald-500 text-white ring-2 ring-emerald-500 shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {rating}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  {pubAgeRating === '3+' && '🧒 Kids 3+ (Visible to minors under 18)'}
+                  {pubAgeRating === '7+' && '🧒 Family 7+ (Visible to minors under 18)'}
+                  {pubAgeRating === '13+' && '📚 Teens 13+ (Requires age 13+)'}
+                  {pubAgeRating === '16+' && '🔥 Young Adult 16+ (Requires age 16+)'}
+                  {pubAgeRating === '18+' && '🔞 Mature 18+ (Strictly blocked for minors)'}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Content Format
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPubContentType('story')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'story'
+                        ? 'bg-brand-500 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> Serialized Text
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPubContentType('picture_book')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'picture_book'
+                        ? 'bg-brand-500 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" /> Picture Book
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Story Language &amp; Status
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={pubLanguage}
+                    onChange={(e) => setPubLanguage(e.target.value)}
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="en">English (EN)</option>
+                    <option value="ka">Georgian (KA)</option>
+                    <option value="hi">Hindi (HI)</option>
+                    <option value="es">Spanish (ES)</option>
+                  </select>
+                  <select
+                    value={pubStatus}
+                    onChange={(e) => setPubStatus(e.target.value)}
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Tags */}
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Synopsis / Story Description <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  value={pubDescription}
+                  onChange={(e) => setPubDescription(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Tags (Comma-separated)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. fantasy, magic, royalty"
+                    value={pubTags}
+                    onChange={(e) => setPubTags(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Story Trope</label>
+                  <select
+                    value={pubTrope}
+                    onChange={(e) => setPubTrope(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="Enemies to Lovers">Enemies to Lovers</option>
+                    <option value="Slow Burn">Slow Burn</option>
+                    <option value="Chosen One">Chosen One</option>
+                    <option value="Found Family">Found Family</option>
+                    <option value="Second Chance">Second Chance</option>
+                    <option value="Fake Dating">Fake Dating</option>
+                    <option value="Time Travel">Time Travel</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Mood</label>
+                  <select
+                    value={pubMood}
+                    onChange={(e) => setPubMood(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="Adventurous">Adventurous</option>
+                    <option value="Heartwarming">Heartwarming</option>
+                    <option value="Romantic">Romantic</option>
+                    <option value="Mysterious">Mysterious</option>
+                    <option value="Dark & Gritty">Dark &amp; Gritty</option>
+                    <option value="Inspiring">Inspiring</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Author Attribution & Cover Visuals */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-lg font-black flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-brand-500" /> Cover Artwork &amp; Creator Persona
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Select high-definition cover art and configure publisher attribution.</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              {/* Cover Preview */}
+              <div className="w-36 aspect-[3/4] shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 relative group">
+                <img
+                  src={pubCover}
+                  alt="Story Cover Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80';
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black bg-black/60 text-white backdrop-blur-md">
+                  Preview
+                </span>
+              </div>
+
+              {/* Cover Presets & Inputs */}
+              <div className="flex-1 space-y-4 w-full">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                    Quick 1-Click Cover Presets (Curated High-Res)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {coverPresets.map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setPubCover(preset.url)}
+                        className={`p-2 text-left rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                          pubCover === preset.url
+                            ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-500 text-brand-600 dark:text-brand-400 shadow-sm'
+                            : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-400'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                    Custom Cover Image URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={pubCover}
+                    onChange={(e) => setPubCover(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Author Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Avora Editorial Desk"
+                      value={pubAuthor}
+                      onChange={(e) => setPubAuthor(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Author Username</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. avora_editorial"
+                      value={pubAuthorUsername}
+                      onChange={(e) => setPubAuthorUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Editorial Flags */}
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsOriginal}
+                      onChange={(e) => setPubIsOriginal(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>🌟 Mark as House Original</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsEditorsPick}
+                      onChange={(e) => setPubIsEditorsPick(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>💎 Editor's Pick Badge</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsTrending}
+                      onChange={(e) => setPubIsTrending(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>🔥 Feature in Trending Shelf</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Initial Chapter or Illustrated Pages */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-lg font-black flex items-center gap-2">
+                <FileText className="w-5 h-5 text-brand-500" />
+                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : 'Illustrated Pages Manager'}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {pubContentType === 'story'
+                  ? 'Input the initial serialization chapter. Paragraphs separated by blank lines will support reader inline comments.'
+                  : 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                Chapter / Section Title
+              </label>
+              <input
+                type="text"
+                value={pubChapterTitle}
+                onChange={(e) => setPubChapterTitle(e.target.value)}
+                placeholder="e.g. Chapter 1: The Glass Needle"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+              />
+            </div>
+
+            {pubContentType === 'story' ? (
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Chapter Text Content
+                </label>
+                <textarea
+                  rows={8}
+                  placeholder="Paste or write the chapter manuscript here...\n\nSeparate each paragraph with an empty line so readers can quote and comment on specific sentences."
+                  value={pubChapterBody}
+                  onChange={(e) => setPubChapterBody(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pubPages.map((page, pIdx) => (
+                  <div key={page.id || pIdx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-brand-600 dark:text-brand-400">Page {pIdx + 1}</span>
+                      {pubPages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPubPages(prev => prev.filter((_, i) => i !== pIdx))}
+                          className="text-xs text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Remove Page
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Image URL</label>
+                        <input
+                          type="url"
+                          value={page.image}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, image: val } : p));
+                          }}
+                          placeholder="https://..."
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs font-mono outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Text / Caption</label>
+                        <input
+                          type="text"
+                          value={page.text}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
+                          }}
+                          placeholder="Text narrative for this page..."
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setPubPages(prev => [
+                    ...prev,
+                    { id: prev.length + 1, image: pubCover, text: 'And so the story continues...', caption: `Page ${prev.length + 1}` }
+                  ])}
+                  className="px-4 py-2 rounded-xl border border-dashed border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-bold transition-all cursor-pointer"
+                >
+                  + Add Another Illustrated Page
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Submission CTA Bar */}
+          <div className="flex items-center justify-between gap-4 p-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl shadow-xl">
+            <div>
+              <h4 className="font-extrabold text-sm">Ready to Publish to Live Catalog?</h4>
+              <p className="text-xs text-white/70 dark:text-slate-600">The novel will immediately populate the home feed, genre directory, and search indexing.</p>
+            </div>
+            <button
+              type="submit"
+              className="px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-black text-xs shadow-lg shadow-brand-500/30 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
+            >
+              🚀 Publish Story Directly
+            </button>
+          </div>
+
+        </form>
+
+          </div>
+        )}
+
+                {/* TAB 2: USER & AUTHOR MODERATION */}
         {activeTab === 'users' && (
           <div className="mt-8 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -2807,7 +3520,528 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Add User Modal */}
+
+      {/* QUICK PUBLISH STORY MODAL */}
+      {showPublishModal && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowPublishModal(false)}
+        >
+          <div 
+            className="w-full max-w-4xl max-h-[90vh] bg-slate-50 dark:bg-slate-950 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-auto overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-brand-500 text-white">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">Admin Direct Story Publisher</h3>
+                  <p className="text-xs text-slate-400">Populate the platform with new novels, age ratings, and chapters.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPublishModal(false)}
+                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            
+        {/* PUBLISH SUCCESS NOTIFICATION BANNER */}
+        {publishSuccessNotice && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700/60 rounded-3xl p-6 sm:p-8 space-y-4 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-200/60 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full">
+                  Published to Production
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
+                  "{publishSuccessNotice.title}" is Live on Avora Library!
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  By {publishSuccessNotice.author} • {publishSuccessNotice.genre} • Rating: {publishSuccessNotice.ageRating}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Link
+                href={`/story/${publishSuccessNotice.slug}`}
+                className="px-5 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> View Story Page
+              </Link>
+              <Link
+                href={`/read/${publishSuccessNotice.slug}`}
+                className="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open Reader View
+              </Link>
+              <button
+                type="button"
+                onClick={() => setPublishSuccessNotice(null)}
+                className="px-4 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer"
+              >
+                + Publish Another Story
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ADMIN QUICK PUBLISHING SUITE */}
+        <form onSubmit={handleAdminPublishStory} className="space-y-8">
+          
+          {/* Section 1: Core Story Metadata */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-brand-500" /> Story Information &amp; Taxonomy
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Define core catalog details, age access policy, and content formats.</p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
+                Editorial CMS
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Story Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. The Kingdom of Starlight"
+                  value={pubTitle}
+                  onChange={handleTitleChange}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  URL Slug: <span className="font-mono text-brand-600 dark:text-brand-400">/story/{pubSlug || 'story-title'}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Primary Genre <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={pubGenre}
+                  onChange={(e) => setPubGenre(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                >
+                  {genres.map(g => (
+                    <option key={g.id} value={g.name}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Age Rating & Format Selector */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Content Age Rating (Strict Backend Policy)
+                </label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {['3+', '7+', '13+', '16+', '18+'].map(rating => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setPubAgeRating(rating)}
+                      className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        pubAgeRating === rating
+                          ? rating === '18+'
+                            ? 'bg-rose-500 text-white ring-2 ring-rose-500 shadow-md'
+                            : rating === '16+'
+                            ? 'bg-amber-500 text-white ring-2 ring-amber-500 shadow-md'
+                            : 'bg-emerald-500 text-white ring-2 ring-emerald-500 shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {rating}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  {pubAgeRating === '3+' && '🧒 Kids 3+ (Visible to minors under 18)'}
+                  {pubAgeRating === '7+' && '🧒 Family 7+ (Visible to minors under 18)'}
+                  {pubAgeRating === '13+' && '📚 Teens 13+ (Requires age 13+)'}
+                  {pubAgeRating === '16+' && '🔥 Young Adult 16+ (Requires age 16+)'}
+                  {pubAgeRating === '18+' && '🔞 Mature 18+ (Strictly blocked for minors)'}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Content Format
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPubContentType('story')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'story'
+                        ? 'bg-brand-500 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> Serialized Text
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPubContentType('picture_book')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'picture_book'
+                        ? 'bg-brand-500 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" /> Picture Book
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Story Language &amp; Status
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={pubLanguage}
+                    onChange={(e) => setPubLanguage(e.target.value)}
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="en">English (EN)</option>
+                    <option value="ka">Georgian (KA)</option>
+                    <option value="hi">Hindi (HI)</option>
+                    <option value="es">Spanish (ES)</option>
+                  </select>
+                  <select
+                    value={pubStatus}
+                    onChange={(e) => setPubStatus(e.target.value)}
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Tags */}
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Synopsis / Story Description <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  value={pubDescription}
+                  onChange={(e) => setPubDescription(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Tags (Comma-separated)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. fantasy, magic, royalty"
+                    value={pubTags}
+                    onChange={(e) => setPubTags(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Story Trope</label>
+                  <select
+                    value={pubTrope}
+                    onChange={(e) => setPubTrope(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="Enemies to Lovers">Enemies to Lovers</option>
+                    <option value="Slow Burn">Slow Burn</option>
+                    <option value="Chosen One">Chosen One</option>
+                    <option value="Found Family">Found Family</option>
+                    <option value="Second Chance">Second Chance</option>
+                    <option value="Fake Dating">Fake Dating</option>
+                    <option value="Time Travel">Time Travel</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Mood</label>
+                  <select
+                    value={pubMood}
+                    onChange={(e) => setPubMood(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                  >
+                    <option value="Adventurous">Adventurous</option>
+                    <option value="Heartwarming">Heartwarming</option>
+                    <option value="Romantic">Romantic</option>
+                    <option value="Mysterious">Mysterious</option>
+                    <option value="Dark & Gritty">Dark &amp; Gritty</option>
+                    <option value="Inspiring">Inspiring</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Author Attribution & Cover Visuals */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-lg font-black flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-brand-500" /> Cover Artwork &amp; Creator Persona
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Select high-definition cover art and configure publisher attribution.</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              {/* Cover Preview */}
+              <div className="w-36 aspect-[3/4] shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 relative group">
+                <img
+                  src={pubCover}
+                  alt="Story Cover Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80';
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black bg-black/60 text-white backdrop-blur-md">
+                  Preview
+                </span>
+              </div>
+
+              {/* Cover Presets & Inputs */}
+              <div className="flex-1 space-y-4 w-full">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                    Quick 1-Click Cover Presets (Curated High-Res)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {coverPresets.map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setPubCover(preset.url)}
+                        className={`p-2 text-left rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                          pubCover === preset.url
+                            ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-500 text-brand-600 dark:text-brand-400 shadow-sm'
+                            : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-400'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                    Custom Cover Image URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={pubCover}
+                    onChange={(e) => setPubCover(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Author Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Avora Editorial Desk"
+                      value={pubAuthor}
+                      onChange={(e) => setPubAuthor(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Author Username</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. avora_editorial"
+                      value={pubAuthorUsername}
+                      onChange={(e) => setPubAuthorUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Editorial Flags */}
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsOriginal}
+                      onChange={(e) => setPubIsOriginal(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>🌟 Mark as House Original</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsEditorsPick}
+                      onChange={(e) => setPubIsEditorsPick(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>💎 Editor's Pick Badge</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={pubIsTrending}
+                      onChange={(e) => setPubIsTrending(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <span>🔥 Feature in Trending Shelf</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Initial Chapter or Illustrated Pages */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-lg font-black flex items-center gap-2">
+                <FileText className="w-5 h-5 text-brand-500" />
+                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : 'Illustrated Pages Manager'}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {pubContentType === 'story'
+                  ? 'Input the initial serialization chapter. Paragraphs separated by blank lines will support reader inline comments.'
+                  : 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                Chapter / Section Title
+              </label>
+              <input
+                type="text"
+                value={pubChapterTitle}
+                onChange={(e) => setPubChapterTitle(e.target.value)}
+                placeholder="e.g. Chapter 1: The Glass Needle"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+              />
+            </div>
+
+            {pubContentType === 'story' ? (
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  Chapter Text Content
+                </label>
+                <textarea
+                  rows={8}
+                  placeholder="Paste or write the chapter manuscript here...\n\nSeparate each paragraph with an empty line so readers can quote and comment on specific sentences."
+                  value={pubChapterBody}
+                  onChange={(e) => setPubChapterBody(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pubPages.map((page, pIdx) => (
+                  <div key={page.id || pIdx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-brand-600 dark:text-brand-400">Page {pIdx + 1}</span>
+                      {pubPages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPubPages(prev => prev.filter((_, i) => i !== pIdx))}
+                          className="text-xs text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Remove Page
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Image URL</label>
+                        <input
+                          type="url"
+                          value={page.image}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, image: val } : p));
+                          }}
+                          placeholder="https://..."
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs font-mono outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Text / Caption</label>
+                        <input
+                          type="text"
+                          value={page.text}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
+                          }}
+                          placeholder="Text narrative for this page..."
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setPubPages(prev => [
+                    ...prev,
+                    { id: prev.length + 1, image: pubCover, text: 'And so the story continues...', caption: `Page ${prev.length + 1}` }
+                  ])}
+                  className="px-4 py-2 rounded-xl border border-dashed border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-bold transition-all cursor-pointer"
+                >
+                  + Add Another Illustrated Page
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Submission CTA Bar */}
+          <div className="flex items-center justify-between gap-4 p-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl shadow-xl">
+            <div>
+              <h4 className="font-extrabold text-sm">Ready to Publish to Live Catalog?</h4>
+              <p className="text-xs text-white/70 dark:text-slate-600">The novel will immediately populate the home feed, genre directory, and search indexing.</p>
+            </div>
+            <button
+              type="submit"
+              className="px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-black text-xs shadow-lg shadow-brand-500/30 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
+            >
+              🚀 Publish Story Directly
+            </button>
+          </div>
+
+        </form>
+
+          </div>
+        </div>
+      )}
+
+            {/* Add User Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 space-y-4">
