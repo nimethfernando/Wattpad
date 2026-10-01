@@ -176,8 +176,14 @@ export default function LibraryPage() {
                                   {story.genre}
                                 </span>
                                 {story.ranking && (
-                                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
-                                    #{story.ranking.rank} in {story.ranking.tag}
+                                  <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                                    story.ranking.rank === 1
+                                      ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/40'
+                                      : story.ranking.rank === 2
+                                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
+                                  }`}>
+                                    {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}
                                   </span>
                                 )}
                               </div>

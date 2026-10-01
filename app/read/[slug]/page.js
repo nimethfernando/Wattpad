@@ -365,9 +365,19 @@ export default function ReaderPage() {
       {/* 2. MAIN CHAPTER READING CANVAS */}
       <main className="max-w-3xl mx-auto px-6 py-12">
         <header className="mb-10 text-center space-y-2">
-          <span className="text-xs uppercase font-extrabold tracking-widest text-brand-600 dark:text-brand-400">
-            Chapter {chapter.number}
-          </span>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <span className="text-xs uppercase font-extrabold tracking-widest text-brand-600 dark:text-brand-400">
+              Chapter {chapter.number}
+            </span>
+            {story.ranking && (
+              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 flex items-center gap-1">
+                <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
+              </span>
+            )}
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <Eye className="w-3 h-3 text-brand-500" /> {(story.reads || 0).toLocaleString()} reads
+            </span>
+          </div>
           <h1 className="text-3xl sm:text-4xl font-black">{chapter.title}</h1>
           <p className="text-xs opacity-70">
             By {story.author} • Published {chapter.publishedAt}

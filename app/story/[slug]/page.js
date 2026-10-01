@@ -259,9 +259,14 @@ export default function StoryDetailPage() {
 
               {/* Wattpad-style Leaderboard Ranking Badge */}
               {story.ranking && (
-                <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-700 dark:text-amber-400">
+                <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-bold text-amber-700 dark:text-amber-400 flex-wrap">
                   <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                  <span>#{story.ranking.rank} in {story.ranking.tag}</span>
+                  <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
+                  {story.ranking.globalRank && (
+                    <span className="bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-black">
+                      #{story.ranking.globalRank} Overall
+                    </span>
+                  )}
                   <span className="text-slate-400 dark:text-slate-500 font-normal">out of {story.ranking.totalInTag}</span>
                 </div>
               )}

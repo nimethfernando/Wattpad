@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { initialStories, initialGenres } from '@/lib/data';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
+import { computeStoryRankings } from '@/lib/rankingEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,17 @@ export async function GET(request) {
         s.description.toLowerCase().includes(q) ||
         s.tags?.some(t => t.toLowerCase().includes(q))
       );
+    }
+
+    const sort = searchParams.get('sort'); // 'most_read' | 'trending' | 'newest'
+
+    // Core Dynamic Ranking Engine: Automatically compute live rankings based on reader counts
+    accessibleStories = computeStoryRankings(accessibleStories);
+
+    if (sort === 'most_read') {
+      accessibleStories.sort((a, b) => (b.reads || 0) - (a.reads || 0));
+    } else if (sort === 'trending') {
+      accessibleStories.sort((a, b) => ((b.reads || 0) + (b.votes || 0) * 5) - ((a.reads || 0) + (a.votes || 0) * 5));
     }
 
     const accessibleGenres = filterGenresForUser(initialGenres, user);

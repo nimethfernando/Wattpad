@@ -93,10 +93,14 @@ export default function HomeFeedView() {
     );
   };
 
-  // 4. "Tailored For You" - Stories matching any of the user's selected genres
-  const tailoredStories = visibleStories.filter(story => 
-    favoriteGenres.some(genre => matchesGenre(story, genre))
-  );
+  // 4. "Tailored For You" - Stories matching any of the user's selected genres (dynamically sorted by reads)
+  const tailoredStories = visibleStories
+    .filter(story => favoriteGenres.some(genre => matchesGenre(story, genre)))
+    .sort((a, b) => (b.reads || 0) - (a.reads || 0));
+
+  // 4B. Top Reading Leaderboard (strictly sorted #1, #2, #3... by live total reads)
+  const topReadingLeaderboard = [...visibleStories]
+    .sort((a, b) => (b.reads || 0) - (a.reads || 0));
 
   // 5. Stories from Followed Writers
   const followedAuthorsStories = visibleStories.filter(story =>
@@ -294,6 +298,45 @@ export default function HomeFeedView() {
         </div>
       </section>
 
+      {/* 2B. TOP READING LEADERBOARD (Strictly sorted by reads descending: #1, #2, #3...) */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+              <h2 className="text-lg sm:text-xl font-black">Top Reading Leaderboard</h2>
+              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800">
+                ⚡ Auto-Ranked by Reads
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Live leaderboard updated automatically as community members read chapters across the library
+            </p>
+          </div>
+
+          <Link
+            href="/browse?sort=most_read"
+            className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
+          >
+            <span>Full Leaderboard</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+          {topReadingLeaderboard.slice(0, 4).map(story => (
+            <StoryFeedCard 
+              key={story.id} 
+              story={story} 
+              isInLib={isInLibrary(story.id)}
+              onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+              onOpenReadingList={(s) => setSelectedStoryForList(s)}
+              onHideStory={(id) => hideStory(id)}
+            />
+          ))}
+        </div>
+      </section>
+
       {/* 3. UPDATES FROM WRITERS YOU FOLLOW */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
@@ -409,7 +452,9 @@ export default function HomeFeedView() {
 
       {/* 5. DYNAMIC SHELVES GENERATED FROM USER'S ONBOARDING GENRES */}
       {topDynamicGenres.map((genre) => {
-        const genreStories = visibleStories.filter(s => matchesGenre(s, genre));
+        const genreStories = visibleStories
+          .filter(s => matchesGenre(s, genre))
+          .sort((a, b) => (b.reads || 0) - (a.reads || 0));
         if (genreStories.length === 0) return null;
 
         return (
@@ -520,10 +565,18 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
           />
 
-          {/* Ranking Badge if present */}
+          {/* Dynamic Ranking Badge if present */}
           {story.ranking && (
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-950/80 backdrop-blur-md text-amber-400 border border-amber-400/30 flex items-center gap-1 z-10">
-              <span>#{story.ranking.rank} in {story.ranking.tag}</span>
+            <div className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black backdrop-blur-md border flex items-center gap-1 z-10 shadow-sm ${
+              story.ranking.rank === 1
+                ? 'bg-amber-950/90 text-amber-300 border-amber-400/50 ring-1 ring-amber-400/30'
+                : story.ranking.rank === 2
+                ? 'bg-slate-900/90 text-slate-200 border-slate-400/40'
+                : story.ranking.rank === 3
+                ? 'bg-amber-950/80 text-amber-200 border-amber-600/40'
+                : 'bg-slate-950/80 text-slate-300 border-slate-700/50'
+            }`}>
+              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
             </div>
           )}
 

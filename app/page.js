@@ -42,7 +42,8 @@ export default function HomePage() {
   const accessibleStories = filterStoriesForUser(stories, user);
   const accessibleGenres = filterGenresForUser(genres, user);
 
-  const trendingStories = accessibleStories.filter(s => s.isTrending);
+  // Dynamic ranking: sorted automatically by total reads descending (#1, #2, #3...)
+  const trendingStories = [...accessibleStories].sort((a, b) => (b.reads || 0) - (a.reads || 0));
   const houseOriginals = accessibleStories.filter(s => s.isOriginal);
   const editorsPicks = accessibleStories.filter(s => s.isEditorsPick);
   const mustReadFanfiction = accessibleStories.filter(s => s.genreSlug === 'fanfiction' || s.isFanfiction);
@@ -193,27 +194,32 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 2. TRENDING NOW STORY CAROUSEL */}
+        {/* 2. TRENDING NOW STORY CAROUSEL (Dynamically ordered by reads descending) */}
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Flame className="w-6 h-6 text-brand-500 fill-brand-500" />
                 <h2 className="text-2xl font-black tracking-tight">{t.trendingNow}</h2>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
+                  ⚡ Auto-Ranked by Reads
+                </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t.trendingSub}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                The most active serialized stories readers are devouring today • Live ordered #1, #2, #3 by reader volume
+              </p>
             </div>
-            <Link href="/browse?sort=trending" className="text-xs font-bold text-brand-500 hover:text-brand-600 flex items-center gap-1">
-              View All <ArrowRight className="w-3.5 h-3.5" />
+            <Link href="/browse?sort=most_read" className="text-xs font-bold text-brand-500 hover:text-brand-600 flex items-center gap-1">
+              Leaderboard <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {trendingStories.map((story) => (
+            {trendingStories.slice(0, 8).map((story, index) => (
               <Link 
                 key={story.id} 
                 href={`/story/${story.slug}`} 
-                className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-brand-500/50 transition-all duration-200"
+                className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-brand-500/50 transition-all duration-200 relative"
               >
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img 
@@ -221,18 +227,38 @@ export default function HomePage() {
                     alt={story.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  {story.isOriginal && (
-                    <div className="absolute top-2.5 left-2.5 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold text-brand-400">
-                      ORIGINAL
-                    </div>
-                  )}
+                  {/* Real-time Leaderboard Position Ribbon */}
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black backdrop-blur-md shadow-md flex items-center gap-1 ${
+                      index === 0
+                        ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 ring-1 ring-amber-300'
+                        : index === 1
+                        ? 'bg-slate-200/90 text-slate-900 ring-1 ring-slate-300 dark:bg-slate-800/90 dark:text-slate-100'
+                        : index === 2
+                        ? 'bg-amber-800/90 text-amber-100 ring-1 ring-amber-600'
+                        : 'bg-slate-950/80 text-white'
+                    }`}>
+                      <span>{index === 0 ? '🥇 #1' : index === 1 ? '🥈 #2' : index === 2 ? '🥉 #3' : `#${index + 1}`}</span>
+                    </span>
+                    {story.isOriginal && (
+                      <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold text-brand-400">
+                        ORIGINAL
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{story.genre}</span>
                       {story.ranking && (
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400">
+                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                          story.ranking.rank === 1
+                            ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300/40'
+                            : story.ranking.rank === 2
+                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                        }`}>
                           #{story.ranking.rank} in {story.ranking.tag}
                         </span>
                       )}
@@ -241,8 +267,8 @@ export default function HomePage() {
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">By {story.author}</p>
                   </div>
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
-                    <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {story.reads.toLocaleString()}</span>
-                    <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {story.votes.toLocaleString()}</span>
+                    <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
+                    <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </Link>

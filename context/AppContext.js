@@ -24,6 +24,10 @@ import {
   filterGenresForUser, 
   EXPERIENCE_MODES 
 } from '@/lib/agePolicy';
+import { 
+  computeStoryRankings, 
+  sortStoriesByReads 
+} from '@/lib/rankingEngine';
 
 const AppContext = createContext();
 
@@ -36,8 +40,8 @@ export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Stories & Content State
-  const [stories, setStories] = useState(initialStories);
+  // Stories & Content State (Dynamically calculated based on live reads)
+  const [stories, setStories] = useState(() => computeStoryRankings(initialStories));
   const [genres, setGenres] = useState(initialGenres);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
   const [contests, setContests] = useState(initialContests);
@@ -300,6 +304,31 @@ export function AppProvider({ children }) {
         }
       } catch (e) {
         console.error("Could not load CMS config from localStorage", e);
+      }
+
+      // Sync story read counts from localStorage and dynamically re-rank
+      try {
+        const savedReads = localStorage.getItem('avora_story_reads');
+        if (savedReads) {
+          const deltas = JSON.parse(savedReads);
+          setStories(prev => {
+            const merged = prev.map(s => {
+              const delta = Number(deltas[s.id]) || 0;
+              const updatedChapters = s.chapters?.map(c => {
+                const chDelta = Number(deltas[`${s.id}_ch_${c.id}`]) || 0;
+                return { ...c, reads: (c.reads || 0) + chDelta };
+              }) || [];
+              return {
+                ...s,
+                reads: (s.reads || 0) + delta,
+                chapters: updatedChapters
+              };
+            });
+            return computeStoryRankings(merged);
+          });
+        }
+      } catch (e) {
+        console.error("Could not load story read counts from localStorage", e);
       }
 
       setIsHydrated(true);
@@ -616,18 +645,80 @@ export function AppProvider({ children }) {
     }));
   };
 
+  const incrementStoryReads = (storyId, chapterId = null, amount = 1) => {
+    setStories(prev => {
+      const updated = prev.map(s => {
+        if (s.id === storyId) {
+          const newReads = (s.reads || 0) + amount;
+          const newChapters = s.chapters?.map(c => {
+            if (chapterId && c.id === chapterId) {
+              return { ...c, reads: (c.reads || 0) + amount };
+            }
+            return c;
+          }) || [];
+          return {
+            ...s,
+            reads: newReads,
+            chapters: newChapters
+          };
+        }
+        return s;
+      });
+
+      // Dynamically recalculate all rankings and positions
+      const newlyRanked = computeStoryRankings(updated);
+
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('avora_story_reads');
+          const deltas = raw ? JSON.parse(raw) : {};
+          deltas[storyId] = (deltas[storyId] || 0) + amount;
+          if (chapterId) {
+            deltas[`${storyId}_ch_${chapterId}`] = (deltas[`${storyId}_ch_${chapterId}`] || 0) + amount;
+          }
+          localStorage.setItem('avora_story_reads', JSON.stringify(deltas));
+        } catch (e) {
+          console.error("Failed to persist read counter:", e);
+        }
+      }
+
+      return newlyRanked;
+    });
+
+    // Asynchronously notify backend API
+    if (typeof window !== 'undefined') {
+      const targetStory = stories.find(s => s.id === storyId);
+      if (targetStory?.slug) {
+        fetch(`/api/stories/${targetStory.slug}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chapterId, count: amount })
+        }).catch(() => {});
+      }
+    }
+  };
+
   const publishStory = (newStory) => {
-    setStories(prev => [newStory, ...prev]);
+    setStories(prev => computeStoryRankings([newStory, ...prev]));
     addAuditLog("Story Published", newStory.title);
   };
 
   const deleteStory = (storyId) => {
     const target = stories.find(s => s.id === storyId);
-    setStories(prev => prev.filter(s => s.id !== storyId));
+    setStories(prev => computeStoryRankings(prev.filter(s => s.id !== storyId)));
     if (target) addAuditLog("Story Deleted", target.title);
   };
 
   const saveReadingProgress = (storyId, chapterId, paragraphIndex = 0, scrollOffset = 0) => {
+    // Record read counter for this chapter session
+    if (typeof window !== 'undefined' && storyId) {
+      const sessionKey = `avora_read_session_${storyId}_${chapterId || 'main'}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, 'true');
+        incrementStoryReads(storyId, chapterId, 1);
+      }
+    }
+
     const targetStory = stories.find(s => s.id === storyId);
     const targetChapter = targetStory?.chapters?.find(c => c.id === chapterId) || targetStory?.chapters?.[0];
     const totalChapters = targetStory?.chapters?.length || 1;
@@ -668,6 +759,7 @@ export function AppProvider({ children }) {
 
   const recordChapterRead = (storyId, chapterId) => {
     saveReadingProgress(storyId, chapterId);
+    incrementStoryReads(storyId, chapterId, 1);
     setReadingStreak(prev => ({
       ...prev,
       chaptersReadThisWeek: (prev?.chaptersReadThisWeek || 0) + 1
@@ -1333,6 +1425,7 @@ export function AppProvider({ children }) {
       voteChapter,
       reactChapterEmoji,
       addParagraphComment,
+      incrementStoryReads,
       publishStory,
       deleteStory,
       authModalOpen,
