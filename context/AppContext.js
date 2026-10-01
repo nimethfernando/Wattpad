@@ -1040,8 +1040,13 @@ export function AppProvider({ children }) {
   };
 
   // Financial & Payment Operations
-  const openPaymentModal = ({ mode = 'donate', story = null, author = null, plan = null }) => {
-    setPaymentModalData({ mode, story, author, plan });
+  const openPaymentModal = (params = {}) => {
+    const mode = params.mode || params.type || 'donate';
+    const plan = params.plan || null;
+    const author = params.author || null;
+    const authorUsername = params.authorUsername || null;
+    const story = params.story || null;
+    setPaymentModalData({ mode, type: mode, story, author, authorUsername, plan });
     setPaymentModalOpen(true);
   };
 
