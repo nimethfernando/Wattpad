@@ -175,21 +175,21 @@ export default function HomeFeedView() {
             </div>
           </div>
 
-          <div className="pt-6 mt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-6 mt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs text-slate-400">
               {activeStory?.chapters?.length || 1} Total Chapters published
             </span>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <Link 
                 href={`/story/${activeStory?.slug}`}
-                className="text-xs font-bold text-slate-300 hover:text-white px-4 py-2 rounded-full hover:bg-white/5 transition-colors"
+                className="flex-1 sm:flex-initial text-center text-xs font-bold text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-full hover:bg-white/5 transition-colors"
               >
                 Table of Contents
               </Link>
               <Link 
                 href={`/read/${activeStory?.slug}`}
-                className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-black text-xs shadow-lg shadow-brand-500/25 flex items-center gap-1.5 hover:scale-[1.02] transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial text-center px-5 sm:px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-black text-xs shadow-lg shadow-brand-500/25 flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-all cursor-pointer"
               >
                 <span>Resume Reading</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -199,7 +199,7 @@ export default function HomeFeedView() {
         </div>
 
         {/* Reading Streak & 7-Day Challenge Widget */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
@@ -228,13 +228,13 @@ export default function HomeFeedView() {
             </div>
 
             {/* 7-Day Visual Calendar Tracker */}
-            <div className="grid grid-cols-7 gap-1.5 pt-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 pt-2">
               {streakDays.map((day, idx) => {
                 const active = streakActive[idx];
                 return (
                   <div key={idx} className="flex flex-col items-center gap-1">
                     <span className="text-[10px] font-bold text-slate-400">{day}</span>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-[10px] sm:text-xs font-bold transition-all ${
                       active
                         ? 'bg-gradient-to-tr from-brand-500 to-amber-400 text-white shadow-md shadow-brand-500/20'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
@@ -280,7 +280,7 @@ export default function HomeFeedView() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {(tailoredStories.length > 0 ? tailoredStories : visibleStories).slice(0, 4).map(story => (
             <StoryFeedCard 
               key={story.id} 
@@ -311,7 +311,7 @@ export default function HomeFeedView() {
         </div>
 
         {followedAuthorsStories.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {followedAuthorsStories.slice(0, 4).map(story => (
               <StoryFeedCard 
                 key={story.id} 
@@ -431,7 +431,7 @@ export default function HomeFeedView() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
               {genreStories.slice(0, 4).map(story => (
                 <StoryFeedCard 
                   key={story.id} 
@@ -463,7 +463,7 @@ export default function HomeFeedView() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {houseOriginals.slice(0, 4).map(story => (
             <StoryFeedCard 
               key={story.id} 
@@ -577,7 +577,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
 
               {/* 3-Dot Menu Popover */}
               {menuOpen && (
-                <div className="absolute right-0 top-10 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-10 w-44 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                   <button
                     onClick={() => {
                       setMenuOpen(false);
