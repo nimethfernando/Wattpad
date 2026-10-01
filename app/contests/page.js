@@ -32,12 +32,12 @@ export default function ContestsPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Banner */}
-        <div className="rounded-3xl bg-gradient-to-r from-amber-600 via-brand-600 to-purple-700 p-8 sm:p-12 text-white shadow-xl mb-10">
+        <div className="rounded-3xl bg-gradient-to-r from-amber-600 via-brand-600 to-purple-700 p-6 sm:p-12 text-white shadow-xl mb-8 sm:mb-10">
           <div className="max-w-2xl space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
               <Trophy className="w-3.5 h-3.5 text-amber-300" /> Avora Library Awards & Competitions
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">The Watty-Style Annual Writing Contests</h1>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">The Watty-Style Annual Writing Contests</h1>
             <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
               Submit your serialized novel to our annual competitions. Win cash grants, official badges, and editorial publishing consideration.
             </p>
@@ -45,10 +45,10 @@ export default function ContestsPage() {
         </div>
 
         {/* Tab Controls: Open Competitions vs Winners Showcase */}
-        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar scrollbar-none border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 sm:mb-8">
           <button 
             onClick={() => setActiveTab('open')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'open' 
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -58,7 +58,7 @@ export default function ContestsPage() {
           </button>
           <button 
             onClick={() => setActiveTab('winners')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'winners' 
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -78,7 +78,7 @@ export default function ContestsPage() {
               {contests.slice((contestPage - 1) * contestPageSize, contestPage * contestPageSize).map((c) => (
                 <div 
                   key={c.id} 
-                  className={`bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border transition-all ${
+                  className={`bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 border transition-all ${
                     selectedContest.id === c.id 
                       ? 'border-brand-500 shadow-xl' 
                       : 'border-slate-200 dark:border-slate-800'
@@ -116,11 +116,11 @@ export default function ContestsPage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span className="text-xs text-slate-400">{c.entriesCount} stories entered so far</span>
                     <button 
                       onClick={() => setSelectedContest(c)}
-                      className="px-5 py-2 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition-colors"
+                      className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition-colors text-center cursor-pointer"
                     >
                       Enter This Contest
                     </button>
