@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --bg-color: #f8fafc;
+  --bg-color: #fafbfc;
   --text-color: #0f172a;
 }
 
@@ -16,14 +16,30 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.dark {
-  --bg-color: #0b0f19;
-  --text-color: #f1f5f9;
+/* Cream Paper theme dedicated to comfortable serialized reading */
+.cream-reader {
+  background-color: #fdfbf7 !important;
+  color: #1e293b !important;
 }
 
-/* Sepia theme dedicated to serialized reading */
+.cream-reader header,
+.cream-reader nav,
+.cream-reader footer,
+.cream-reader .reader-toolbar {
+  background-color: #f9f5ec !important;
+  border-color: #ebe2d3 !important;
+  color: #1e293b !important;
+}
+
+.cream-reader .reader-card {
+  background-color: #fffefb !important;
+  border-color: #ede5d8 !important;
+  color: #1e293b !important;
+}
+
+/* Sepia theme dedicated to warm classic serialized reading */
 .sepia-reader {
-  background-color: #fbf0d9 !important;
+  background-color: #faf5eb !important;
   color: #3b2f1e !important;
 }
 
@@ -31,8 +47,8 @@ body {
 .sepia-reader nav,
 .sepia-reader footer,
 .sepia-reader .reader-toolbar {
-  background-color: #f4ecd8 !important;
-  border-color: #e3d5b8 !important;
+  background-color: #f2ebd9 !important;
+  border-color: #e5dac2 !important;
   color: #3b2f1e !important;
 }
 
@@ -42,7 +58,7 @@ body {
   color: #3b2f1e !important;
 }
 
-/* Custom scrollbars */
+/* Custom modern light scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -54,8 +70,8 @@ body {
   background: #cbd5e1;
   border-radius: 9999px;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+::-webkit-scrollbar-thumb:hover {
+  background: #fb923c;
 }
 
 /* Reading Confetti Falling Keyframe */

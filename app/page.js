@@ -53,21 +53,21 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-[#fafbfc] text-slate-900 transition-colors">
       <Header />
 
       {/* Dual-State View Switcher (Wattpad Feed vs Public Landing) */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 py-2 px-4 sticky top-16 z-40">
+      <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 px-4 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 font-bold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 font-bold text-slate-500">
             <span>Home View:</span>
-            <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/70">
               <button
                 onClick={() => setHomeFeedViewMode('feed')}
                 className={`px-3 py-1 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 ${
                   homeFeedViewMode === 'feed'
                     ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-brand-500'
+                    : 'text-slate-600 hover:text-brand-500'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export default function HomePage() {
                 className={`px-3 py-1 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 ${
                   homeFeedViewMode === 'landing'
                     ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-brand-500'
+                    : 'text-slate-600 hover:text-brand-500'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ export default function HomePage() {
           <div className="text-[11px] text-slate-400 flex items-center gap-2">
             <span>{user ? `Active Member: @${user.username}` : 'Guest Visitor'}</span>
             <span className="hidden md:inline">•</span>
-            <Link href="/home" className="text-brand-600 dark:text-brand-400 font-bold hover:underline hidden md:inline">
+            <Link href="/home" className="text-brand-600 font-bold hover:underline hidden md:inline">
               Direct Route: /home →
             </Link>
           </div>
@@ -106,11 +106,11 @@ export default function HomePage() {
         /* 2. PUBLIC SHOWCASE & MARKETING LANDING VIEW */
         <main className="flex-1">
         {/* 1. HERO SECTION */}
-        <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-brand-50/60 via-transparent to-transparent dark:from-slate-900/40">
+        <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-slate-200/70 bg-gradient-to-b from-orange-50/70 via-amber-50/30 to-[#fafbfc]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-900">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200">
                   <Sparkles className="w-3.5 h-3.5 text-brand-500" /> Original Serialized Fiction & Community
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
@@ -119,7 +119,7 @@ export default function HomePage() {
                     Capture Your Imagination.
                   </span>
                 </h1>
-                <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
                   {t.heroSubtitle}
                 </p>
                 
