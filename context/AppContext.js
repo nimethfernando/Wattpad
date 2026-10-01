@@ -333,14 +333,18 @@ export function AppProvider({ children }) {
         console.error("Could not load CMS config from localStorage", e);
       }
 
-      // Sync Wishlist from localStorage
+      // Sync Wish List and Library from localStorage
       try {
         const savedWishlist = localStorage.getItem('avora_wishlist');
         if (savedWishlist) {
           setWishlist(JSON.parse(savedWishlist));
         }
+        const savedLib = localStorage.getItem('avora_library');
+        if (savedLib) {
+          setLibrary(JSON.parse(savedLib));
+        }
       } catch (e) {
-        console.error("Could not load wishlist from localStorage", e);
+        console.error("Could not load wishlist/library from localStorage", e);
       }
 
       // Sync story read counts from localStorage and dynamically re-rank
@@ -395,14 +399,21 @@ export function AppProvider({ children }) {
 
   // Sync Wishlist to localStorage
   useEffect(() => {
-    if (isHydrated && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isHydrated) {
       try {
         localStorage.setItem('avora_wishlist', JSON.stringify(wishlist));
-      } catch (e) {
-        console.error("Failed to save wishlist to localStorage", e);
-      }
+      } catch (e) {}
     }
   }, [wishlist, isHydrated]);
+
+  // Sync Library to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated) {
+      try {
+        localStorage.setItem('avora_library', JSON.stringify(library));
+      } catch (e) {}
+    }
+  }, [library, isHydrated]);
 
   // Trigger onboarding modal if user has not completed onboarding
   useEffect(() => {
@@ -991,7 +1002,7 @@ export function AppProvider({ children }) {
     return library.includes(storyId);
   };
 
-  // Dedicated Personal Wish List Handlers
+  // Dedicated Personal Wish List Operations
   const addToWishlist = (storyId) => {
     const numId = Number(storyId);
     if (!user) {
@@ -1000,10 +1011,11 @@ export function AppProvider({ children }) {
     }
     if (!wishlist.includes(numId)) {
       setWishlist(prev => [...prev, numId]);
-      showNotification({
-        type: 'success',
-        title: 'Added to Wish List',
-        message: 'Story has been saved to your personal Wish List!'
+      const targetStory = stories.find(s => s.id === numId);
+      sendNotification({
+        title: "Added to Wish List! 🎁",
+        message: `"${targetStory?.title || 'Story'}" has been added to your personal Wish List.`,
+        type: "system"
       });
     }
   };
@@ -1026,7 +1038,6 @@ export function AppProvider({ children }) {
       addToWishlist(numId);
     }
   };
-
 
   // Financial & Payment Operations
   const openPaymentModal = ({ mode = 'donate', story = null, author = null, plan = null }) => {

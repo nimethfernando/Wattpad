@@ -48,6 +48,8 @@ export default function StoryDetailPage() {
     openAuthModal,
     user,
     setAgeVerificationModalOpen,
+    openPaymentModal,
+    featureFlags,
     t
   } = useApp();
 
@@ -299,6 +301,28 @@ export default function StoryDetailPage() {
                   {isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
+
+                {featureFlags?.enablePaidFeatures && (
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        openAuthModal('login', `Sign in to tip ${story.author} and support their serialized story!`);
+                        return;
+                      }
+                      openPaymentModal({
+                        mode: 'donate',
+                        author: story.author,
+                        authorUsername: story.authorUsername,
+                        story: story
+                      });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm cursor-pointer hover:scale-105"
+                    title={`Send a tip to ${story.author}`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                    <span>Tip Author</span>
+                  </button>
+                )}
 
                 {/* Report button */}
                 <button

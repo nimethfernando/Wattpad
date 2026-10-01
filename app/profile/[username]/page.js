@@ -19,7 +19,8 @@ import {
   Activity, 
   Share2,
   Send,
-  Trophy
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 import { filterStoriesForUser } from '@/lib/agePolicy';
 
@@ -35,6 +36,8 @@ export default function ProfilePage() {
     userConversations,
     postConversationMessage,
     openAuthModal,
+    openPaymentModal,
+    featureFlags,
     t 
   } = useApp();
 
@@ -116,17 +119,40 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-3">
               {!isSelf && (
-                <button 
-                  onClick={() => followAuthor(profileData.username)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all ${
-                    isFollowing 
-                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200' 
-                      : 'bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/25'
-                  }`}
-                >
-                  {isFollowing ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                  {isFollowing ? 'Following' : 'Follow Author'}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button 
+                    onClick={() => followAuthor(profileData.username)}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      isFollowing 
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200' 
+                        : 'bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/25'
+                    }`}
+                  >
+                    {isFollowing ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {isFollowing ? 'Following' : 'Follow Author'}
+                  </button>
+
+                  {featureFlags?.enablePaidFeatures && (
+                    <button
+                      onClick={() => {
+                        if (!user) {
+                          openAuthModal('login', `Sign in to tip ${profileData.name} and support their novels!`);
+                          return;
+                        }
+                        openPaymentModal({
+                          mode: 'donate',
+                          author: profileData.name,
+                          authorUsername: profileData.username
+                        });
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 cursor-pointer hover:scale-105"
+                      title={`Send a tip to ${profileData.name}`}
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-200" />
+                      <span>Tip Author</span>
+                    </button>
+                  )}
+                </div>
               )}
               {isSelf && (
                 <Link href="/write" className="px-5 py-2.5 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600">

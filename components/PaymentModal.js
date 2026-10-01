@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { 
   X, 
@@ -25,7 +25,7 @@ export default function PaymentModal() {
     user 
   } = useApp();
 
-  const mode = paymentModalData?.mode || 'donate'; // 'donate' | 'subscribe'
+  const mode = paymentModalData?.mode || paymentModalData?.type || 'donate'; // 'donate' | 'subscribe'
   const targetAuthor = paymentModalData?.author || 'Elena Vance';
   const targetStory = paymentModalData?.story || null;
 
@@ -35,7 +35,19 @@ export default function PaymentModal() {
   const [donorMessage, setDonorMessage] = useState('');
 
   // Subscription state
-  const [selectedPlan, setSelectedPlan] = useState(paymentModalData?.plan || 'Monthly VIP ($5.99/mo)');
+  const getInitialPlan = (p) => {
+    if (p === 'annual') return 'Annual VIP ($49.99/yr)';
+    if (p === 'monthly') return 'Monthly VIP ($5.99/mo)';
+    return p || 'Monthly VIP ($5.99/mo)';
+  };
+
+  const [selectedPlan, setSelectedPlan] = useState(getInitialPlan(paymentModalData?.plan));
+
+  useEffect(() => {
+    if (paymentModalData?.plan) {
+      setSelectedPlan(getInitialPlan(paymentModalData.plan));
+    }
+  }, [paymentModalData]);
 
   // Card Inputs
   const [cardNumber, setCardNumber] = useState('');
