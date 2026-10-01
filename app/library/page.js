@@ -33,7 +33,7 @@ export default function LibraryPage() {
     t 
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('library'); // 'library' | 'lists' | 'archive'
+  const [activeTab, setActiveTab] = useState('library'); // 'library' | 'wishlist' | 'lists' | 'archive'
   const [newListTitle, setNewListTitle] = useState('');
   const [newListDesc, setNewListDesc] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -248,7 +248,149 @@ export default function LibraryPage() {
           </div>
         )}
 
-        {/* TAB 2: READING LISTS */}
+
+        {/* TAB: WISHLIST */}
+        {activeTab === 'wishlist' && (
+          <div>
+            {wishlistStories.length === 0 ? (
+              <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-4 shadow-sm">
+                <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-500 mx-auto shadow-inner">
+                  <Heart className="w-8 h-8 fill-rose-500/20" />
+                </div>
+                <h3 className="text-xl font-black">{t?.emptyWishlist || 'Your Wish List is Empty'}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                  {t?.emptyWishlistDesc || 'Save stories you are excited to read later by tapping the heart icon on any story card or detail page.'}
+                </p>
+                <Link
+                  href="/browse"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-500/25 hover:bg-rose-600 transition-all cursor-pointer"
+                >
+                  {t?.browse || 'Explore Trending Stories'} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedWishlistStories.map((story) => {
+                    const inLib = isInLibrary ? isInLibrary(story.id) : library.includes(story.id);
+
+                    return (
+                      <div 
+                        key={story.id} 
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group"
+                      >
+                        <div className="flex gap-3 sm:gap-4">
+                          <Link href={`/story/${story.slug}`} className="shrink-0">
+                            <img 
+                              src={story.cover} 
+                              alt={story.title} 
+                              className="w-20 sm:w-28 aspect-[3/4] object-cover rounded-2xl shadow-md group-hover:scale-105 transition-transform" 
+                            />
+                          </Link>
+
+                          <div className="flex-1 flex flex-col justify-between py-0.5">
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
+                                  {story.genre}
+                                </span>
+                                {story.ageRating && (
+                                  <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                                    story.ageRating === '18+'
+                                      ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
+                                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                                  }`}>
+                                    {story.ageRating}
+                                  </span>
+                                )}
+                              </div>
+                              <Link href={`/story/${story.slug}`}>
+                                <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
+                                  {story.title}
+                                </h3>
+                              </Link>
+                              <p className="text-xs text-slate-400">By {story.author}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                                {story.description}
+                              </p>
+                            </div>
+
+                            <div className="pt-2 flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+                              <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
+                              <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500 fill-rose-500" /> {story.votes.toLocaleString()}</span>
+                              <span>{story.chapters.length} Ch.</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Actions */}
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Link 
+                              href={`/read/${story.slug}`}
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all cursor-pointer"
+                            >
+                              <BookOpen className="w-3.5 h-3.5" /> {t?.startReading || 'Start Reading'}
+                            </Link>
+
+                            <button
+                              onClick={() => {
+                                if (inLib) {
+                                  removeFromLibrary(story.id);
+                                } else {
+                                  addToLibrary(story.id);
+                                }
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                inLib
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                              }`}
+                              title={inLib ? "Saved in Library" : "Add to Library"}
+                            >
+                              {inLib ? (
+                                <>
+                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span>{t?.inLibrary || 'In Library'}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <BookMarked className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>{t?.moveToLibrary || 'Move to Library'}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <button 
+                            onClick={() => removeFromWishlist && removeFromWishlist(story.id)}
+                            className="p-2 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer shrink-0"
+                            title={t?.removeFromWishlist || "Remove from Wish List"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Wishlist Pagination */}
+                <Pagination
+                  currentPage={wishlistPage}
+                  totalPages={totalWishlistPages}
+                  onPageChange={setWishlistPage}
+                  totalItems={wishlistStories.length}
+                  itemsPerPage={wishlistPageSize}
+                  onItemsPerPageChange={setWishlistPageSize}
+                  pageSizeOptions={[6, 9, 12]}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+                {/* TAB 2: READING LISTS */}
         {activeTab === 'lists' && (
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">

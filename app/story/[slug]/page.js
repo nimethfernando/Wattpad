@@ -39,12 +39,16 @@ export default function StoryDetailPage() {
     addToLibrary,
     removeFromLibrary,
     isInLibrary,
+    wishlist,
+    toggleWishlist,
+    isInWishlist,
     readingLists,
     setReadingLists,
     readingProgress,
     openAuthModal,
     user,
-    setAgeVerificationModalOpen
+    setAgeVerificationModalOpen,
+    t
   } = useApp();
 
   const [copiedShare, setCopiedShare] = useState(false);
@@ -159,6 +163,7 @@ export default function StoryDetailPage() {
 
   const isFollowing = followingAuthors.includes(story.authorUsername);
   const inLib = isInLibrary(story.id);
+  const isWish = isInWishlist ? isInWishlist(story.id) : false;
 
   // Reading progress check
   const savedProgress = readingProgress[story.id];
@@ -357,6 +362,20 @@ export default function StoryDetailPage() {
                 >
                   {inLib ? <Check className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4" />}
                   <span>{inLib ? 'In Your Library' : 'Add to Library'}</span>
+                </button>
+
+                {/* Dedicated 1-Click Wish List Button */}
+                <button
+                  onClick={() => toggleWishlist && toggleWishlist(story.id)}
+                  className={`px-4 py-3 rounded-full font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    isWish
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                      : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-rose-400 hover:text-rose-500'
+                  }`}
+                  title={isWish ? (t?.removeFromWishlist || "Remove from Wish List") : (t?.addToWishlist || "Add to Wish List")}
+                >
+                  <Heart className={`w-4 h-4 ${isWish ? 'fill-current text-rose-500' : ''}`} />
+                  <span>{isWish ? (t?.wishlisted || 'Wish Listed') : (t?.wishlist || 'Wish List')}</span>
                 </button>
 
                 {/* Add to Reading List Popover */}

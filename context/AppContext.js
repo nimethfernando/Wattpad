@@ -53,6 +53,7 @@ export function AppProvider({ children }) {
   const [followingAuthors, setFollowingAuthors] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [library, setLibrary] = useState([]); // Wattpad Personal Library
+  const [wishlist, setWishlist] = useState([]); // Dedicated Personal Wish List
   const [readingLists, setReadingLists] = useState([]);
 
   // Reading Progress & Streaks
@@ -332,6 +333,16 @@ export function AppProvider({ children }) {
         console.error("Could not load CMS config from localStorage", e);
       }
 
+      // Sync Wishlist from localStorage
+      try {
+        const savedWishlist = localStorage.getItem('avora_wishlist');
+        if (savedWishlist) {
+          setWishlist(JSON.parse(savedWishlist));
+        }
+      } catch (e) {
+        console.error("Could not load wishlist from localStorage", e);
+      }
+
       // Sync story read counts from localStorage and dynamically re-rank
       try {
         const savedReads = localStorage.getItem('avora_story_reads');
@@ -381,6 +392,17 @@ export function AppProvider({ children }) {
       console.error("Could not sync user to localStorage", e);
     }
   }, [user, isHydrated]);
+
+  // Sync Wishlist to localStorage
+  useEffect(() => {
+    if (isHydrated && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_wishlist', JSON.stringify(wishlist));
+      } catch (e) {
+        console.error("Failed to save wishlist to localStorage", e);
+      }
+    }
+  }, [wishlist, isHydrated]);
 
   // Trigger onboarding modal if user has not completed onboarding
   useEffect(() => {
@@ -969,6 +991,43 @@ export function AppProvider({ children }) {
     return library.includes(storyId);
   };
 
+  // Dedicated Personal Wish List Handlers
+  const addToWishlist = (storyId) => {
+    const numId = Number(storyId);
+    if (!user) {
+      openAuthModal('login', 'Sign in to save this story to your personal Wish List!', () => addToWishlist(storyId));
+      return;
+    }
+    if (!wishlist.includes(numId)) {
+      setWishlist(prev => [...prev, numId]);
+      showNotification({
+        type: 'success',
+        title: 'Added to Wish List',
+        message: 'Story has been saved to your personal Wish List!'
+      });
+    }
+  };
+
+  const removeFromWishlist = (storyId) => {
+    const numId = Number(storyId);
+    setWishlist(prev => prev.filter(id => id !== numId));
+  };
+
+  const isInWishlist = (storyId) => {
+    const numId = Number(storyId);
+    return wishlist.includes(numId);
+  };
+
+  const toggleWishlist = (storyId) => {
+    const numId = Number(storyId);
+    if (isInWishlist(numId)) {
+      removeFromWishlist(numId);
+    } else {
+      addToWishlist(numId);
+    }
+  };
+
+
   // Financial & Payment Operations
   const openPaymentModal = ({ mode = 'donate', story = null, author = null, plan = null }) => {
     setPaymentModalData({ mode, story, author, plan });
@@ -1551,6 +1610,12 @@ export function AppProvider({ children }) {
       addToLibrary,
       removeFromLibrary,
       isInLibrary,
+      wishlist,
+      setWishlist,
+      addToWishlist,
+      removeFromWishlist,
+      isInWishlist,
+      toggleWishlist,
       readingLists,
       setReadingLists,
       createReadingList,

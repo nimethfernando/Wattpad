@@ -24,7 +24,7 @@ import {
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 
 export default function BrowsePage() {
-  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, user, t } = useApp();
+  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t } = useApp();
 
   // Filters & Sorting state
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -496,17 +496,31 @@ export default function BrowsePage() {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
-                    className={`p-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                      isInLibrary(story.id)
-                        ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40'
-                        : 'text-slate-400 hover:text-brand-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                    title={isInLibrary(story.id) ? "Saved in Library" : "Add to Library"}
-                  >
-                    {isInLibrary(story.id) ? <Check className="w-3.5 h-3.5" /> : <BookMarked className="w-3.5 h-3.5" />}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => toggleWishlist && toggleWishlist(story.id)}
+                      className={`p-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        isInWishlist && isInWishlist(story.id)
+                          ? 'text-rose-500 bg-rose-50 dark:bg-rose-950/40 ring-1 ring-rose-500/20'
+                          : 'text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      title={isInWishlist && isInWishlist(story.id) ? (t?.inWishlist || "In Wish List") : (t?.addToWishlist || "Add to Wish List")}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${isInWishlist && isInWishlist(story.id) ? 'fill-current' : ''}`} />
+                    </button>
+
+                    <button
+                      onClick={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                      className={`p-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        isInLibrary(story.id)
+                          ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40'
+                          : 'text-slate-400 hover:text-brand-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      title={isInLibrary(story.id) ? (t?.inLibrary || "Saved in Library") : (t?.addToLibrary || "Add to Library")}
+                    >
+                      {isInLibrary(story.id) ? <Check className="w-3.5 h-3.5" /> : <BookMarked className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

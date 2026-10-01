@@ -612,6 +612,8 @@ export default function HomeFeedView() {
 
 // Reusable Wattpad-style Card Component with 3-Dot Quick Actions
 function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideStory }) {
+  const { isInWishlist, toggleWishlist, t } = useApp();
+  const isWish = isInWishlist ? isInWishlist(story.id) : false;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -675,8 +677,24 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
             )}
           </div>
 
-          {/* Top Right Actions: Quick Add + 3-Dot Menu */}
+          {/* Top Right Actions: Quick Wishlist + Quick Add + 3-Dot Menu */}
           <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+            {/* Quick Wish List Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (toggleWishlist) toggleWishlist(story.id);
+              }}
+              className={`p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                isWish
+                  ? 'bg-rose-500 text-white shadow-md'
+                  : 'bg-black/50 hover:bg-black/80 text-white'
+              }`}
+              title={isWish ? (t?.removeFromWishlist || "Remove from Wish List") : (t?.addToWishlist || "Add to Wish List")}
+            >
+              <Heart className={`w-3.5 h-3.5 ${isWish ? 'fill-current text-white' : 'text-white'}`} />
+            </button>
+
             {/* Quick Add to Library Button */}
             <button
               onClick={onToggleLib}
