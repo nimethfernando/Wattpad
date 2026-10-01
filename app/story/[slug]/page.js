@@ -301,7 +301,7 @@ export default function StoryDetailPage() {
               </div>
 
               {/* Story Stats */}
-              <div className="flex items-center gap-6 text-xs text-slate-600 dark:text-slate-300 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600 dark:text-slate-300 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <span className="flex items-center gap-1.5 font-semibold"><Eye className="w-4 h-4 text-brand-500" /> {story.reads.toLocaleString()} Reads</span>
                 <span className="flex items-center gap-1.5 font-semibold"><Heart className="w-4 h-4 text-rose-500" /> {story.votes.toLocaleString()} Votes</span>
                 <span className="flex items-center gap-1.5 font-semibold"><MessageSquare className="w-4 h-4 text-indigo-500" /> {story.commentsCount.toLocaleString()} Comments</span>
@@ -328,11 +328,11 @@ export default function StoryDetailPage() {
             </div>
 
             {/* Read & Wattpad-style Library CTA Buttons */}
-            <div className="flex items-center gap-3 pt-3 flex-wrap">
+            <div className="flex items-center gap-2.5 sm:gap-3 pt-3 flex-wrap">
               {/* Primary Start / Continue Reading Button */}
               <Link 
                 href={`/read/${story.slug}`} 
-                className="px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] flex items-center gap-2"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
               >
                 <BookOpen className="w-4 h-4" /> 
                 {savedProgress 
@@ -340,74 +340,76 @@ export default function StoryDetailPage() {
                   : 'Start Reading Chapter 1'}
               </Link>
 
-              {/* Add to Library Toggle Button */}
-              <button
-                onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
-                className={`px-5 py-3 rounded-full font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
-                  inLib
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                    : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-500'
-                }`}
-              >
-                {inLib ? <Check className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4" />}
-                <span>{inLib ? 'In Your Library' : 'Add to Library'}</span>
-              </button>
-
-              {/* Add to Reading List Popover */}
-              <div className="relative">
+              {/* Add to Library Toggle Button & Reading List Popover Group */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => setShowListDropdown(!showListDropdown)}
-                  className="px-4 py-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Add to Reading List"
+                  onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                  className={`flex-1 sm:flex-initial px-5 py-3 rounded-full font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    inLib
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                      : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-500'
+                  }`}
                 >
-                  <BookMarked className="w-4 h-4" />
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  {inLib ? <Check className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4" />}
+                  <span>{inLib ? 'In Your Library' : 'Add to Library'}</span>
                 </button>
 
-                {showListDropdown && (
-                  <div className="absolute left-0 bottom-14 sm:bottom-auto sm:top-14 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs">
-                    <div className="flex items-center justify-between px-2 py-1">
-                      <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
-                        Save to Reading List
-                      </p>
-                      <button 
-                        onClick={() => {
-                          setShowListDropdown(false);
-                          setShowReadingListModal(true);
-                        }}
-                        className="text-[11px] font-bold text-brand-500 hover:underline flex items-center gap-0.5 cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" /> New
-                      </button>
+                {/* Add to Reading List Popover */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowListDropdown(!showListDropdown)}
+                    className="p-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Add to Reading List"
+                  >
+                    <BookMarked className="w-4 h-4" />
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+
+                  {showListDropdown && (
+                    <div className="absolute left-0 bottom-14 sm:bottom-auto sm:top-14 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs">
+                      <div className="flex items-center justify-between px-2 py-1">
+                        <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
+                          Save to Reading List
+                        </p>
+                        <button 
+                          onClick={() => {
+                            setShowListDropdown(false);
+                            setShowReadingListModal(true);
+                          }}
+                          className="text-[11px] font-bold text-brand-500 hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> New
+                        </button>
+                      </div>
+                      <div className="space-y-1 my-1 max-h-48 overflow-y-auto">
+                        {readingLists.map((list) => {
+                          const isContained = list.storyIds.includes(story.id);
+                          return (
+                            <button
+                              key={list.id}
+                              onClick={() => handleToggleReadingList(list.id)}
+                              className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold cursor-pointer"
+                            >
+                              <span className="truncate">{list.title}</span>
+                              {isContained && <Check className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          onClick={() => {
+                            setShowListDropdown(false);
+                            setShowReadingListModal(true);
+                          }}
+                          className="w-full py-1.5 text-center font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors cursor-pointer"
+                        >
+                          Manage All Lists
+                        </button>
+                      </div>
                     </div>
-                    <div className="space-y-1 my-1 max-h-48 overflow-y-auto">
-                      {readingLists.map((list) => {
-                        const isContained = list.storyIds.includes(story.id);
-                        return (
-                          <button
-                            key={list.id}
-                            onClick={() => handleToggleReadingList(list.id)}
-                            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold cursor-pointer"
-                          >
-                            <span className="truncate">{list.title}</span>
-                            {isContained && <Check className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        onClick={() => {
-                          setShowListDropdown(false);
-                          setShowReadingListModal(true);
-                        }}
-                        className="w-full py-1.5 text-center font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs transition-colors cursor-pointer"
-                      >
-                        Manage All Lists
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Share Button */}
