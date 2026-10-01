@@ -1,8 +1,8 @@
 'use client';
-import { useState, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useApp } from '@/context/AppContext';
 import { calculateAgeFromDob, EXPERIENCE_MODES } from '@/lib/agePolicy';
-import { ShieldCheck, ShieldAlert, Sparkles, Lock, Check, Calendar, AlertCircle } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Sparkles, Lock, Check, Calendar, AlertCircle, X } from 'lucide-react';
 
 export default function AgeVerificationModal() {
   const { 
@@ -22,6 +22,19 @@ export default function AgeVerificationModal() {
   const calculatedAge = calculateAgeFromDob(dob);
   const isUnder18 = calculatedAge !== null && calculatedAge < 18;
   const isUnder13 = calculatedAge !== null && calculatedAge < 13;
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setAgeVerificationModalOpen(false);
+      }
+    };
+    if (ageVerificationModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [ageVerificationModalOpen, setAgeVerificationModalOpen]);
 
   if (!ageVerificationModalOpen) return null;
 
@@ -68,11 +81,23 @@ export default function AgeVerificationModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[120] overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[120] overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+      onClick={() => setAgeVerificationModalOpen(false)}
+    >
       <div 
         className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={() => setAgeVerificationModalOpen(false)}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          aria-label="Close modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
