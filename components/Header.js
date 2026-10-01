@@ -108,46 +108,46 @@ export default function Header() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* Brand Logo */}
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/40 shrink-0 bg-slate-950">
+        {/* Brand Logo & Nav */}
+        <div className="flex items-center gap-3 lg:gap-6 min-w-0">
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/40 shrink-0 bg-slate-950">
               <img src="/tab-icon.png" alt="Avora Library Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
                 Avora<span className="text-brand-500 dark:text-amber-400">Library</span>
               </span>
-              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5">
+              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5 hidden sm:block">
                 {theme === 'dark' ? 'Night Reader' : 'Serialized Fiction'}
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
-              <Compass className="w-4 h-4" /> {t.browse}
+          <nav className="hidden md:flex items-center gap-2 lg:gap-3.5 xl:gap-5 text-xs lg:text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+              <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
             </Link>
-            <Link href="/library" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
-              <BookMarked className="w-4 h-4 text-brand-500" /> My Library
+            <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+              <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> Library
               {library.length > 0 && (
-                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-brand-500 text-white">
+                <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
                   {library.length}
                 </span>
               )}
             </Link>
-            <Link href="/community" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
-              <Users className="w-4 h-4" /> {t.community}
+            <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+              <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
             </Link>
-            <Link href="/contests" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
-              <Trophy className="w-4 h-4 text-amber-500" /> {t.contests}
+            <Link href="/contests" className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+              <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
             </Link>
-            <Link href="/write" className="hover:text-brand-500 flex items-center gap-1.5 transition-colors">
-              <PenTool className="w-4 h-4 text-brand-500" /> {t.write}
+            <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+              <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
             </Link>
             {user?.role === 'admin' && (
-              <Link href="/admin" className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200">
+              <Link href="/admin" className="hidden 2xl:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
               </Link>
             )}
@@ -155,7 +155,7 @@ export default function Header() {
         </div>
 
         {/* Global Autocomplete Search Bar */}
-        <div className="hidden lg:block relative flex-1 max-w-sm mx-6" ref={searchRef}>
+        <div className="hidden xl:block relative flex-1 max-w-xs xl:max-w-sm mx-3 lg:mx-4" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -215,48 +215,48 @@ export default function Header() {
           )}
         </div>
 
-        {/* Right Action Icons: Experience Mode, Language, Theme, Notifications & User */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Action Icons: Experience Mode, Language, Theme, Search, Notifications & User */}
+        <div className="shrink-0 flex items-center gap-1 sm:gap-2">
           {/* Experience Mode Switcher (DOB-enforced) */}
           {user && (
             <div className="hidden sm:block">
               {user.age !== undefined && user.age < 18 ? (
                 <div 
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
                   title="Age-Protected Kids/Family Mode (Under 18)"
                 >
                   <span>🧒</span>
-                  <span className="hidden md:inline">Kids Mode</span>
+                  <span className="hidden lg:inline">Kids</span>
                   <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 </div>
               ) : (
                 <button
                   onClick={() => toggleExperienceMode()}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                  className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${
                     user.experienceMode === 'kids'
                       ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
                       : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700 hover:bg-rose-100'
                   }`}
                   title={`Click to switch to ${user.experienceMode === 'kids' ? '18+ Mature' : 'Kids / Family'} mode`}
                 >
-                  <span>{user.experienceMode === 'kids' ? '🧒 Kids Mode' : '🔥 18+ Mature'}</span>
+                  <span>{user.experienceMode === 'kids' ? '🧒 Kids' : '🔥 18+'}</span>
                 </button>
               )}
             </div>
           )}
 
           {/* Language Switcher */}
-          <div className="flex items-center text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1.5 rounded-full">
-            <Globe className="w-3.5 h-3.5 mr-1 text-slate-500" />
+          <div className="hidden md:flex items-center text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
+            <Globe className="w-3.5 h-3.5 mr-1 text-slate-500 shrink-0" />
             <select 
               value={lang}
               onChange={(e) => setLang(e.target.value)}
               aria-label="Language selection"
-              className="bg-transparent font-bold text-slate-700 dark:text-slate-300 border-none outline-none cursor-pointer"
+              className="bg-transparent font-bold text-slate-700 dark:text-slate-300 border-none outline-none cursor-pointer text-xs"
             >
-              <option value="en">English (EN)</option>
-              <option value="ka">ქართული (KA)</option>
-              <option value="hi">हिन्दी (HI)</option>
+              <option value="en">EN</option>
+              <option value="ka">KA</option>
+              <option value="hi">HI</option>
             </select>
           </div>
 
@@ -264,16 +264,17 @@ export default function Header() {
           <button 
             onClick={toggleTheme}
             aria-label="Toggle theme mode"
-            className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Mobile Search Toggle Button */}
+          {/* Search Toggle Button (visible whenever the full search bar is hidden) */}
           <button
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="md:hidden p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="xl:hidden p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Search"
+            title="Search stories"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -328,13 +329,14 @@ export default function Header() {
 
           {/* User Profile or Login */}
           {user ? (
-            <div className="relative">
+            <div className="relative shrink-0">
               <button 
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-brand-500/50 transition-all"
+                className="flex items-center gap-1.5 p-1 rounded-full hover:ring-2 hover:ring-brand-500/50 transition-all cursor-pointer"
+                aria-label="User profile menu"
               >
-                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700 shrink-0" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block shrink-0" />
               </button>
 
               {/* Profile Dropdown */}
@@ -411,24 +413,24 @@ export default function Header() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => openAuthModal('login')} 
-                className="text-xs font-semibold px-3 py-1.5 hover:text-brand-500 transition-colors cursor-pointer"
+                className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 hover:text-brand-500 transition-colors cursor-pointer shrink-0"
               >
                 {t.login}
               </button>
               <button 
                 onClick={() => openAuthModal('register')} 
-                className="text-xs font-bold px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all cursor-pointer"
+                className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all cursor-pointer shrink-0"
               >
                 {t.signup}
               </button>
             </div>
           )}
 
-          {/* Mobile Menu Button */}
+          {/* Menu Button for Mobile & Tablets */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-600 dark:text-slate-300"
-            aria-label="Toggle Navigation"
+            className="xl:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer shrink-0"
+            aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -436,9 +438,9 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Search Expandable Bar */}
+      {/* Expandable Search Bar for screens where full search is hidden */}
       {mobileSearchOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-lg">
+        <div className="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-lg">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -491,7 +493,7 @@ export default function Header() {
 
       {/* Mobile Slide-Over Drawer with Backdrop Blur */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] xl:hidden">
           {/* Backdrop Overlay */}
           <div 
             onClick={() => setMobileMenuOpen(false)}
