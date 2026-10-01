@@ -70,7 +70,7 @@ export default function HomePage() {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Personalized Feed (Wattpad Style)</span>
+                <span><span className="hidden sm:inline">Personalized </span>Feed</span>
               </button>
               <button
                 onClick={() => setHomeFeedViewMode('landing')}
@@ -81,7 +81,7 @@ export default function HomePage() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>Public Landing Page</span>
+                <span><span className="hidden sm:inline">Public </span>Landing</span>
               </button>
             </div>
           </div>
@@ -163,11 +163,11 @@ export default function HomePage() {
 
               {/* Hero Spotlight Story Card */}
               <div className="lg:col-span-5 flex justify-center">
-                <div className="relative group w-72 sm:w-80 rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 transition-transform duration-300 hover:scale-[1.02]">
+                <div className="relative group w-full max-w-[280px] sm:max-w-xs rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 transition-transform duration-300 hover:scale-[1.02]">
                   <img 
                     src={stories[0].cover} 
                     alt={stories[0].title}
-                    className="w-full h-[450px] object-cover"
+                    className="w-full h-[360px] sm:h-[450px] object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end text-white">
                     <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full bg-brand-500 w-fit mb-2">

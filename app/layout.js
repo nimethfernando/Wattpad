@@ -4,6 +4,7 @@ import AuthModal from '@/components/AuthModal';
 import OnboardingModal from '@/components/OnboardingModal';
 import AgeVerificationModal from '@/components/AgeVerificationModal';
 import AuthProvider from '@/components/AuthProvider';
+import MobileBottomNav from '@/components/MobileBottomNav';
 
 export const viewport = {
   themeColor: '#ea580c',
@@ -38,10 +39,11 @@ export default function RootLayout({ children }) {
         <link rel="alternate icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
-      <body>
+      <body className="pb-16 md:pb-0 min-h-screen">
         <AuthProvider>
           <AppProvider>
             {children}
+            <MobileBottomNav />
             <AuthModal />
             <OnboardingModal />
             <AgeVerificationModal />

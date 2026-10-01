@@ -82,11 +82,11 @@ export default function LibraryPage() {
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-8">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar scrollbar-none pb-1 w-full sm:w-auto">
             <button
               onClick={() => setActiveTab('library')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'library'
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -96,7 +96,7 @@ export default function LibraryPage() {
             </button>
             <button
               onClick={() => setActiveTab('lists')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'lists'
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -106,7 +106,7 @@ export default function LibraryPage() {
             </button>
             <button
               onClick={() => setActiveTab('archive')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'archive'
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -119,7 +119,7 @@ export default function LibraryPage() {
           {activeTab === 'lists' && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all"
+              className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/25 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" /> New Reading List
             </button>
@@ -158,14 +158,14 @@ export default function LibraryPage() {
                     return (
                       <div 
                         key={story.id} 
-                        className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group"
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group"
                       >
-                        <div className="flex gap-4">
+                        <div className="flex gap-3 sm:gap-4">
                           <Link href={`/story/${story.slug}`} className="shrink-0">
                             <img 
                               src={story.cover} 
                               alt={story.title} 
-                              className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-2xl shadow-md group-hover:scale-105 transition-transform" 
+                              className="w-20 sm:w-28 aspect-[3/4] object-cover rounded-2xl shadow-md group-hover:scale-105 transition-transform" 
                             />
                           </Link>
 

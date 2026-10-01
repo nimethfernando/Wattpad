@@ -65,6 +65,7 @@ export default function ReaderPage() {
   const [fontFamily, setFontFamily] = useState('serif'); // 'serif' | 'sans'
   const [lineSpacing, setLineSpacing] = useState('leading-relaxed'); // 'leading-normal' | 'leading-relaxed' | 'leading-loose'
   const [showChapterDrawer, setShowChapterDrawer] = useState(false);
+  const [showAppearanceModal, setShowAppearanceModal] = useState(false);
 
   // Inline Paragraph Comments & Emojis State
   const [activeParagraph, setActiveParagraph] = useState(null);
@@ -256,17 +257,17 @@ export default function ReaderPage() {
     }`}>
       
       {/* 1. TOP READER NAVIGATION BAR */}
-      <nav className="sticky top-0 z-40 backdrop-blur-md border-b px-4 sm:px-8 h-14 flex items-center justify-between border-black/10 dark:border-white/10">
-        <div className="flex items-center gap-3">
+      <nav className="sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 h-14 flex items-center justify-between border-black/10 dark:border-white/10">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link 
             href={`/story/${story.slug}`} 
-            className="text-xs font-bold px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 hover:opacity-80 transition-opacity"
+            className="text-xs font-bold px-2 sm:px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 hover:opacity-80 transition-opacity truncate max-w-[95px] sm:max-w-xs shrink-0"
           >
             ← {story.title}
           </Link>
           <button 
             onClick={() => setShowChapterDrawer(true)}
-            className="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline shrink-0"
           >
             <ListFilter className="w-3.5 h-3.5" /> Ch. {chapter.number} / {story.chapters.length}
           </button>
@@ -274,7 +275,7 @@ export default function ReaderPage() {
           {/* Add to Library Toggle in Reader Navbar (Wattpad UX) */}
           <button
             onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
               inLib
                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                 : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 text-slate-700 dark:text-slate-200'
@@ -287,12 +288,21 @@ export default function ReaderPage() {
         </div>
 
         {/* Reader Customization Settings Controls */}
-        <div className="flex items-center gap-2">
-          {/* Quick Font Size */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Mobile "Aa" Appearance Button */}
+          <button
+            onClick={() => setShowAppearanceModal(true)}
+            className="sm:hidden flex items-center justify-center px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 text-xs font-black cursor-pointer"
+            title="Appearance Settings"
+          >
+            Aa
+          </button>
+
+          {/* Quick Font Size (Desktop) */}
           <div className="hidden sm:flex items-center bg-black/5 dark:bg-white/10 rounded-lg p-0.5">
             <button 
               onClick={() => setFontSize(Math.max(14, fontSize - 2))}
-              className="px-2 py-1 text-xs font-bold hover:text-brand-500"
+              className="px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer"
               title="Decrease Font Size"
             >
               A-
@@ -300,42 +310,42 @@ export default function ReaderPage() {
             <span className="text-[11px] font-mono px-1">{fontSize}px</span>
             <button 
               onClick={() => setFontSize(Math.min(26, fontSize + 2))}
-              className="px-2 py-1 text-xs font-bold hover:text-brand-500"
+              className="px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer"
               title="Increase Font Size"
             >
               A+
             </button>
           </div>
 
-          {/* Theme Mode Buttons */}
-          <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-lg p-0.5">
+          {/* Theme Mode Buttons (Desktop) */}
+          <div className="hidden sm:flex items-center bg-black/5 dark:bg-white/10 rounded-lg p-0.5">
             <button 
               onClick={() => setReaderTheme('light')} 
-              className={`p-1.5 rounded-md text-xs ${readerTheme === 'light' ? 'bg-white shadow text-slate-900 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'light' ? 'bg-white shadow text-slate-900 font-bold' : ''}`}
               title="Light Theme"
             >
               <Sun className="w-3.5 h-3.5" />
             </button>
             <button 
               onClick={() => setReaderTheme('sepia')} 
-              className={`p-1.5 rounded-md text-xs ${readerTheme === 'sepia' ? 'bg-[#f4ecd8] shadow text-amber-900 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'sepia' ? 'bg-[#f4ecd8] shadow text-amber-900 font-bold' : ''}`}
               title="Sepia Paper Theme"
             >
               ☕
             </button>
             <button 
               onClick={() => setReaderTheme('dark')} 
-              className={`p-1.5 rounded-md text-xs ${readerTheme === 'dark' ? 'bg-slate-800 shadow text-amber-400 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'dark' ? 'bg-slate-800 shadow text-amber-400 font-bold' : ''}`}
               title="Dark Theme"
             >
               <Moon className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Font Family Toggle */}
+          {/* Font Family Toggle (Desktop) */}
           <button 
             onClick={() => setFontFamily(fontFamily === 'serif' ? 'sans' : 'serif')}
-            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10"
+            className="hidden sm:inline-block px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 cursor-pointer"
             title="Toggle Font Family"
           >
             {fontFamily === 'serif' ? 'Serif' : 'Sans'}
@@ -344,7 +354,7 @@ export default function ReaderPage() {
           {/* Report Button */}
           <button 
             onClick={() => setReportModalOpen(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 cursor-pointer"
             title="Report Chapter"
           >
             <Flag className="w-3.5 h-3.5" />
@@ -560,10 +570,10 @@ export default function ReaderPage() {
       {/* 4. CHAPTERS DRAWER */}
       {showChapterDrawer && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-start">
-          <div className="w-80 bg-white dark:bg-slate-900 h-full p-6 shadow-2xl overflow-y-auto space-y-4">
+          <div className="w-80 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 h-full p-6 shadow-2xl overflow-y-auto space-y-4">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-sm">All Chapters ({story.chapters.length})</h3>
-              <button onClick={() => setShowChapterDrawer(false)}>
+              <button onClick={() => setShowChapterDrawer(false)} className="cursor-pointer">
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
@@ -572,16 +582,106 @@ export default function ReaderPage() {
                 <button
                   key={ch.id}
                   onClick={() => { setCurrentChapterIndex(idx); setShowChapterDrawer(false); }}
-                  className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-between ${
+                  className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-between cursor-pointer ${
                     idx === currentChapterIndex 
                       ? 'bg-brand-500 text-white' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <span>Ch. {ch.number}: {ch.title}</span>
-                  {idx === currentChapterIndex && <CheckCircle className="w-3.5 h-3.5" />}
+                  <span className="truncate pr-2">Ch. {ch.number}: {ch.title}</span>
+                  {idx === currentChapterIndex && <CheckCircle className="w-3.5 h-3.5 shrink-0" />}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MOBILE READING APPEARANCE BOTTOM SHEET */}
+      {showAppearanceModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:hidden">
+          <div className="w-full bg-white dark:bg-slate-900 rounded-t-3xl p-6 border-t border-slate-200 dark:border-slate-800 space-y-5 animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-black text-sm">Reading Appearance</h3>
+              <button onClick={() => setShowAppearanceModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Theme Mode Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Theme</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setReaderTheme('light')}
+                  className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                    readerTheme === 'light' ? 'bg-white text-slate-900 border-slate-400 shadow-sm' : 'bg-slate-100 text-slate-600 border-transparent'
+                  }`}
+                >
+                  <Sun className="w-4 h-4" /> Light
+                </button>
+                <button
+                  onClick={() => setReaderTheme('sepia')}
+                  className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                    readerTheme === 'sepia' ? 'bg-[#f4ecd8] text-amber-950 border-amber-400 shadow-sm' : 'bg-[#fbf7ee] text-amber-800 border-transparent'
+                  }`}
+                >
+                  ☕ Sepia
+                </button>
+                <button
+                  onClick={() => setReaderTheme('dark')}
+                  className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                    readerTheme === 'dark' ? 'bg-slate-800 text-white border-slate-600 shadow-sm' : 'bg-slate-900 text-slate-400 border-transparent'
+                  }`}
+                >
+                  <Moon className="w-4 h-4" /> Dark
+                </button>
+              </div>
+            </div>
+
+            {/* Font Size Stepper */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Font Size</label>
+                <span className="text-xs font-mono font-bold">{fontSize}px</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setFontSize(Math.max(14, fontSize - 2))}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-sm cursor-pointer"
+                >
+                  A- Smaller
+                </button>
+                <button
+                  onClick={() => setFontSize(Math.min(26, fontSize + 2))}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-sm cursor-pointer"
+                >
+                  A+ Larger
+                </button>
+              </div>
+            </div>
+
+            {/* Typeface Switcher */}
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Typeface</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setFontFamily('serif')}
+                  className={`py-2.5 rounded-xl font-serif text-sm font-bold border transition-all cursor-pointer ${
+                    fontFamily === 'serif' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-100 dark:bg-slate-800 border-transparent'
+                  }`}
+                >
+                  Serif (Book)
+                </button>
+                <button
+                  onClick={() => setFontFamily('sans')}
+                  className={`py-2.5 rounded-xl font-sans text-sm font-bold border transition-all cursor-pointer ${
+                    fontFamily === 'sans' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-100 dark:bg-slate-800 border-transparent'
+                  }`}
+                >
+                  Sans-Serif (Clean)
+                </button>
+              </div>
             </div>
           </div>
         </div>

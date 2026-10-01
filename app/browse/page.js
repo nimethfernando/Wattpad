@@ -38,8 +38,24 @@ export default function BrowsePage() {
   const [specialFilter, setSpecialFilter] = useState('all'); // 'all' | 'originals' | 'picks'
   const [sortBy, setSortBy] = useState('trending'); // 'trending' | 'newest' | 'most_read' | 'most_voted' | 'recently_updated'
   const [searchFilter, setSearchFilter] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
+
+  const activeFiltersCount = useMemo(() => {
+    return [
+      selectedGenre !== 'all',
+      selectedAgeRating !== 'all',
+      selectedStatus !== 'all',
+      selectedMaturity !== 'all',
+      selectedLanguage !== 'all',
+      selectedMood !== 'all',
+      selectedTrope !== 'all',
+      selectedLength !== 'all',
+      specialFilter !== 'all',
+      searchFilter.trim() !== ''
+    ].filter(Boolean).length;
+  }, [selectedGenre, selectedAgeRating, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, specialFilter, searchFilter]);
 
   // DOB & Age Policy Enforced Collections
   const accessibleStories = useMemo(() => filterStoriesForUser(stories, user), [stories, user]);
@@ -145,8 +161,59 @@ export default function BrowsePage() {
           </div>
         </div>
 
+        {/* Horizontal Quick-Genre Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none py-3 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <button
+            onClick={() => { setSelectedGenre('all'); setCurrentPage(1); }}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              selectedGenre === 'all'
+                ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500'
+            }`}
+          >
+            All Genres
+          </button>
+          {accessibleGenres.map(g => (
+            <button
+              key={g.id}
+              onClick={() => { setSelectedGenre(g.slug); setCurrentPage(1); }}
+              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                selectedGenre === g.slug
+                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile Filter Toggle Button */}
+        <div className="flex items-center justify-between lg:hidden pt-4 pb-2">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-brand-500" />
+            <span>Filters & Sorting</span>
+            {activeFiltersCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-brand-500 text-white text-[10px] font-black flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+          {activeFiltersCount > 0 && (
+            <button 
+              onClick={resetFilters} 
+              className="text-xs font-bold text-rose-500 hover:underline cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+
         {/* Filter Controls Row 1 & 2 */}
-        <div className="space-y-3 py-6">
+        <div className={`${showMobileFilters ? 'block' : 'hidden lg:block'} space-y-3 py-4 lg:py-6 transition-all`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Keyword Search */}
             <div className="relative">
@@ -350,8 +417,8 @@ export default function BrowsePage() {
                 key={story.id} 
                 className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-brand-500/50 transition-all duration-200"
               >
-                <div className="flex p-4 gap-4 flex-1">
-                  <Link href={`/story/${story.slug}`} className="shrink-0 w-28 aspect-[3/4] relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="flex p-3 sm:p-4 gap-3 sm:gap-4 flex-1">
+                  <Link href={`/story/${story.slug}`} className="shrink-0 w-20 sm:w-28 aspect-[3/4] relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <img 
                       src={story.cover} 
                       alt={story.title}
