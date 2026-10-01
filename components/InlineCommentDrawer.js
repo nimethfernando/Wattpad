@@ -72,7 +72,14 @@ export default function InlineCommentDrawer({
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col transition-transform animate-slide-left">
+    <>
+      {/* Backdrop overlay */}
+      <div 
+        onClick={onClose} 
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity"
+        aria-hidden="true"
+      />
+      <aside className="fixed inset-y-0 right-0 w-full sm:w-96 z-50 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col transition-transform animate-slide-left">
       {/* Drawer Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -204,6 +211,7 @@ export default function InlineCommentDrawer({
         </button>
       </form>
     </aside>
+    </>
   );
 }
 
