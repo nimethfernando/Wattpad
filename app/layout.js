@@ -6,6 +6,8 @@ import AgeVerificationModal from '@/components/AgeVerificationModal';
 import EmergingGenreModal from '@/components/EmergingGenreModal';
 import AuthProvider from '@/components/AuthProvider';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import PaymentModal from '@/components/PaymentModal';
+import Mascot3D from '@/components/Mascot3D';
 
 export const viewport = {
   themeColor: '#ea580c',
@@ -49,6 +51,8 @@ export default function RootLayout({ children }) {
             <OnboardingModal />
             <AgeVerificationModal />
             <EmergingGenreModal />
+            <PaymentModal />
+            <Mascot3D />
           </AppProvider>
         </AuthProvider>
       </body>

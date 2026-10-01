@@ -78,12 +78,55 @@ export default function ReaderPage() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
+  // Reading Animations State
+  const [voteHearts, setVoteHearts] = useState([]);
+  const [emojiBursts, setEmojiBursts] = useState([]);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState([]);
+
   // Sync reading progress
   useEffect(() => {
     if (story && chapter) {
       saveReadingProgress(story.id, chapter.id, 0);
     }
   }, [story?.id, chapter?.id]);
+
+  const triggerChapterCompletion = () => {
+    const pieces = Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      color: ['#ea580c', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899', '#3b82f6'][i % 6],
+      delay: Math.random() * 0.6,
+      size: 6 + Math.random() * 8,
+      rotation: Math.random() * 360,
+    }));
+    setConfettiPieces(pieces);
+    setShowCompletionModal(true);
+  };
+
+  const spawnVoteHearts = () => {
+    const newHearts = Array.from({ length: 7 }).map((_, i) => ({
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 80,
+      y: -30 - Math.random() * 50,
+      scale: 0.7 + Math.random() * 0.5,
+      rot: (Math.random() - 0.5) * 35,
+    }));
+    setVoteHearts(newHearts);
+    setTimeout(() => setVoteHearts([]), 1100);
+  };
+
+  const spawnEmojiBurst = (emoji) => {
+    const burst = {
+      id: Date.now(),
+      emoji,
+      x: (Math.random() - 0.5) * 40,
+    };
+    setEmojiBursts(prev => [...prev.slice(-3), burst]);
+    setTimeout(() => {
+      setEmojiBursts(prev => prev.filter(b => b.id !== burst.id));
+    }, 900);
+  };
 
   if (!story || !chapter) {
     return (
@@ -112,16 +155,19 @@ export default function ReaderPage() {
       openAuthModal('login', `Sign in to vote on Chapter ${chapter.number} and support ${story.author}!`, () => {
         voteChapter(story.id, chapter.id);
         setHasVoted(true);
+        spawnVoteHearts();
       });
       return;
     }
     if (!hasVoted) {
       voteChapter(story.id, chapter.id);
       setHasVoted(true);
+      spawnVoteHearts();
     }
   };
 
   const handleEmojiReact = (emoji) => {
+    spawnEmojiBurst(emoji);
     if (!user) {
       openAuthModal('login', `Sign in to react with ${emoji} on Chapter ${chapter.number}!`, () => {
         reactChapterEmoji(story.id, chapter.id, emoji);
@@ -476,15 +522,27 @@ export default function ReaderPage() {
           </div>
         )}
 
-        {/* CHAPTER EMOJI REACTIONS (Scope 3) */}
-        <div className="mt-14 pt-8 border-t border-black/10 dark:border-white/10 flex flex-col items-center gap-4">
+        {/* CHAPTER EMOJI REACTIONS */}
+        <div className="mt-14 pt-8 border-t border-black/10 dark:border-white/10 flex flex-col items-center gap-4 relative">
           <span className="text-xs font-bold uppercase tracking-wider opacity-60">Chapter Emoji Reactions</span>
+          
+          {/* Floating Emoji Bursts */}
+          {emojiBursts.map(b => (
+            <div 
+              key={b.id}
+              className="absolute -top-6 text-2xl font-bold animate-out fade-out slide-out-to-top duration-700 pointer-events-none select-none"
+              style={{ transform: `translateX(${b.x}px) scale(1.3)` }}
+            >
+              {b.emoji}
+            </div>
+          ))}
+
           <div className="flex items-center gap-3">
             {['🔥', '❤️', '😭', '👏', '😱'].map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleEmojiReact(emoji)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 hover:scale-110 transition-transform text-sm font-bold"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 hover:scale-110 active:scale-95 transition-all text-sm font-bold cursor-pointer"
               >
                 <span>{emoji}</span>
                 <span className="text-xs">{chapter.emojis?.[emoji] || 0}</span>
@@ -495,13 +553,30 @@ export default function ReaderPage() {
 
         {/* CHAPTER VOTE & TIP AUTHOR FOOTER */}
         <div className="mt-6 flex flex-col items-center gap-6">
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 relative">
+            
+            {/* Floating Heart Bursts upon Voting */}
+            {voteHearts.map(h => (
+              <div 
+                key={h.id}
+                className="absolute pointer-events-none select-none text-rose-500 font-bold text-xl animate-out fade-out slide-out-to-top duration-1000"
+                style={{
+                  top: h.y,
+                  left: `calc(50% + ${h.x}px)`,
+                  transform: `scale(${h.scale}) rotate(${h.rot}deg)`,
+                  zIndex: 30,
+                }}
+              >
+                💖
+              </div>
+            ))}
+
             <button 
               onClick={handleVote}
-              className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-xl ${
+              className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-xl cursor-pointer ${
                 hasVoted 
                   ? 'bg-rose-500 text-white shadow-rose-500/30' 
-                  : 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/30 hover:scale-[1.02]'
+                  : 'bg-brand-500 hover:bg-brand-600 active:scale-95 text-white shadow-brand-500/30 hover:scale-[1.02]'
               }`}
             >
               <Heart className={`w-5 h-5 ${hasVoted ? 'fill-white' : ''}`} />
@@ -516,9 +591,9 @@ export default function ReaderPage() {
                     return;
                   }
                   openPaymentModal({
-                    type: 'tip',
-                    authorName: story.author,
-                    storyTitle: story.title
+                    mode: 'donate',
+                    author: story.author,
+                    story: story
                   });
                 }}
                 className="flex items-center gap-2 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
@@ -535,17 +610,30 @@ export default function ReaderPage() {
             <button 
               onClick={() => setCurrentChapterIndex(Math.max(0, currentChapterIndex - 1))}
               disabled={currentChapterIndex === 0}
-              className="flex items-center gap-1 text-xs sm:text-sm font-bold opacity-60 hover:opacity-100 disabled:opacity-20"
+              className="flex items-center gap-1 text-xs sm:text-sm font-bold opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" /> Previous Chapter
             </button>
-            <button 
-              onClick={() => setCurrentChapterIndex(Math.min(story.chapters.length - 1, currentChapterIndex + 1))}
-              disabled={currentChapterIndex === story.chapters.length - 1}
-              className="flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-500 disabled:opacity-20"
-            >
-              Next Chapter <ChevronRight className="w-4 h-4" />
-            </button>
+
+            {currentChapterIndex < story.chapters.length - 1 ? (
+              <button 
+                onClick={() => {
+                  triggerChapterCompletion();
+                  setCurrentChapterIndex(currentChapterIndex + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
+              >
+                Next Chapter <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={triggerChapterCompletion}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-200" /> Complete Story! 🎉
+              </button>
+            )}
           </div>
         </div>
       </main>
@@ -706,6 +794,96 @@ export default function ReaderPage() {
         reportedUser={story.authorUsername}
         storyTitle={`${story.title} - Chapter ${chapter.number}`}
       />
+
+      {/* CHAPTER COMPLETION CELEBRATION MODAL & CONFETTI ANIMATION */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          
+          {/* Confetti Falling Particle Stream */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {confettiPieces.map(c => (
+              <div 
+                key={c.id}
+                className="absolute w-2.5 h-3.5 rounded-sm animate-fall"
+                style={{
+                  left: `${c.left}%`,
+                  top: '-20px',
+                  backgroundColor: c.color,
+                  animationDelay: `${c.delay}s`,
+                  animationDuration: '2.5s',
+                  transform: `rotate(${c.rotation}deg)`,
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Celebration Card */}
+          <div className="relative max-w-sm w-full bg-white dark:bg-slate-900 rounded-3xl p-6 text-center shadow-2xl border border-brand-100 dark:border-slate-800 space-y-4 animate-in zoom-in-95 duration-250">
+            <button 
+              onClick={() => setShowCompletionModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Glowing Trophy Icon */}
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-brand-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30 animate-bounce">
+              <Sparkles className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-3 py-1 rounded-full">
+                Reading Milestone
+              </span>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white pt-1">
+                Chapter Completed! 🎉
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                You just finished Chapter {chapter.number} of <strong className="text-slate-800 dark:text-slate-200">{story.title}</strong>
+              </p>
+            </div>
+
+            {/* Streak Bonus Pill */}
+            <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-800/40 text-orange-700 dark:text-orange-300 text-xs font-bold">
+              <span className="text-base">🔥</span>
+              <span>+1 Daily Streak Progress Logged!</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col gap-2">
+              {currentChapterIndex < story.chapters.length - 1 ? (
+                <button
+                  onClick={() => {
+                    setShowCompletionModal(false);
+                    setCurrentChapterIndex(currentChapterIndex + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-500 to-amber-500 text-white font-extrabold text-xs shadow-md shadow-brand-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>Continue to Chapter {chapter.number + 1}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <Link
+                  href="/browse"
+                  onClick={() => setShowCompletionModal(false)}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-xs shadow-md shadow-emerald-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>Explore Another Story</span>
+                  <Sparkles className="w-4 h-4" />
+                </Link>
+              )}
+
+              <button
+                onClick={() => setShowCompletionModal(false)}
+                className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Close & Review Comments
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

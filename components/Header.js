@@ -8,8 +8,6 @@ import {
   Users, 
   PenTool, 
   Globe, 
-  Moon, 
-  Sun, 
   Search, 
   Menu, 
   X, 
@@ -30,8 +28,6 @@ export default function Header() {
   const { 
     lang, 
     setLang, 
-    theme, 
-    toggleTheme, 
     t, 
     user, 
     setUser, 
@@ -119,7 +115,7 @@ export default function Header() {
                 Avora<span className="text-brand-500 dark:text-amber-400">Library</span>
               </span>
               <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5 hidden sm:block">
-                {theme === 'dark' ? 'Night Reader' : 'Serialized Fiction'}
+                Serialized Fiction
               </span>
             </div>
           </Link>
@@ -260,15 +256,6 @@ export default function Header() {
               <option value="es">ES</option>
             </select>
           </div>
-
-          {/* Theme Switcher Button */}
-          <button 
-            onClick={toggleTheme}
-            aria-label="Toggle theme mode"
-            className="p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-          </button>
 
           {/* Search Toggle Button (visible whenever the full search bar is hidden) */}
           <button
@@ -671,25 +658,13 @@ export default function Header() {
                 </select>
               </div>
 
-              {/* Theme Toggle in Drawer */}
+              {/* Theme Badge in Drawer */}
               <div className="flex items-center justify-between text-xs px-2">
-                <span className="text-slate-400 font-semibold">Appearance:</span>
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold cursor-pointer"
-                >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Dark Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-3.5 h-3.5 text-slate-600" />
-                      <span>Light Mode</span>
-                    </>
-                  )}
-                </button>
+                <span className="text-slate-400 font-semibold">Theme:</span>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 font-bold border border-amber-200/60">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Modern Light</span>
+                </span>
               </div>
 
               {/* Logout Button */}
