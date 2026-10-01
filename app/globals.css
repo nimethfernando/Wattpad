@@ -94,3 +94,70 @@ body {
   animation: mascotLevitate 3.2s ease-in-out infinite;
 }
 
+/* Page Turn & Flip Transitions */
+@keyframes pageTurnNext {
+  0% {
+    transform: perspective(1200px) rotateY(-14deg) scale(0.98);
+    opacity: 0.6;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pageTurnPrev {
+  0% {
+    transform: perspective(1200px) rotateY(14deg) scale(0.98);
+    opacity: 0.6;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-page-turn-next {
+  animation: pageTurnNext 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-page-turn-prev {
+  animation: pageTurnPrev 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Chapter Transition Slide */
+@keyframes chapterSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-chapter-slide {
+  animation: chapterSlideIn 0.35s ease-out forwards;
+}
+
+/* Heart Particle Burst */
+@keyframes heartBurstPop {
+  0% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--hx, 0px), var(--hy, -75px)) scale(var(--hs, 1.2)) rotate(var(--hr, 15deg));
+    opacity: 0;
+  }
+}
+
+.animate-heart-burst {
+  animation: heartBurstPop 0.95s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+

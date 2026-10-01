@@ -79,10 +79,30 @@ export default function ReaderPage() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
   // Reading Animations State
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [voteHearts, setVoteHearts] = useState([]);
+  const [voteBonusPop, setVoteBonusPop] = useState(false);
   const [emojiBursts, setEmojiBursts] = useState([]);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
+  const [pageTurnDirection, setPageTurnDirection] = useState('next');
+  const [pageFlipKey, setPageFlipKey] = useState(0);
+  const [chapterTransitionKey, setChapterTransitionKey] = useState(0);
+
+  // Animated Reading Progress Bar: Smooth Scroll Depth Tracker
+  useEffect(() => {
+    const handleScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight > 0) {
+        const progress = Math.min(100, Math.max(0, (window.scrollY / docHeight) * 100));
+        setScrollProgress(progress);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentChapterIndex, activePageIndex]);
 
   // Sync reading progress
   useEffect(() => {
@@ -92,12 +112,13 @@ export default function ReaderPage() {
   }, [story?.id, chapter?.id]);
 
   const triggerChapterCompletion = () => {
-    const pieces = Array.from({ length: 30 }).map((_, i) => ({
+    const pieces = Array.from({ length: 45 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
-      color: ['#ea580c', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899', '#3b82f6'][i % 6],
-      delay: Math.random() * 0.6,
-      size: 6 + Math.random() * 8,
+      color: ['#ea580c', '#f59e0b', '#8b5cf6', '#10b981', '#ec4899', '#3b82f6', '#06b6d4', '#e11d48'][i % 8],
+      delay: Math.random() * 0.7,
+      size: 7 + Math.random() * 9,
+      shape: i % 3 === 0 ? 'circle' : i % 3 === 1 ? 'star' : 'ribbon',
       rotation: Math.random() * 360,
     }));
     setConfettiPieces(pieces);
@@ -105,12 +126,17 @@ export default function ReaderPage() {
   };
 
   const spawnVoteHearts = () => {
-    const newHearts = Array.from({ length: 7 }).map((_, i) => ({
+    setVoteBonusPop(true);
+    setTimeout(() => setVoteBonusPop(false), 900);
+
+    const icons = ['💖', '❤️', '✨', '💕', '🔥', '🎉'];
+    const newHearts = Array.from({ length: 10 }).map((_, i) => ({
       id: Date.now() + i,
-      x: (Math.random() - 0.5) * 80,
-      y: -30 - Math.random() * 50,
-      scale: 0.7 + Math.random() * 0.5,
-      rot: (Math.random() - 0.5) * 35,
+      char: icons[i % icons.length],
+      x: (Math.random() - 0.5) * 110,
+      y: -35 - Math.random() * 65,
+      scale: 0.8 + Math.random() * 0.6,
+      rot: (Math.random() - 0.5) * 45,
     }));
     setVoteHearts(newHearts);
     setTimeout(() => setVoteHearts([]), 1100);
@@ -120,12 +146,24 @@ export default function ReaderPage() {
     const burst = {
       id: Date.now(),
       emoji,
-      x: (Math.random() - 0.5) * 40,
+      x: (Math.random() - 0.5) * 50,
     };
     setEmojiBursts(prev => [...prev.slice(-3), burst]);
     setTimeout(() => {
       setEmojiBursts(prev => prev.filter(b => b.id !== burst.id));
     }, 900);
+  };
+
+  const handlePageChange = (newIndex, direction) => {
+    setPageTurnDirection(direction);
+    setPageFlipKey(prev => prev + 1);
+    setActivePageIndex(newIndex);
+  };
+
+  const handleChapterChange = (newIndex) => {
+    setChapterTransitionKey(prev => prev + 1);
+    setCurrentChapterIndex(newIndex);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (!story || !chapter) {
@@ -304,7 +342,15 @@ export default function ReaderPage() {
     }`}>
       
       {/* 1. TOP READER NAVIGATION BAR */}
-      <nav className="sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 h-14 flex items-center justify-between border-black/10 dark:border-white/10">
+      <nav className="sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 h-14 flex items-center justify-between border-black/10 dark:border-white/10 relative">
+        {/* Animated Reading Progress Bar (Top Edge of Reader) */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/10 z-50 overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-brand-500 via-amber-400 to-orange-500 transition-all duration-150 ease-out shadow-sm shadow-orange-500/50"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link 
             href={`/story/${story.slug}`} 
@@ -318,6 +364,12 @@ export default function ReaderPage() {
           >
             <ListFilter className="w-3.5 h-3.5" /> Ch. {chapter.number} / {story.chapters.length}
           </button>
+
+          {/* Reading Progress Percentage Badge */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-700 dark:text-brand-300 text-[11px] font-extrabold border border-brand-500/20 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+            <span>{Math.round(scrollProgress)}% read</span>
+          </div>
 
           {/* Add to Library Toggle in Reader Navbar (Wattpad UX) */}
           <button
@@ -434,7 +486,12 @@ export default function ReaderPage() {
         {/* 2A. ILLUSTRATED PICTURE BOOK / VISUAL STORY VIEWER */}
         {chapter.pages && chapter.pages.length > 0 ? (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
+            <div 
+              key={pageFlipKey}
+              className={`bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 ${
+                pageTurnDirection === 'next' ? 'animate-page-turn-next' : 'animate-page-turn-prev'
+              }`}
+            >
               {/* Page Image */}
               <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
                 <img 
@@ -458,7 +515,7 @@ export default function ReaderPage() {
                 {/* Page Navigation Controls */}
                 <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
-                    onClick={() => setActivePageIndex(Math.max(0, activePageIndex - 1))}
+                    onClick={() => handlePageChange(Math.max(0, activePageIndex - 1), 'prev')}
                     disabled={activePageIndex === 0}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-30 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
                   >
@@ -469,7 +526,7 @@ export default function ReaderPage() {
                     {chapter.pages.map((_, idx) => (
                       <button
                         key={idx}
-                        onClick={() => setActivePageIndex(idx)}
+                        onClick={() => handlePageChange(idx, idx >= activePageIndex ? 'next' : 'prev')}
                         className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
                           activePageIndex === idx 
                             ? 'bg-brand-500 scale-125' 
@@ -481,7 +538,7 @@ export default function ReaderPage() {
                   </div>
 
                   <button
-                    onClick={() => setActivePageIndex(Math.min(chapter.pages.length - 1, activePageIndex + 1))}
+                    onClick={() => handlePageChange(Math.min(chapter.pages.length - 1, activePageIndex + 1), 'next')}
                     disabled={activePageIndex === chapter.pages.length - 1}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white disabled:opacity-30 font-bold text-xs hover:bg-brand-600 transition-all cursor-pointer"
                   >
@@ -494,7 +551,8 @@ export default function ReaderPage() {
         ) : (
           /* 2B. NOVEL PARAGRAPH-LEVEL READING CANVAS */
           <div 
-            className={`space-y-6 ${lineSpacing} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
+            key={chapterTransitionKey}
+            className={`space-y-6 animate-chapter-slide ${lineSpacing} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
             style={{ fontSize: `${fontSize}px` }}
           >
             {chapter.paragraphs?.map((p) => (
@@ -559,17 +617,25 @@ export default function ReaderPage() {
             {voteHearts.map(h => (
               <div 
                 key={h.id}
-                className="absolute pointer-events-none select-none text-rose-500 font-bold text-xl animate-out fade-out slide-out-to-top duration-1000"
+                className="absolute pointer-events-none select-none text-xl animate-heart-burst z-30"
                 style={{
-                  top: h.y,
-                  left: `calc(50% + ${h.x}px)`,
-                  transform: `scale(${h.scale}) rotate(${h.rot}deg)`,
-                  zIndex: 30,
+                  '--hx': `${h.x}px`,
+                  '--hy': `${h.y}px`,
+                  '--hs': h.scale,
+                  '--hr': `${h.rot}deg`,
+                  top: '50%',
+                  left: '50%',
                 }}
               >
-                💖
+                {h.char}
               </div>
             ))}
+
+            {voteBonusPop && (
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full shadow-md animate-bounce pointer-events-none select-none z-30 whitespace-nowrap">
+                +1 Loved! 💖
+              </div>
+            )}
 
             <button 
               onClick={handleVote}
@@ -608,32 +674,40 @@ export default function ReaderPage() {
           {/* Chapter Next / Previous Navigation */}
           <div className="flex items-center justify-between w-full pt-4">
             <button 
-              onClick={() => setCurrentChapterIndex(Math.max(0, currentChapterIndex - 1))}
+              onClick={() => handleChapterChange(Math.max(0, currentChapterIndex - 1))}
               disabled={currentChapterIndex === 0}
-              className="flex items-center gap-1 text-xs sm:text-sm font-bold opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer"
+              className="flex items-center gap-1 text-xs sm:text-sm font-bold opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer transition-opacity"
             >
               <ChevronLeft className="w-4 h-4" /> Previous Chapter
             </button>
 
-            {currentChapterIndex < story.chapters.length - 1 ? (
-              <button 
-                onClick={() => {
-                  triggerChapterCompletion();
-                  setCurrentChapterIndex(currentChapterIndex + 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
-              >
-                Next Chapter <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button 
+            <div className="flex items-center gap-2">
+              <button
                 onClick={triggerChapterCompletion}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all hover:scale-105 cursor-pointer shadow-sm"
+                title="Celebrate finishing this chapter with confetti"
               >
-                <Sparkles className="w-4 h-4 text-emerald-200" /> Complete Story! 🎉
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Celebrate Finish 🎉</span>
               </button>
-            )}
+
+              {currentChapterIndex < story.chapters.length - 1 ? (
+                <button 
+                  onClick={() => handleChapterChange(currentChapterIndex + 1)}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
+                >
+                  <span>Next Chapter</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button 
+                  onClick={triggerChapterCompletion}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-200" /> Complete Story! 🎉
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -680,7 +754,7 @@ export default function ReaderPage() {
               {story.chapters.map((ch, idx) => (
                 <button
                   key={ch.id}
-                  onClick={() => { setCurrentChapterIndex(idx); setShowChapterDrawer(false); }}
+                  onClick={() => { handleChapterChange(idx); setShowChapterDrawer(false); }}
                   className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-between cursor-pointer ${
                     idx === currentChapterIndex 
                       ? 'bg-brand-500 text-white' 
@@ -804,10 +878,16 @@ export default function ReaderPage() {
             {confettiPieces.map(c => (
               <div 
                 key={c.id}
-                className="absolute w-2.5 h-3.5 rounded-sm animate-fall"
+                className={`absolute animate-fall pointer-events-none ${
+                  c.shape === 'circle' 
+                    ? 'w-3 h-3 rounded-full' 
+                    : c.shape === 'ribbon'
+                    ? 'w-2 h-4 rounded-xs'
+                    : 'w-3 h-3 rotate-45 rounded-xs'
+                }`}
                 style={{
                   left: `${c.left}%`,
-                  top: '-20px',
+                  top: '-24px',
                   backgroundColor: c.color,
                   animationDelay: `${c.delay}s`,
                   animationDuration: '2.5s',
@@ -855,8 +935,7 @@ export default function ReaderPage() {
                 <button
                   onClick={() => {
                     setShowCompletionModal(false);
-                    setCurrentChapterIndex(currentChapterIndex + 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handleChapterChange(currentChapterIndex + 1);
                   }}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-500 to-amber-500 text-white font-extrabold text-xs shadow-md shadow-brand-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
