@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
@@ -200,10 +201,10 @@ export default function AuthorStudio() {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Create & Manage Serial Stories</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none w-full sm:w-auto pb-1">
             <button 
               onClick={() => setActiveTab('editor')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'editor' 
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -213,7 +214,7 @@ export default function AuthorStudio() {
             </button>
             <button 
               onClick={() => setActiveTab('stories')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'stories' 
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -223,7 +224,7 @@ export default function AuthorStudio() {
             </button>
             <button 
               onClick={() => setActiveTab('analytics')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'analytics' 
                   ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -401,12 +402,12 @@ export default function AuthorStudio() {
               )}
 
               {/* Publishing Bar */}
-              <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <select 
                     value={publishStatus}
                     onChange={(e) => setPublishStatus(e.target.value)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                    className="w-full sm:w-auto p-2.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
                   >
                     <option value="published">Publish Immediately</option>
                     <option value="draft">Save as Draft</option>
@@ -416,7 +417,7 @@ export default function AuthorStudio() {
 
                 <button 
                   type="submit"
-                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+                  className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" /> {t.publishChapter}
                 </button>
@@ -597,32 +598,32 @@ export default function AuthorStudio() {
             ) : (
               <div className="space-y-4">
                 {myStories.map(s => (
-                  <div key={s.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+                  <div key={s.id} className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 shadow-sm">
                     <div className="flex items-center gap-4">
-                      <img src={s.cover} alt={s.title} className="w-14 aspect-[3/4] object-cover rounded-xl" />
+                      <img src={s.cover} alt={s.title} className="w-14 aspect-[3/4] object-cover rounded-xl shrink-0" />
                       <div>
                         <span className="text-[10px] font-bold text-brand-600 uppercase">{s.genre}</span>
-                        <h4 className="font-black text-base text-slate-900 dark:text-white">{s.title}</h4>
+                        <h4 className="font-black text-base text-slate-900 dark:text-white line-clamp-1">{s.title}</h4>
                         <p className="text-xs text-slate-400">{s.chapters.length} Chapters • {s.reads.toLocaleString()} Reads • {s.votes.toLocaleString()} Votes</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
                       <button 
                         onClick={() => handleReorderChapters(s.id)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                       >
                         <ArrowUpDown className="w-3.5 h-3.5" /> Reorder Chapters
                       </button>
                       <Link 
                         href={`/story/${s.slug}`}
-                        className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200"
+                        className="flex-1 md:flex-initial text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200"
                       >
                         View Public Page
                       </Link>
                       <button 
                         onClick={() => deleteStory(s.id)}
-                        className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                        className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                         title="Delete Story"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -662,13 +663,13 @@ export default function AuthorStudio() {
             </div>
 
             {/* Reads Over Time Timeline Chart (Scope 4: reads over time) */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Reads Over Time</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Daily reading traffic and chapter completion velocity (Past 7 Days)</p>
                 </div>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600">
+                <span className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600">
                   Weekly Reads: 37,700
                 </span>
               </div>
