@@ -120,27 +120,27 @@ export default function CommunityPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Community Banner */}
-        <div className="rounded-3xl bg-gradient-to-r from-brand-600 via-amber-600 to-rose-600 p-8 sm:p-12 text-white shadow-xl mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="rounded-3xl bg-gradient-to-r from-brand-600 via-amber-600 to-rose-600 p-6 sm:p-12 text-white shadow-xl mb-8 sm:mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
               <Users className="w-3.5 h-3.5" /> Fandom Spaces & Discussion
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">The Avora Library Community</h1>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">The Avora Library Community</h1>
             <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
               Connect with fellow serialized readers, curate public reading lists, debate character theories in fandom spaces, and earn achievement badges.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 w-full sm:w-auto">
             <button 
               onClick={() => setShowNewThreadModal(true)}
-              className="px-5 py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs sm:text-sm shadow-lg hover:bg-slate-100 transition-all shrink-0"
+              className="flex-1 sm:flex-initial text-center px-4 sm:px-5 py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs sm:text-sm shadow-lg hover:bg-slate-100 transition-all shrink-0 cursor-pointer"
             >
               + Start Discussion
             </button>
             <button 
               onClick={() => setShowCreateListModal(true)}
-              className="px-5 py-2.5 rounded-full bg-slate-900/60 backdrop-blur-md text-white border border-white/20 font-bold text-xs sm:text-sm hover:bg-slate-900 transition-all shrink-0"
+              className="flex-1 sm:flex-initial text-center px-4 sm:px-5 py-2.5 rounded-full bg-slate-900/60 backdrop-blur-md text-white border border-white/20 font-bold text-xs sm:text-sm hover:bg-slate-900 transition-all shrink-0 cursor-pointer"
             >
               + Create Reading List
             </button>
@@ -148,10 +148,10 @@ export default function CommunityPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar scrollbar-none border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 sm:mb-8">
           <button 
             onClick={() => setActiveTab('spaces')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'spaces' 
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -161,7 +161,7 @@ export default function CommunityPage() {
           </button>
           <button 
             onClick={() => setActiveTab('lists')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'lists' 
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -171,7 +171,7 @@ export default function CommunityPage() {
           </button>
           <button 
             onClick={() => setActiveTab('badges')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'badges' 
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' 
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
@@ -267,14 +267,14 @@ export default function CommunityPage() {
         {/* TAB 2: READING LISTS */}
         {activeTab === 'lists' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-lg">Public Community Reading Lists</h3>
+                <h3 className="font-bold text-base sm:text-lg">Public Community Reading Lists</h3>
                 <p className="text-xs text-slate-400">Curated book collections created, reordered, and shared by readers</p>
               </div>
               <button 
                 onClick={() => setShowCreateListModal(true)}
-                className="px-4 py-2 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600"
+                className="self-start sm:self-auto px-4 py-2 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 shrink-0 cursor-pointer"
               >
                 + Create New List
               </button>
