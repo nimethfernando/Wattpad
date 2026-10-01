@@ -152,6 +152,13 @@ export default function AuthModal() {
               type="button"
               onClick={() => {
                 setAuthModalOpen(false);
+                if (typeof window !== 'undefined') {
+                  if (authModalMode === 'register') {
+                    sessionStorage.setItem('avora_registration_pending', 'true');
+                  } else {
+                    sessionStorage.removeItem('avora_registration_pending');
+                  }
+                }
                 signIn('facebook', { callbackUrl: '/home' });
               }}
               disabled={loading}
@@ -168,6 +175,13 @@ export default function AuthModal() {
               type="button"
               onClick={() => {
                 setAuthModalOpen(false);
+                if (typeof window !== 'undefined') {
+                  if (authModalMode === 'register') {
+                    sessionStorage.setItem('avora_registration_pending', 'true');
+                  } else {
+                    sessionStorage.removeItem('avora_registration_pending');
+                  }
+                }
                 signIn('google', { callbackUrl: '/home' });
               }}
               disabled={loading}
