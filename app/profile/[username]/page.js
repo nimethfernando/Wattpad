@@ -135,10 +135,6 @@ export default function ProfilePage() {
                   {featureFlags?.enablePaidFeatures && (
                     <button
                       onClick={() => {
-                        if (!user) {
-                          openAuthModal('login', `Sign in to tip ${profileData.name} and support their novels!`);
-                          return;
-                        }
                         openPaymentModal({
                           mode: 'donate',
                           author: profileData.name,

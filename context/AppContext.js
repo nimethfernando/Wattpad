@@ -70,7 +70,7 @@ export function AppProvider({ children }) {
 
   // Soft Launch Feature Flags
   const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags || {
-    enablePaidFeatures: false,
+    enablePaidFeatures: true,
     authorSelfPublishing: true,
     requireStoryApproval: false,
     ageGateEnforced: true,
@@ -384,6 +384,11 @@ export function AppProvider({ children }) {
             });
             return computeStoryRankings(merged);
           });
+        }
+        // Sync Feature Flags from localStorage
+        const savedFeatureFlags = localStorage.getItem('avora_feature_flags');
+        if (savedFeatureFlags) {
+          setFeatureFlags(prev => ({ ...prev, ...JSON.parse(savedFeatureFlags) }));
         }
       } catch (e) {
         console.error("Could not load story read counts from localStorage", e);
@@ -1161,12 +1166,26 @@ export function AppProvider({ children }) {
     setFeatureFlags(prev => {
       const next = !prev.enablePaidFeatures;
       addAuditLog('Feature Flag Changed', `enablePaidFeatures: ${next ? 'ENABLED' : 'DISABLED'}`);
-      return { ...prev, enablePaidFeatures: next };
+      const updated = { ...prev, enablePaidFeatures: next };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_feature_flags', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
     });
   };
 
   const updateFeatureFlags = (updates) => {
-    setFeatureFlags(prev => ({ ...prev, ...updates }));
+    setFeatureFlags(prev => {
+      const updated = { ...prev, ...updates };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_feature_flags', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
     addAuditLog('Platform Settings Updated', 'Feature flags modified');
   };
 

@@ -652,10 +652,6 @@ export default function ReaderPage() {
             {featureFlags?.enablePaidFeatures && (
               <button 
                 onClick={() => {
-                  if (!user) {
-                    openAuthModal('login', `Sign in to tip ${story.author} and support their serialized story!`);
-                    return;
-                  }
                   openPaymentModal({
                     mode: 'donate',
                     author: story.author,
