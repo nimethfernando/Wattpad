@@ -282,12 +282,12 @@ export default function Header() {
 
             {/* Notification Drawer */}
             {showNotifications && (
-              <div className="absolute right-0 top-12 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50">
+              <div className="absolute right-0 top-12 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <h4 className="font-bold text-sm">Notifications</h4>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">{t.notifications || 'Notifications'}</h4>
                   {unreadCount > 0 && (
                     <button onClick={markAllRead} className="text-xs text-brand-500 hover:underline">
-                      Mark all as read
+                      {t.markAllAsRead || 'Mark all as read'}
                     </button>
                   )}
                 </div>
@@ -329,7 +329,7 @@ export default function Header() {
 
               {/* Profile Dropdown */}
               {showProfileMenu && (
-                <div className="absolute right-0 top-12 w-56 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 text-xs">
+                <div className="absolute right-0 top-12 w-60 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 text-xs">
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
                     <p className="font-bold truncate text-slate-900 dark:text-white">{user.name}</p>
                     <p className="text-slate-400 text-[11px] truncate">@{user.username}</p>
@@ -341,57 +341,88 @@ export default function Header() {
                       ))}
                     </div>
                   </div>
-                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl my-1 border border-slate-100 dark:border-slate-800">
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl my-1.5 border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-slate-500">Verified Age:</span>
+                      <span className="font-semibold text-slate-500 dark:text-slate-400">{t.verifiedAge || 'Verified Age'}:</span>
                       <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {user.age !== undefined ? `${user.age} yrs` : 'Unverified'}
+                        {user?.age !== undefined && user?.age !== null ? `${user.age} ${t.yearsOldShort || 'yrs'}` : (t.unverified || 'Unverified')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[11px] mt-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
-                      <span className="font-semibold text-slate-500">Experience:</span>
-                      {user.age !== undefined && user.age < 18 ? (
-                        <span className="font-bold text-emerald-600 flex items-center gap-1">
-                          Kids Only <Lock className="w-2.5 h-2.5" />
+                      <span className="font-semibold text-slate-500 dark:text-slate-400">{t.experience || 'Experience'}:</span>
+                      {user?.age !== undefined && user?.age !== null && user.age < 18 ? (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          {t.kidsOnly || 'Kids Only'} <Lock className="w-2.5 h-2.5" />
                         </span>
                       ) : (
                         <button 
                           onClick={() => toggleExperienceMode()}
                           className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
                         >
-                          {user.experienceMode === 'kids' ? '🧒 Kids (Switch)' : '🔥 18+ (Switch)'}
+                          {user.experienceMode === 'kids' ? (t.kidsSwitch || '🧒 Kids (Switch)') : (t.matureSwitch || '🔥 18+ (Switch)')}
                         </button>
                       )}
                     </div>
                   </div>
-                  <div className="py-1">
-                    <Link href={`/profile/${user.username}`} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                      <User className="w-3.5 h-3.5 text-slate-500" /> {t.profile}
+                  <div className="py-1 space-y-0.5">
+                    <Link 
+                      href={`/profile/${user.username}`} 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                    >
+                      <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0" />
+                      <span className="truncate">{t.profile}</span>
                     </Link>
-                    <Link href="/library" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                      <BookMarked className="w-3.5 h-3.5 text-brand-500" /> My Library ({library.length})
+                    <Link 
+                      href="/library" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                    >
+                      <span className="flex items-center gap-2.5 truncate">
+                        <BookMarked className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                        <span className="truncate">{t.myLibrary || t.myPersonalShelf || t.library || 'My Library'}</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        {library.length}
+                      </span>
                     </Link>
-                    <Link href="/write" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                      <PenTool className="w-3.5 h-3.5 text-brand-500" /> {t.myStories}
+                    <Link 
+                      href="/write" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                    >
+                      <PenTool className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                      <span className="truncate">{t.myStories}</span>
                     </Link>
-                    <Link href="/settings" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                      <Settings className="w-3.5 h-3.5 text-slate-500" /> Account Settings
+                    <Link 
+                      href="/settings" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0" />
+                      <span className="truncate">{t.accountSettings || t.settings || 'Account Settings'}</span>
                     </Link>
                     {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
-                      <Link href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-purple-600 font-semibold">
-                        <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
+                      <Link 
+                        href="/admin" 
+                        onClick={() => setShowProfileMenu(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-purple-600 dark:text-purple-400 font-semibold transition-colors"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{t.adminPanel}</span>
                       </Link>
                     )}
                   </div>
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
                     <button 
                       onClick={() => {
                         setShowProfileMenu(false);
                         logoutUser();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left font-medium cursor-pointer transition-colors"
                     >
-                      <LogOut className="w-3.5 h-3.5" /> {t.logout}
+                      <LogOut className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{t.logout}</span>
                     </button>
                   </div>
                 </div>
@@ -613,16 +644,18 @@ export default function Header() {
                     <Link 
                       href={`/profile/${user.username}`} 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <User className="w-4 h-4 text-slate-500" /> {t.profile}
+                      <User className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+                      <span>{t.profile}</span>
                     </Link>
                     <Link 
                       href="/settings" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <Settings className="w-4 h-4 text-slate-500" /> Settings
+                      <Settings className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+                      <span>{t.accountSettings || t.settings || 'Settings'}</span>
                     </Link>
                   </>
                 )}
