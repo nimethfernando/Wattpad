@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { BookOpen, Mail, Lock, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithEmail, t } = useApp();
+  const { loginWithEmail, loginWithGoogle, loginWithFacebook, t } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,8 +21,40 @@ export default function LoginPage() {
       setErrorMessage('Please enter both your email and password.');
       return;
     }
-    loginWithEmail(email, password);
-    router.push('/home');
+    const loggedInUser = loginWithEmail(email, password);
+    if (loggedInUser?.role === 'admin') {
+      router.push('/admin');
+    } else {
+      router.push('/home');
+    }
+  };
+
+  const handleQuickDemo = (demoEmail, demoPass, targetRoute = '/home') => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    loginWithEmail(demoEmail, demoPass);
+    router.push(targetRoute);
+  };
+
+  const handleSocialLogin = async (provider) => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('avora_registration_pending');
+      }
+      if (provider === 'google') {
+        await loginWithGoogle();
+      } else {
+        await loginWithFacebook();
+      }
+      router.push('/home');
+    } catch (err) {
+      console.error('Social login error:', err);
+      setErrorMessage('Authentication error. Please try again or use 1-Click Demo login.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,6 +75,45 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Quick Demo Access Bar */}
+          <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 dark:from-slate-800/80 dark:to-slate-800/40 p-4 rounded-2xl border border-brand-200/80 dark:border-slate-700/80 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-brand-500" /> Instant 1-Click Demo
+              </span>
+              <span className="text-[10px] text-slate-400">No Password Required</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('admin@avoralibrary.com', 'admin123', '/admin')}
+                className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
+                title="Log in as Platform Administrator with full CMS and Story Publishing tools"
+              >
+                👑 Admin
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('reader@avoralibrary.com', 'password123', '/home')}
+                className="p-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
+                title="Log in as Avid Reader with personalized shelves & reading history"
+              >
+                📖 Reader
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('elena.author@avoralibrary.com', 'password123', '/write')}
+                className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
+                title="Log in as Serial Author with writing studio & story publishing"
+              >
+                ✍️ Author
+              </button>
+            </div>
+          </div>
+
           {errorMessage && (
             <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -56,13 +126,9 @@ export default function LoginPage() {
             {/* Facebook Login Button */}
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  sessionStorage.removeItem('avora_registration_pending');
-                }
-                signIn('facebook', { callbackUrl: '/home' });
-              }}
-              className="w-full py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-[#1877F2]/20 transition-all cursor-pointer"
+              disabled={loading}
+              onClick={() => handleSocialLogin('facebook')}
+              className="w-full py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-[#1877F2]/20 transition-all cursor-pointer disabled:opacity-60"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -73,13 +139,9 @@ export default function LoginPage() {
             {/* Google Login Button */}
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  sessionStorage.removeItem('avora_registration_pending');
-                }
-                signIn('google', { callbackUrl: '/home' });
-              }}
-              className="w-full py-3 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.99] text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-3 shadow-sm transition-all cursor-pointer"
+              disabled={loading}
+              onClick={() => handleSocialLogin('google')}
+              className="w-full py-3 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.99] text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-3 shadow-sm transition-all cursor-pointer disabled:opacity-60"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -95,14 +157,14 @@ export default function LoginPage() {
           <div className="relative flex items-center justify-center">
             <div className="border-t border-slate-200 dark:border-slate-800 w-full"></div>
             <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest absolute">
-              OR
+              OR EMAIL
             </span>
           </div>
 
           {/* 2. EMAIL FORM */}
           <form onSubmit={handleEmailLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Email or Username</label>
+              <label className="block font-bold text-slate-500 mb-1">Email or Username</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -118,14 +180,13 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-bold text-slate-400">Password</label>
-                <button 
-                  type="button" 
-                  onClick={() => alert("Password reset link has been dispatched to your email address.")}
+                <label className="font-bold text-slate-500">Password</label>
+                <Link 
+                  href="/forgot-password"
                   className="text-brand-500 font-bold hover:underline"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -143,7 +204,7 @@ export default function LoginPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer"
+              className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold shadow-lg shadow-brand-500/25 transition-all cursor-pointer disabled:opacity-60"
             >
               Sign In to Avora Library
             </button>

@@ -14,7 +14,9 @@ export default function AuthModal() {
     setAuthModalMode, 
     authModalMessage, 
     loginWithEmail, 
-    registerWithEmail
+    registerWithEmail,
+    loginWithGoogle,
+    loginWithFacebook
   } = useApp();
 
   const [email, setEmail] = useState('');
@@ -115,77 +117,18 @@ export default function AuthModal() {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
-          <button 
-            onClick={() => setAuthModalOpen(false)}
-            className="absolute top-4 right-4 z-20 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Brand Logo & Header */}
-          <div className="text-center space-y-1.5 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/25">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {authModalMode === 'login' ? 'Welcome Back' : 'Join Avora Library'}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-              {authModalMessage || (authModalMode === 'login' 
-                ? 'Log in to sync your library, vote on chapters, and join the discussion.' 
-                : 'Create a free account to discover thousands of serialized stories and publish your own.')}
-            </p>
-          </div>
-
-          {errorMessage && (
-            <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* 1. SOCIAL LOGINS (Facebook & Google at top, matching Wattpad) */}
-          <div className="space-y-2.5 mb-4">
-            {/* Facebook Login Button */}
-            <button
+          <button
               type="button"
-              onClick={() => {
-                setAuthModalOpen(false);
-                if (typeof window !== 'undefined') {
-                  if (authModalMode === 'register') {
-                    sessionStorage.setItem('avora_registration_pending', 'true');
-                  } else {
-                    sessionStorage.removeItem('avora_registration_pending');
-                  }
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loginWithGoogle();
+                } finally {
+                  setLoading(false);
                 }
-                signIn('facebook', { callbackUrl: '/home' });
               }}
               disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/20 transition-all cursor-pointer"
-            >
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              <span>Continue with Facebook</span>
-            </button>
-
-            {/* Google Login Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setAuthModalOpen(false);
-                if (typeof window !== 'undefined') {
-                  if (authModalMode === 'register') {
-                    sessionStorage.setItem('avora_registration_pending', 'true');
-                  } else {
-                    sessionStorage.removeItem('avora_registration_pending');
-                  }
-                }
-                signIn('google', { callbackUrl: '/home' });
-              }}
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 active:scale-[0.99] text-slate-700 dark:text-slate-100 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 active:scale-[0.99] text-slate-700 dark:text-slate-100 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -195,6 +138,49 @@ export default function AuthModal() {
               </svg>
               <span>Continue with Google</span>
             </button>
+          </div>
+
+          {/* Quick Demo Access (1-Click) */}
+          {authModalMode === 'login' && (
+            <div className="mb-4 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 dark:from-slate-800/60 dark:to-slate-800/30 p-3 rounded-2xl border border-brand-200/80 dark:border-slate-700/80 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-brand-700 dark:text-brand-300">
+                <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-brand-500" /> Instant 1-Click Demo</span>
+                <span className="text-[10px] text-slate-400">No Password</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 text-[10px] font-extrabold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginWithEmail('admin@avoralibrary.com', 'admin123');
+                    setAuthModalOpen(false);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all text-center cursor-pointer"
+                >
+                  👑 Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginWithEmail('reader@avoralibrary.com', 'password123');
+                    setAuthModalOpen(false);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all text-center cursor-pointer"
+                >
+                  📖 Reader
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginWithEmail('elena.author@avoralibrary.com', 'password123');
+                    setAuthModalOpen(false);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all text-center cursor-pointer"
+                >
+                  ✍️ Author
+                </button>
+              </div>
+            </div>
+          )}
           </div>
 
           {/* Divider OR */}

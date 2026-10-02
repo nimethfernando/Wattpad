@@ -349,27 +349,42 @@ export default function PaymentModal() {
 
             {/* Credit / Debit Card Module */}
             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <CreditCard className="w-3.5 h-3.5 text-slate-400" /> Payment Details
                 </label>
                 
-                {/* Brand Logos */}
+                {/* 1-Click Test Card Autofill */}
                 <div className="flex items-center gap-1.5">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase transition-all ${
-                    detectedBrand === 'visa' 
-                      ? 'bg-blue-600 text-white ring-2 ring-blue-500' 
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                  }`}>
-                    VISA
-                  </span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase transition-all ${
-                    detectedBrand === 'mastercard' 
-                      ? 'bg-red-500 text-white ring-2 ring-red-400' 
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                  }`}>
-                    MASTERCARD
-                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">Fill:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('4242 4242 4242 4242');
+                      setCardHolder(user?.name || 'Elena Vance');
+                      setExpiry('12/28');
+                      setCvv('123');
+                      setCardError('');
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px] font-bold hover:bg-blue-100 cursor-pointer"
+                    title="Autofill with Test Visa Card"
+                  >
+                    ⚡ Visa 4242
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('5454 5454 5454 5454');
+                      setCardHolder(user?.name || 'Marcus Vance');
+                      setExpiry('10/27');
+                      setCvv('888');
+                      setCardError('');
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-[10px] font-bold hover:bg-rose-100 cursor-pointer"
+                    title="Autofill with Test Mastercard"
+                  >
+                    ⚡ MC 5454
+                  </button>
                 </div>
               </div>
 

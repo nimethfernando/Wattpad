@@ -11,7 +11,7 @@ import { signIn } from 'next-auth/react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { registerWithEmail, t } = useApp();
+  const { registerWithEmail, loginWithFacebook, loginWithGoogle, t } = useApp();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -104,13 +104,17 @@ export default function RegisterPage() {
             {/* Facebook Button */}
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  sessionStorage.setItem('avora_registration_pending', 'true');
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loginWithFacebook();
+                  router.push('/home');
+                } finally {
+                  setLoading(false);
                 }
-                signIn('facebook', { callbackUrl: '/home' });
               }}
-              className="w-full py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-[#1877F2]/20 transition-all cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-[#1877F2]/20 transition-all cursor-pointer disabled:opacity-60"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -121,13 +125,17 @@ export default function RegisterPage() {
             {/* Google Button */}
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  sessionStorage.setItem('avora_registration_pending', 'true');
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loginWithGoogle();
+                  router.push('/home');
+                } finally {
+                  setLoading(false);
                 }
-                signIn('google', { callbackUrl: '/home' });
               }}
-              className="w-full py-3 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.99] text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-3 shadow-sm transition-all cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.99] text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-3 shadow-sm transition-all cursor-pointer disabled:opacity-60"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -196,9 +204,30 @@ export default function RegisterPage() {
 
             {/* 3. Date of Birth & Live Age Calculation */}
             <div className="space-y-1.5 pt-1">
-              <label className="block font-bold text-slate-700 dark:text-slate-300">
-                Date of Birth (DOB) <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block font-bold text-slate-700 dark:text-slate-300">
+                  Date of Birth (DOB) <span className="text-rose-500">*</span>
+                </label>
+                {/* Quick DOB Testing Presets */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setBirthdate('2003-05-15')}
+                    className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold hover:bg-emerald-100 cursor-pointer"
+                    title="Set to Adult (21 years old)"
+                  >
+                    ⚡ Adult 21+
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBirthdate('2009-08-20')}
+                    className="px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-[10px] font-bold hover:bg-amber-100 cursor-pointer"
+                    title="Set to Teen (15 years old - minor)"
+                  >
+                    ⚡ Teen 15+
+                  </button>
+                </div>
+              </div>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
