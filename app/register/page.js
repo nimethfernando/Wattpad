@@ -56,7 +56,7 @@ export default function RegisterPage() {
         })
       });
 
-      registerWithEmail({
+      const registered = registerWithEmail({
         username,
         email,
         password,
@@ -66,7 +66,11 @@ export default function RegisterPage() {
         isAgeConfirmed
       });
 
-      router.push('/home');
+      if (registered?.role === 'admin' || email.trim().toLowerCase() === 'groupditya@gmail.com') {
+        router.push('/admin');
+      } else {
+        router.push('/home');
+      }
     } catch (err) {
       setErrorMessage(err.message || 'Registration failed. Please try again.');
     } finally {

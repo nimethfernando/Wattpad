@@ -142,7 +142,7 @@ export default function Header() {
             <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
               <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
             </Link>
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
               <Link href="/admin" className="hidden 2xl:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
               </Link>
@@ -377,7 +377,7 @@ export default function Header() {
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                       <Settings className="w-3.5 h-3.5 text-slate-500" /> Account Settings
                     </Link>
-                    {user.role === 'admin' && (
+                    {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
                       <Link href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-purple-600 font-semibold">
                         <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
                       </Link>
@@ -627,7 +627,7 @@ export default function Header() {
                   </>
                 )}
 
-                {user?.role === 'admin' && (
+                {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
                   <Link 
                     href="/admin" 
                     onClick={() => setMobileMenuOpen(false)}

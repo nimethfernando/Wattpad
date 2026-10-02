@@ -166,23 +166,26 @@ export function AppProvider({ children }) {
           } catch (e) {}
         }
 
+        const cleanEmail = (email || '').trim().toLowerCase();
+        const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
+
         const authenticatedUser = {
           id: session.user.id || Date.now(),
-          username,
-          name,
+          username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username,
+          name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name,
           email,
           provider: "google",
-          role: "reader",
+          role: isAdmin ? "admin" : "reader",
           avatar,
-          badges: ["Google Verified", "Avid Reader"],
+          badges: isAdmin ? ["Platform Admin", "Google Verified"] : ["Google Verified", "Avid Reader"],
           birthdate: savedDob,
           age: savedAge,
-          experienceMode: savedMode,
-          isAgeVerified,
-          hideMature: savedMode === EXPERIENCE_MODES.KIDS,
+          experienceMode: isAdmin ? EXPERIENCE_MODES.MATURE : savedMode,
+          isAgeVerified: isAdmin ? true : isAgeVerified,
+          hideMature: isAdmin ? false : (savedMode === EXPERIENCE_MODES.KIDS),
           hasCompletedOnboarding: true,
           userPreferences: {
-            goals: "I'm here to read stories",
+            goals: isAdmin ? "Platform Administration & Moderation" : "I'm here to read stories",
             favoriteGenres: ["Romance", "Fantasy", "Mystery"],
             language: "en"
           }
@@ -191,6 +194,12 @@ export function AppProvider({ children }) {
         setUser(authenticatedUser);
         setHomeFeedViewMode('feed');
         setAuthModalOpen(false);
+
+        if (isAdmin && typeof window !== 'undefined') {
+          if (window.location.pathname !== '/admin') {
+            window.location.href = '/admin';
+          }
+        }
 
         // Only prompt for DOB if this authentication was explicitly triggered by user registration
         if (typeof window !== 'undefined') {
@@ -256,10 +265,15 @@ export function AppProvider({ children }) {
         const savedUser = localStorage.getItem('avora_user');
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
+          if (parsedUser?.email && (parsedUser.email.toLowerCase() === 'groupditya@gmail.com' || parsedUser.email.toLowerCase().includes('admin'))) {
+            parsedUser.role = 'admin';
+            parsedUser.isAgeVerified = true;
+            parsedUser.hideMature = false;
+          }
           if (parsedUser.birthdate) {
             parsedUser.age = calculateAgeFromDob(parsedUser.birthdate);
             parsedUser.isAgeVerified = true;
-            if (parsedUser.age !== null && parsedUser.age < 18) {
+            if (parsedUser.age !== null && parsedUser.age < 18 && parsedUser.role !== 'admin') {
               parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
               parsedUser.hideMature = true;
             }
@@ -1281,20 +1295,23 @@ export function AppProvider({ children }) {
       const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
       const avatar = customUser.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
 
+      const cleanEmail = email.toLowerCase();
+      const isAdmin = cleanEmail === 'groupditya@gmail.com' || cleanEmail.includes('admin');
+
       const googleUser = {
-        id: Date.now(),
-        username,
-        name,
+        id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
+        username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username,
+        name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name,
         email,
         provider: "google",
-        role: "reader",
+        role: isAdmin ? "admin" : "reader",
         avatar,
-        badges: ["Google Verified", "Avid Reader"],
+        badges: isAdmin ? ["Platform Admin", "Google Verified"] : ["Google Verified", "Avid Reader"],
         isAgeVerified: true,
         hideMature: false,
         hasCompletedOnboarding: true,
         userPreferences: {
-          goals: "I'm here to read stories",
+          goals: isAdmin ? "Platform Administration & Moderation" : "I'm here to read stories",
           favoriteGenres: ["Romance", "Fantasy", "Mystery"],
           language: "en"
         }
@@ -1315,6 +1332,13 @@ export function AppProvider({ children }) {
       setHomeFeedViewMode('feed');
       setAuthModalOpen(false);
       executePending();
+
+      if (isAdmin && typeof window !== 'undefined') {
+        if (window.location.pathname !== '/admin') {
+          window.location.href = '/admin';
+        }
+      }
+
       return googleUser;
     }
     
@@ -1386,14 +1410,14 @@ export function AppProvider({ children }) {
 
   // 3. Email Authentication
   const loginWithEmail = (email, password) => {
-    const cleanEmail = (email || '').trim();
+    const cleanEmail = (email || '').trim().toLowerCase();
     const username = cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail;
-    const isAdmin = cleanEmail.toLowerCase().includes('admin');
-    const isAuthor = cleanEmail.toLowerCase().includes('author') || cleanEmail.toLowerCase().includes('elena');
+    const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
+    const isAuthor = cleanEmail.includes('author') || cleanEmail.includes('elena');
     const emailUser = {
-      id: Date.now(),
-      username: username || 'reader',
-      name: cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader'),
+      id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
+      username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader'),
+      name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader')),
       email: cleanEmail.includes('@') ? cleanEmail : `${username || 'reader'}@avoralibrary.com`,
       provider: "email",
       role: isAdmin ? 'admin' : (isAuthor ? 'author' : 'reader'),
@@ -1402,12 +1426,12 @@ export function AppProvider({ children }) {
         : (isAuthor 
             ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80"
             : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80"),
-      badges: isAdmin ? ["Admin", "Editorial Member"] : (isAuthor ? ["Verified Author", "Rising Creator"] : ["Member", "Avid Reader"]),
+      badges: isAdmin ? ["Platform Admin", "Editorial Lead"] : (isAuthor ? ["Verified Author", "Rising Creator"] : ["Member", "Avid Reader"]),
       isAgeVerified: true,
       hideMature: false,
       hasCompletedOnboarding: true,
       userPreferences: {
-        goals: isAdmin ? "Both reading and writing" : (isAuthor ? "Publishing original serials" : "I'm here to read stories"),
+        goals: isAdmin ? "Platform Administration & Moderation" : (isAuthor ? "Publishing original serials" : "I'm here to read stories"),
         favoriteGenres: ["Romance", "Fantasy", "Mystery"],
         language: "en"
       }
@@ -1426,30 +1450,44 @@ export function AppProvider({ children }) {
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
+
+    if (isAdmin && typeof window !== 'undefined') {
+      if (window.location.pathname !== '/admin') {
+        window.location.href = '/admin';
+      }
+    }
+
     return emailUser;
   };
 
   const registerWithEmail = ({ username, email, password, birthdate, age = null, experienceMode = 'mature', isAgeConfirmed }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
     const calculatedAge = age !== null ? age : (birthdate ? calculateAgeFromDob(birthdate) : null);
     const enforcedMode = (calculatedAge !== null && calculatedAge < 18) 
       ? EXPERIENCE_MODES.KIDS 
       : (experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
 
     const newUser = {
-      id: Date.now(),
-      username,
-      name: username,
-      email,
+      id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
+      username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader'),
+      name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (username || 'Reader'),
+      email: cleanEmail || email,
       provider: "email",
       birthdate,
       age: calculatedAge,
-      experienceMode: enforcedMode,
-      role: 'author',
+      experienceMode: isAdmin ? EXPERIENCE_MODES.MATURE : enforcedMode,
+      role: isAdmin ? 'admin' : 'author',
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-      badges: calculatedAge && calculatedAge < 18 ? ["Young Creator", "Kids Reader"] : ["New Creator"],
-      isAgeVerified: Boolean(birthdate && calculatedAge !== null),
-      hideMature: enforcedMode === EXPERIENCE_MODES.KIDS,
-      hasCompletedOnboarding: false
+      badges: isAdmin ? ["Platform Admin", "Editorial Lead"] : (calculatedAge && calculatedAge < 18 ? ["Young Creator", "Kids Reader"] : ["New Creator"]),
+      isAgeVerified: isAdmin ? true : Boolean(birthdate && calculatedAge !== null),
+      hideMature: isAdmin ? false : (enforcedMode === EXPERIENCE_MODES.KIDS),
+      hasCompletedOnboarding: isAdmin ? true : false,
+      userPreferences: {
+        goals: isAdmin ? "Platform Administration & Moderation" : "Publishing original serials",
+        favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+        language: "en"
+      }
     };
 
     if (typeof window !== 'undefined') {
@@ -1468,73 +1506,6 @@ export function AppProvider({ children }) {
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
-    setOnboardingModalOpen(true);
-
-  // Age Verification & DOB Management
-  const updateUserAgeAndDob = (birthdate, age, experienceMode = EXPERIENCE_MODES.MATURE) => {
-    const calculatedAge = age ?? calculateAgeFromDob(birthdate);
-    const enforcedMode = (calculatedAge !== null && calculatedAge < 18) 
-      ? EXPERIENCE_MODES.KIDS 
-      : (experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
-
-    setUser(prev => {
-      const updated = {
-        ...(prev || {}),
-        birthdate,
-        age: calculatedAge,
-        experienceMode: enforcedMode,
-        isAgeVerified: true,
-        hideMature: enforcedMode === EXPERIENCE_MODES.KIDS
-      };
-
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('avora_user', JSON.stringify(updated));
-          document.cookie = `avora_dob=${encodeURIComponent(birthdate)}; path=/; max-age=2592000; SameSite=Lax`;
-          document.cookie = `avora_age=${encodeURIComponent(String(calculatedAge))}; path=/; max-age=2592000; SameSite=Lax`;
-          document.cookie = `avora_experience_mode=${encodeURIComponent(enforcedMode)}; path=/; max-age=2592000; SameSite=Lax`;
-        } catch (e) {
-          console.error("Failed to update user age in localStorage", e);
-        }
-      }
-
-      return updated;
-    });
-
-    sendNotification({
-      title: "Age Verification Completed",
-      message: `Your account is verified (${calculatedAge} years old) in ${enforcedMode === EXPERIENCE_MODES.KIDS ? 'Kids / Family' : '18+ Mature'} mode.`,
-      type: "system"
-    });
-  };
-
-  const toggleExperienceMode = (mode) => {
-    if (!user) return;
-    const userAge = user.birthdate ? calculateAgeFromDob(user.birthdate) : user.age;
-    if (userAge !== null && userAge < 18 && mode === EXPERIENCE_MODES.MATURE) {
-      alert("Access Restricted: Accounts verified under 18 years cannot access 18+ Mature mode.");
-      return;
-    }
-    const newMode = mode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE;
-    setUser(prev => {
-      const updated = {
-        ...prev,
-        experienceMode: newMode,
-        hideMature: newMode === EXPERIENCE_MODES.KIDS
-      };
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('avora_user', JSON.stringify(updated));
-          document.cookie = `avora_experience_mode=${encodeURIComponent(newMode)}; path=/; max-age=2592000; SameSite=Lax`;
-        } catch (e) {}
-      }
-      return updated;
-    });
-  };
-
-  const canAccessStory = (story) => {
-    return canUserAccessContent(user, story);
-  };
 
     // Dispatch welcome notification & welcome email
     sendNotification({
@@ -1544,6 +1515,15 @@ export function AppProvider({ children }) {
       sendEmail: true,
       recipientEmail: email
     });
+
+    if (isAdmin) {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+        window.location.href = '/admin';
+      }
+    } else {
+      setOnboardingModalOpen(true);
+    }
+
     return newUser;
   };
 
@@ -1617,7 +1597,16 @@ export function AppProvider({ children }) {
   };
 
   // DOB-based Age Verification and Experience Mode controls
-  const updateUserAgeAndDob = ({ birthdate, experienceMode }) => {
+  const updateUserAgeAndDob = (arg1, arg2, arg3) => {
+    let birthdate = null;
+    let experienceMode = EXPERIENCE_MODES.MATURE;
+    if (arg1 && typeof arg1 === 'object') {
+      birthdate = arg1.birthdate;
+      experienceMode = arg1.experienceMode || EXPERIENCE_MODES.MATURE;
+    } else {
+      birthdate = arg1;
+      experienceMode = (arg3 && typeof arg3 === 'string') ? arg3 : ((arg2 && typeof arg2 === 'string' && isNaN(arg2)) ? arg2 : EXPERIENCE_MODES.MATURE);
+    }
     const age = calculateAgeFromDob(birthdate);
     const enforcedMode = (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : experienceMode;
     const hideMature = enforcedMode === EXPERIENCE_MODES.KIDS || (age !== null && age < 18);
