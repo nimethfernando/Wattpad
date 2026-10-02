@@ -81,13 +81,13 @@ export default function Header() {
       {/* 0. Site-Wide Announcement Banner */}
       {announcementBanner?.active && !bannerDismissed && (
         <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 px-4 text-center relative flex items-center justify-center gap-2 shadow-sm">
-          <span>{announcementBanner.text}</span>
+          <span>{t?.announcementText || announcementBanner.text}</span>
           {announcementBanner.linkUrl && (
             <Link 
               href={announcementBanner.linkUrl} 
               className="underline font-bold hover:text-white/80 transition-colors ml-1"
             >
-              {announcementBanner.linkText || 'Learn More →'}
+              {t?.announcementLink || announcementBanner.linkText || 'Learn More →'}
             </Link>
           )}
           {announcementBanner.dismissible && (

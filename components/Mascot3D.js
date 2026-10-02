@@ -26,7 +26,10 @@ export default function Mascot3D() {
     user, 
     readingStreak, 
     openPaymentModal, 
-    featureFlags 
+    featureFlags,
+    t,
+    translateGenre,
+    lang
   } = useApp();
 
   const mascotRef = useRef(null);
@@ -56,23 +59,23 @@ export default function Mascot3D() {
     if (user) {
       messages.push({
         id: 'greet_user',
-        badge: 'Welcome Back',
+        badge: t?.welcomeBackBadge || 'Welcome Back',
         badgeColor: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
         badgeIcon: 'Sparkles',
-        title: `Hi, ${user.name.split(' ')[0]}! ✨`,
-        text: `Avora is keeping your place warm in the library. Ready to continue reading today?`,
-        actionLabel: 'Explore Library',
+        title: (t?.hiUser || 'Hi, {name}! ✨').replace('{name}', user.name.split(' ')[0]),
+        text: t?.avoraWarmWelcome || 'Avora is keeping your place warm in the library. Ready to continue reading today?',
+        actionLabel: t?.exploreLibraryBtn || 'Explore Library',
         actionUrl: '/library',
       });
     } else {
       messages.push({
         id: 'greet_guest',
-        badge: 'Book Guardian',
+        badge: t?.bookGuardianBadge || 'Book Guardian',
         badgeColor: 'bg-brand-500/10 text-brand-600 border-brand-500/20',
         badgeIcon: 'Sparkles',
-        title: `Hoot! I'm Avora 🦉`,
-        text: `Welcome to Avora Library! I am your magical reading companion. Click me anytime for recommendations and secret reading tips!`,
-        actionLabel: 'Browse All Stories',
+        title: t?.guestGreetingTitle || "Hoot! I'm Avora 🦉",
+        text: t?.guestGreetingText || 'Welcome to Avora Library! I am your magical reading companion. Click me anytime for recommendations and secret reading tips!',
+        actionLabel: t?.browseAllStoriesBtn || 'Browse All Stories',
         actionUrl: '/browse',
       });
     }
@@ -81,14 +84,14 @@ export default function Mascot3D() {
     const streakCount = readingStreak?.currentStreak || 0;
     messages.push({
       id: 'streak',
-      badge: streakCount > 0 ? `${streakCount} Day Streak!` : 'Daily Habit',
+      badge: streakCount > 0 ? (t?.dayStreakBadge || '{count} Day Streak!').replace('{count}', streakCount) : (t?.dailyHabitBadge || 'Daily Habit'),
       badgeColor: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
       badgeIcon: 'Flame',
-      title: streakCount > 0 ? `Your Flame is Blazing! 🔥` : `Start a Streak Today! 📖`,
+      title: streakCount > 0 ? (t?.flameBlazingTitle || 'Your Flame is Blazing! 🔥') : (t?.startStreakTitle || 'Start a Streak Today! 📖'),
       text: streakCount > 0 
-        ? `You've read ${readingStreak?.chaptersReadThisWeek || 1} chapter(s) this week! Keep reading today to protect your streak!` 
-        : `Read at least 1 chapter every day to build a habit and earn the Golden Scholar badge!`,
-      actionLabel: 'Start Reading',
+        ? (t?.streakDescActive || "You've read {count} chapter(s) this week! Keep reading today to protect your streak!").replace('{count}', readingStreak?.chaptersReadThisWeek || 1) 
+        : (t?.streakDescInactive || 'Read at least 1 chapter every day to build a habit and earn the Golden Scholar badge!'),
+      actionLabel: t?.startReading || 'Start Reading',
       actionUrl: randomStory ? `/read/${randomStory.slug}` : '/browse',
     });
 
@@ -96,13 +99,13 @@ export default function Mascot3D() {
     if (randomStory) {
       messages.push({
         id: 'rec',
-        badge: 'Recommended For You',
+        badge: t?.recommendedBadge || 'Recommended For You',
         badgeColor: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
         badgeIcon: 'BookOpen',
         title: randomStory.title,
-        text: `Readers are raving about this ${randomStory.genre} serialized story by ${randomStory.author} (${(randomStory.reads || 0).toLocaleString()} reads)!`,
+        text: `${t?.recommendedBadge || 'Recommended'}: ${translateGenre ? translateGenre(randomStory.genre) : randomStory.genre} (${randomStory.author} • ${(randomStory.reads || 0).toLocaleString()} ${t?.reads || 'reads'})`,
         story: randomStory,
-        actionLabel: 'Read Chapter 1 📖',
+        actionLabel: `${t?.readNow || 'Read'} 1 📖`,
         actionUrl: `/read/${randomStory.slug}`,
       });
     }
@@ -110,24 +113,24 @@ export default function Mascot3D() {
     // 4. Feature Tip (Inline Comments & Reactions)
     messages.push({
       id: 'tip_comments',
-      badge: 'Reading Tip',
+      badge: t?.readingTipBadge || 'Reading Tip',
       badgeColor: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
       badgeIcon: 'MessageSquare',
-      title: 'Join the Discussion! 💬',
-      text: 'Did you know? You can click the speech bubble on any paragraph in a story to read thoughts and react line-by-line!',
-      actionLabel: 'Try in a Story',
+      title: t?.joinDiscussionTitle || 'Join the Discussion! 💬',
+      text: t?.joinDiscussionText || 'Did you know? You can click the speech bubble on any paragraph in a story to read thoughts and react line-by-line!',
+      actionLabel: t?.tryInAStory || 'Try in a Story',
       actionUrl: topStory ? `/read/${topStory.slug}` : '/browse',
     });
 
     // 5. Modern Light Theme Highlight
     messages.push({
       id: 'light_theme',
-      badge: 'Visual Comfort',
+      badge: t?.visualComfortBadge || 'Visual Comfort',
       badgeColor: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
       badgeIcon: 'Lightbulb',
-      title: 'Fresh & Modern Design ☀️',
-      text: 'Avora Library features a clean, lively light aesthetic tailored for daytime reading without eye fatigue!',
-      actionLabel: 'Explore Genres',
+      title: t?.freshModernDesignTitle || 'Fresh & Modern Design ☀️',
+      text: t?.freshModernDesignText || 'Avora Library features a clean, lively light aesthetic tailored for daytime reading without eye fatigue!',
+      actionLabel: t?.exploreAll || 'Explore Genres',
       actionUrl: '/browse',
     });
 
@@ -135,18 +138,18 @@ export default function Mascot3D() {
     if (featureFlags?.enablePaidFeatures) {
       messages.push({
         id: 'tip_author',
-        badge: 'Support Creators',
+        badge: t?.supportCreatorsBadge || 'Support Creators',
         badgeColor: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
         badgeIcon: 'Heart',
-        title: 'Send Author Love 💖',
-        text: 'Tips and VIP passes empower authors to write serialized fiction full-time. Have a favorite writer?',
-        actionLabel: 'Support an Author',
+        title: t?.sendAuthorLoveTitle || 'Send Author Love 💖',
+        text: t?.sendAuthorLoveText || 'Tips and VIP passes empower authors to write serialized fiction full-time. Have a favorite writer?',
+        actionLabel: t?.tipAuthor || 'Support an Author',
         actionCallbackType: 'donate',
       });
     }
 
     return messages;
-  }, [stories, user, readingStreak, featureFlags]);
+  }, [stories, user, readingStreak, featureFlags, t, lang]);
 
   // Initial greeting timer (opens speech bubble after 2.8s on initial load)
   useEffect(() => {
@@ -380,7 +383,7 @@ export default function Mascot3D() {
                     className="text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors px-1 py-1 rounded cursor-pointer"
                     title="Skip Mascot Tips"
                   >
-                    Skip
+                    {t?.skipBtn || 'Skip'}
                   </button>
 
                   <div className="w-[1px] h-3 bg-slate-200" />
@@ -436,7 +439,7 @@ export default function Mascot3D() {
                     title="Finish Mascot Tips"
                   >
                     <Check className={`w-3.5 h-3.5 ${isLastSlide ? 'text-white' : 'text-emerald-500'}`} />
-                    <span>Finish</span>
+                    <span>{t?.finishBtn || 'Finish'}</span>
                   </button>
 
                   {!isLastSlide && currentMessage.actionCallbackType === 'donate' ? (

@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { 
   initialGenres, 
@@ -16,7 +16,7 @@ import {
   initialFeatureFlags,
   initialCmsConfig
 } from '@/lib/data';
-import { translations } from '@/lib/translations';
+import { translations, getTranslatedGenre } from '@/lib/translations';
 import { 
   calculateAgeFromDob, 
   canUserAccessContent, 
@@ -493,6 +493,32 @@ export function AppProvider({ children }) {
     const activeDict = translations[lang] || translations.en;
     return { ...translations.en, ...activeDict };
   }, [lang]);
+
+  // Synchronize document lang attribute and typography classes when language changes
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+      const langClasses = ['lang-en', 'lang-ka', 'lang-hi', 'lang-es'];
+      langClasses.forEach(cls => {
+        document.documentElement.classList.remove(cls);
+        document.body.classList.remove(cls);
+      });
+      document.documentElement.classList.add(`lang-${lang}`);
+      document.body.classList.add(`lang-${lang}`);
+    }
+  }, [lang]);
+
+  const translateGenre = useCallback((nameOrSlug) => {
+    return getTranslatedGenre(nameOrSlug, lang);
+  }, [lang]);
+
+  const localizedGenres = useMemo(() => {
+    return genres.map(g => ({
+      ...g,
+      name: getTranslatedGenre(g.slug, lang) || g.name,
+      originalName: g.name
+    }));
+  }, [genres, lang]);
 
   // Actions
   const toggleTheme = () => {
@@ -1683,8 +1709,11 @@ export function AppProvider({ children }) {
       setUser,
       stories,
       setStories,
-      genres,
+      genres: localizedGenres,
+      rawGenres: genres,
       setGenres,
+      translateGenre,
+      getTranslatedGenre: translateGenre,
       testimonials,
       setTestimonials,
       contests,

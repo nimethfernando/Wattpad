@@ -24,13 +24,18 @@ export default function LibraryPage() {
   const { 
     stories, 
     library, 
+    addToLibrary,
     removeFromLibrary, 
+    isInLibrary,
+    wishlist,
+    removeFromWishlist,
     readingLists, 
     createReadingList, 
     readingProgress, 
     user, 
     openAuthModal, 
-    t 
+    t,
+    translateGenre
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('library'); // 'library' | 'wishlist' | 'lists' | 'archive'
@@ -42,6 +47,9 @@ export default function LibraryPage() {
   const [libraryPage, setLibraryPage] = useState(1);
   const [libraryPageSize, setLibraryPageSize] = useState(6);
 
+  const [wishlistPage, setWishlistPage] = useState(1);
+  const [wishlistPageSize, setWishlistPageSize] = useState(6);
+
   const [listPage, setListPage] = useState(1);
   const [listPageSize, setListPageSize] = useState(4);
 
@@ -49,6 +57,12 @@ export default function LibraryPage() {
   const libraryStories = stories.filter(s => library.includes(s.id));
   const totalLibraryPages = Math.ceil(libraryStories.length / libraryPageSize) || 1;
   const paginatedLibraryStories = libraryStories.slice((libraryPage - 1) * libraryPageSize, libraryPage * libraryPageSize);
+
+  // Filter stories in user wishlist
+  const userWishlist = wishlist || [];
+  const wishlistStories = stories.filter(s => userWishlist.includes(s.id));
+  const totalWishlistPages = Math.ceil(wishlistStories.length / wishlistPageSize) || 1;
+  const paginatedWishlistStories = wishlistStories.slice((wishlistPage - 1) * wishlistPageSize, wishlistPage * wishlistPageSize);
 
   const totalListPages = Math.ceil(readingLists.length / listPageSize) || 1;
   const paginatedLists = readingLists.slice((listPage - 1) * listPageSize, listPage * listPageSize);
@@ -92,7 +106,17 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <BookOpen className="w-4 h-4" /> {t.currentReads || 'Current Reads'} ({libraryStories.length})
+              <BookOpen className="w-4 h-4" /> {t?.currentReads || 'Current Reads'} ({libraryStories.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              className={`shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'wishlist'
+                  ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              <Heart className="w-4 h-4" /> {t?.wishlist || 'Wish List'} ({wishlistStories.length})
             </button>
             <button
               onClick={() => setActiveTab('lists')}
@@ -102,7 +126,7 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <BookMarked className="w-4 h-4" /> {t.readingLists || 'Reading Lists'} ({readingLists.length})
+              <BookMarked className="w-4 h-4" /> {t?.readingLists || 'Reading Lists'} ({readingLists.length})
             </button>
             <button
               onClick={() => setActiveTab('archive')}
@@ -112,7 +136,7 @@ export default function LibraryPage() {
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              <CheckCircle className="w-4 h-4" /> {t.archive || 'Archive / Finished'}
+              <CheckCircle className="w-4 h-4" /> {t?.archive || 'Archive / Finished'}
             </button>
           </div>
 
@@ -173,7 +197,7 @@ export default function LibraryPage() {
                             <div>
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
-                                  {story.genre}
+                                  {translateGenre ? translateGenre(story.genre) : story.genre}
                                 </span>
                                 {story.ranking && (
                                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
@@ -183,7 +207,7 @@ export default function LibraryPage() {
                                       ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                                       : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
                                   }`}>
-                                    {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}
+                                    {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}
                                   </span>
                                 )}
                               </div>
@@ -192,13 +216,13 @@ export default function LibraryPage() {
                                   {story.title}
                                 </h3>
                               </Link>
-                              <p className="text-xs text-slate-400">By {story.author}</p>
+                              <p className="text-xs text-slate-400">{t?.by || 'By'} {story.author}</p>
                             </div>
 
                             {/* Reading Progress Indicator */}
                             <div className="space-y-1.5 pt-2">
                               <div className="flex justify-between text-[11px] font-bold">
-                                <span className="text-slate-500">Ch. {currentChNum} of {totalCh}</span>
+                                <span className="text-slate-500">{t?.chapters || 'Ch.'} {currentChNum} / {totalCh}</span>
                                 <span className="text-brand-600 dark:text-brand-400">{percent}%</span>
                               </div>
                               <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -215,15 +239,15 @@ export default function LibraryPage() {
                         <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
                           <Link 
                             href={`/read/${story.slug}`}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20"
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20 cursor-pointer"
                           >
-                            <BookOpen className="w-3.5 h-3.5" /> Continue Reading
+                            <BookOpen className="w-3.5 h-3.5" /> {t?.continueReading || 'Continue Reading'}
                           </Link>
 
                           <button 
                             onClick={() => removeFromLibrary(story.id)}
-                            className="p-2 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                            title="Remove from Library"
+                            className="p-2 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                            title={t?.removeFromLibrary || "Remove from Library"}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -292,24 +316,24 @@ export default function LibraryPage() {
                             <div>
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
-                                  {story.genre}
-                                </span>
-                                {story.ageRating && (
-                                  <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                                    story.ageRating === '18+'
-                                      ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
-                                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
-                                  }`}>
-                                    {story.ageRating}
-                                  </span>
-                                )}
+                                   {translateGenre ? translateGenre(story.genre) : story.genre}
+                                 </span>
+                                 {story.ageRating && (
+                                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                                     story.ageRating === '18+'
+                                       ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
+                                       : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                                   }`}>
+                                     {story.ageRating}
+                                   </span>
+                                 )}
                               </div>
                               <Link href={`/story/${story.slug}`}>
                                 <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
-                                  {story.title}
-                                </h3>
+                                   {story.title}
+                                 </h3>
                               </Link>
-                              <p className="text-xs text-slate-400">By {story.author}</p>
+                              <p className="text-xs text-slate-400">{t?.by || 'By'} {story.author}</p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
                                 {story.description}
                               </p>
@@ -318,7 +342,7 @@ export default function LibraryPage() {
                             <div className="pt-2 flex items-center gap-3 text-[11px] text-slate-400 font-medium">
                               <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
                               <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500 fill-rose-500" /> {story.votes.toLocaleString()}</span>
-                              <span>{story.chapters.length} Ch.</span>
+                              <span>{story.chapters.length} {t?.chapterShort || 'Ch.'}</span>
                             </div>
                           </div>
                         </div>

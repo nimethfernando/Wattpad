@@ -50,7 +50,8 @@ export default function StoryDetailPage() {
     setAgeVerificationModalOpen,
     openPaymentModal,
     featureFlags,
-    t
+    t,
+    translateGenre
   } = useApp();
 
   const [copiedShare, setCopiedShare] = useState(false);
@@ -231,7 +232,7 @@ export default function StoryDetailPage() {
               {/* Category, Status, Maturity */}
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-lg">
-                  {story.genre}
+                  {translateGenre ? translateGenre(story.genre) : story.genre}
                 </span>
                 {/* Age Rating Badge */}
                 <span className={`text-xs font-black px-2.5 py-0.5 rounded-lg border ${
@@ -268,7 +269,7 @@ export default function StoryDetailPage() {
               {story.ranking && (
                 <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-bold text-amber-700 dark:text-amber-400 flex-wrap">
                   <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
+                  <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}</span>
                   {story.ranking.globalRank && (
                     <span className="bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-black">
                       #{story.ranking.globalRank} Overall
@@ -283,7 +284,7 @@ export default function StoryDetailPage() {
                 <Link href={`/profile/${story.authorUsername}`} className="flex items-center gap-2.5 group">
                   <img src={story.authorAvatar} alt={story.author} className="w-9 h-9 rounded-full object-cover ring-2 ring-brand-500/20" />
                   <div>
-                    <p className="text-xs text-slate-400">Written by</p>
+                    <p className="text-xs text-slate-400">{t?.writtenBy || 'Written by'}</p>
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500 transition-colors">
                       {story.author}
                     </p>
@@ -299,7 +300,7 @@ export default function StoryDetailPage() {
                   }`}
                 >
                   {isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                  {isFollowing ? 'Following' : 'Follow'}
+                  {isFollowing ? (t?.following || 'Following') : (t?.follow || 'Follow')}
                 </button>
 
                 {featureFlags?.enablePaidFeatures && (
@@ -316,26 +317,26 @@ export default function StoryDetailPage() {
                     title={`Send a tip to ${story.author}`}
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                    <span>Tip Author</span>
+                    <span>{t?.tipAuthor || 'Tip Author'}</span>
                   </button>
                 )}
 
                 {/* Report button */}
                 <button
                   onClick={() => setReportModalOpen(true)}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 ml-auto"
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 ml-auto cursor-pointer"
                   title="Report Content"
                 >
-                  <Flag className="w-3.5 h-3.5" /> Report
+                  <Flag className="w-3.5 h-3.5" /> {t?.report || 'Report'}
                 </button>
               </div>
 
               {/* Story Stats */}
               <div className="flex items-center flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600 dark:text-slate-300 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <span className="flex items-center gap-1.5 font-semibold"><Eye className="w-4 h-4 text-brand-500" /> {story.reads.toLocaleString()} Reads</span>
-                <span className="flex items-center gap-1.5 font-semibold"><Heart className="w-4 h-4 text-rose-500" /> {story.votes.toLocaleString()} Votes</span>
-                <span className="flex items-center gap-1.5 font-semibold"><MessageSquare className="w-4 h-4 text-indigo-500" /> {story.commentsCount.toLocaleString()} Comments</span>
-                <span className="flex items-center gap-1.5 font-semibold"><BookOpen className="w-4 h-4 text-amber-500" /> {story.chapters.length} Chapters</span>
+                <span className="flex items-center gap-1.5 font-semibold"><Eye className="w-4 h-4 text-brand-500" /> {story.reads.toLocaleString()} {t?.reads || 'Reads'}</span>
+                <span className="flex items-center gap-1.5 font-semibold"><Heart className="w-4 h-4 text-rose-500" /> {story.votes.toLocaleString()} {t?.votes || 'Votes'}</span>
+                <span className="flex items-center gap-1.5 font-semibold"><MessageSquare className="w-4 h-4 text-indigo-500" /> {story.commentsCount.toLocaleString()} {t?.comments || 'Comments'}</span>
+                <span className="flex items-center gap-1.5 font-semibold"><BookOpen className="w-4 h-4 text-amber-500" /> {story.chapters.length} {t?.chapters || 'Chapters'}</span>
               </div>
 
               {/* Description */}
@@ -366,8 +367,8 @@ export default function StoryDetailPage() {
               >
                 <BookOpen className="w-4 h-4" /> 
                 {savedProgress 
-                  ? `Continue Reading (Ch. ${currentChapter.number})` 
-                  : 'Start Reading Chapter 1'}
+                  ? `${t?.continueReading || 'Continue Reading'} (Ch. ${currentChapter.number})` 
+                  : (t?.startReading || 'Start Reading Chapter 1')}
               </Link>
 
               {/* Add to Library Toggle Button & Reading List Popover Group */}
@@ -381,7 +382,7 @@ export default function StoryDetailPage() {
                   }`}
                 >
                   {inLib ? <Check className="w-4 h-4 text-emerald-500" /> : <Plus className="w-4 h-4" />}
-                  <span>{inLib ? 'In Your Library' : 'Add to Library'}</span>
+                  <span>{inLib ? (t?.inLibrary || 'In Your Library') : (t?.addToLibrary || 'Add to Library')}</span>
                 </button>
 
                 {/* Dedicated 1-Click Wish List Button */}

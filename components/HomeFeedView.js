@@ -612,7 +612,7 @@ export default function HomeFeedView() {
 
 // Reusable Wattpad-style Card Component with 3-Dot Quick Actions
 function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideStory }) {
-  const { isInWishlist, toggleWishlist, t } = useApp();
+  const { isInWishlist, toggleWishlist, t, translateGenre } = useApp();
   const isWish = isInWishlist ? isInWishlist(story.id) : false;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -653,7 +653,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                 ? 'bg-amber-950/80 text-amber-200 border-amber-600/40'
                 : 'bg-slate-950/80 text-slate-300 border-slate-700/50'
             }`}>
-              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
+              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}</span>
             </div>
           )}
 
@@ -778,7 +778,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
             {story.title}
           </h3>
         </Link>
-        <p className="text-xs text-slate-400 mt-0.5">By {story.author}</p>
+        <p className="text-xs text-slate-400 mt-0.5">{t?.by || 'By'} {story.author}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
           {story.description}
         </p>
@@ -790,7 +790,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
           <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
         </div>
         <span className="font-bold text-brand-600 dark:text-brand-400">
-          {story.chapters?.length || 1} Ch.
+          {story.chapters?.length || 1} {t?.chapterShort || 'Ch.'}
         </span>
       </div>
     </div>

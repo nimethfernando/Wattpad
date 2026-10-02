@@ -24,7 +24,7 @@ import {
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 
 export default function BrowsePage() {
-  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t } = useApp();
+  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t, translateGenre } = useApp();
 
   // Filters & Sorting state
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -430,7 +430,7 @@ export default function BrowsePage() {
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md">
-                          {story.genre}
+                          {translateGenre ? translateGenre(story.genre) : story.genre}
                         </span>
                         {/* Age Rating Badge */}
                         <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
@@ -455,7 +455,7 @@ export default function BrowsePage() {
                               ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                               : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
                           }`}>
-                            {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}
+                            {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}
                           </span>
                         )}
                         {story.isOriginal && (
@@ -474,14 +474,14 @@ export default function BrowsePage() {
                         </h3>
                       </Link>
 
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">By {story.author}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t?.by || 'By'} {story.author}</p>
                       <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{story.description}</p>
                     </div>
 
                     <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 dark:border-slate-800 mt-2">
                       <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
                       <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()}</span>
-                      <span className="font-semibold text-brand-600 dark:text-brand-400">{story.chapters.length} Ch.</span>
+                      <span className="font-semibold text-brand-600 dark:text-brand-400">{story.chapters.length} {t?.chapterShort || 'Ch.'}</span>
                     </div>
                   </div>
                 </div>
