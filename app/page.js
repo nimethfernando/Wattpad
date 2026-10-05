@@ -35,7 +35,8 @@ export default function HomePage() {
     user,
     homeFeedViewMode = 'landing',
     setHomeFeedViewMode,
-    translateGenre
+    translateGenre,
+    translateStory
   } = useApp();
   const [installPromptShown, setInstallPromptShown] = useState(false);
 
@@ -61,7 +62,7 @@ export default function HomePage() {
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 px-4 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 font-bold text-slate-500">
-            <span>Home View:</span>
+            <span>{t.homeView || 'Home View'}:</span>
             <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/70">
               <button
                 onClick={() => setHomeFeedViewMode('feed')}
@@ -72,7 +73,7 @@ export default function HomePage() {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span><span className="hidden sm:inline">Personalized </span>Feed</span>
+                <span>{t.personalizedFeedNav || 'Personalized Feed'}</span>
               </button>
               <button
                 onClick={() => setHomeFeedViewMode('landing')}
@@ -83,13 +84,13 @@ export default function HomePage() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span><span className="hidden sm:inline">Public </span>Landing</span>
+                <span>{t.publicLandingNav || 'Public Landing'}</span>
               </button>
             </div>
           </div>
 
           <div className="text-[11px] text-slate-400 flex items-center gap-2">
-            <span>{user ? `Active Member: @${user.username}` : 'Guest Visitor'}</span>
+            <span>{user ? `${t.activeMember || 'Active Member'}: @${user.username}` : (t.guestVisitor || 'Guest Visitor')}</span>
             <span className="hidden md:inline">•</span>
             <Link href="/home" className="text-brand-600 font-bold hover:underline hidden md:inline">
               Direct Route: /home →
@@ -164,33 +165,38 @@ export default function HomePage() {
               </div>
 
               {/* Hero Spotlight Story Card */}
-              <div className="lg:col-span-5 flex justify-center">
-                <div className="relative group w-full max-w-[280px] sm:max-w-xs rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 transition-transform duration-300 hover:scale-[1.02]">
-                  <img 
-                    src={stories[0].cover} 
-                    alt={stories[0].title}
-                    className="w-full h-[360px] sm:h-[450px] object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end text-white">
-                    <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full bg-brand-500 w-fit mb-2">
-                      Featured House Original
-                    </span>
-                    <h3 className="text-2xl font-black">{stories[0].title}</h3>
-                    <p className="text-xs text-slate-300 mt-1">{t?.by || 'By'} {stories[0].author}</p>
-                    <p className="text-xs text-slate-300/90 mt-2 line-clamp-2">{stories[0].description}</p>
-                    
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/20 text-xs">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-400" /> {stories[0].reads.toLocaleString()}</span>
-                        <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-400" /> {stories[0].votes.toLocaleString()}</span>
+              {stories[0] && (() => {
+                const spotStory = translateStory ? translateStory(stories[0]) : stories[0];
+                return (
+                  <div className="lg:col-span-5 flex justify-center">
+                    <div className="relative group w-full max-w-[280px] sm:max-w-xs rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 transition-transform duration-300 hover:scale-[1.02]">
+                      <img 
+                        src={stories[0].cover} 
+                        alt={spotStory.title} 
+                        className="w-full h-[360px] sm:h-[450px] object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end text-white">
+                        <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full bg-brand-500 w-fit mb-2">
+                          Featured House Original
+                        </span>
+                        <h3 className="text-2xl font-black">{spotStory.title}</h3>
+                        <p className="text-xs text-slate-300 mt-1">{t?.by || 'By'} {spotStory.author}</p>
+                        <p className="text-xs text-slate-300/90 mt-2 line-clamp-2">{spotStory.description}</p>
+                        
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/20 text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-400" /> {stories[0].reads.toLocaleString()}</span>
+                            <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-400" /> {stories[0].votes.toLocaleString()}</span>
+                          </div>
+                          <Link href={`/read/${stories[0].slug}`} className="px-3 py-1.5 rounded-full bg-white text-slate-950 font-bold text-xs hover:bg-slate-200">
+                            {t?.readNow || 'Read Now'}
+                          </Link>
+                        </div>
                       </div>
-                      <Link href={`/read/${stories[0].slug}`} className="px-3 py-1.5 rounded-full bg-white text-slate-950 font-bold text-xs hover:bg-slate-200">
-                        {t?.readNow || 'Read Now'}
-                      </Link>
                     </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </div>
         </section>
@@ -216,64 +222,67 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {trendingStories.slice(0, 8).map((story, index) => (
-              <Link 
-                key={story.id} 
-                href={`/story/${story.slug}`} 
-                className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-brand-500/50 transition-all duration-200 relative"
-              >
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  <img 
-                    src={story.cover} 
-                    alt={story.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {/* Real-time Leaderboard Position Ribbon */}
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black backdrop-blur-md shadow-md flex items-center gap-1 ${
-                      index === 0
-                        ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 ring-1 ring-amber-300'
+            {trendingStories.slice(0, 8).map((story, index) => {
+              const locStory = translateStory ? translateStory(story) : story;
+              return (
+                <Link 
+                  key={story.id} 
+                  href={`/story/${story.slug}`} 
+                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-brand-500/50 transition-all duration-200 relative"
+                >
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img 
+                      src={story.cover} 
+                      alt={locStory.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {/* Real-time Leaderboard Position Ribbon */}
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black backdrop-blur-md shadow-md flex items-center gap-1 ${
+                        index === 0
+                          ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 ring-1 ring-amber-300'
                         : index === 1
-                        ? 'bg-slate-200/90 text-slate-900 ring-1 ring-slate-300 dark:bg-slate-800/90 dark:text-slate-100'
+                          ? 'bg-slate-200/90 text-slate-900 ring-1 ring-slate-300 dark:bg-slate-800/90 dark:text-slate-100'
                         : index === 2
-                        ? 'bg-amber-800/90 text-amber-100 ring-1 ring-amber-600'
+                          ? 'bg-amber-800/90 text-amber-100 ring-1 ring-amber-600'
                         : 'bg-slate-950/80 text-white'
-                    }`}>
-                      <span>{index === 0 ? '🥇 #1' : index === 1 ? '🥈 #2' : index === 2 ? '🥉 #3' : `#${index + 1}`}</span>
-                    </span>
-                    {story.isOriginal && (
-                      <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold text-brand-400">
-                        ORIGINAL
+                      }`}>
+                        <span>{index === 0 ? '🥇 #1' : index === 1 ? '🥈 #2' : index === 2 ? '🥉 #3' : `#${index + 1}`}</span>
                       </span>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{translateGenre ? translateGenre(story.genre) : story.genre}</span>
-                      {story.ranking && (
-                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                          story.ranking.rank === 1
-                            ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300/40'
-                            : story.ranking.rank === 2
-                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
-                        }`}>
-                          #{story.ranking.rank} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}
+                      {story.isOriginal && (
+                        <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold text-brand-400">
+                          ORIGINAL
                         </span>
                       )}
                     </div>
-                    <h3 className="font-extrabold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{story.title}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t?.by || 'By'} {story.author}</p>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
-                    <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
-                    <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
+                        {story.ranking && (
+                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                            story.ranking.rank === 1
+                              ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300/40'
+                              : story.ranking.rank === 2
+                              ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                          }`}>
+                            #{story.ranking.rank} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-extrabold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{locStory.title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t?.by || 'By'} {locStory.author}</p>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
+                      <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
+                      <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -295,32 +304,35 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {editorsPicks.map((story) => (
-                <div key={story.id} className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-amber-200/60 dark:border-amber-900/50 p-4 flex gap-4 hover:shadow-lg transition-all group">
-                  <img src={story.cover} alt={story.title} className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-xl shrink-0 group-hover:scale-105 transition-transform" />
-                  <div className="flex-1 flex flex-col justify-between py-1">
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">
-                          ★ Editor's Choice
-                        </span>
-                        <span className="text-[10px] text-slate-400">{translateGenre ? translateGenre(story.genre) : story.genre}</span>
+              {editorsPicks.map((story) => {
+                const locStory = translateStory ? translateStory(story) : story;
+                return (
+                  <div key={story.id} className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-amber-200/60 dark:border-amber-900/50 p-4 flex gap-4 hover:shadow-lg transition-all group">
+                    <img src={story.cover} alt={locStory.title} className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-xl shrink-0 group-hover:scale-105 transition-transform" />
+                    <div className="flex-1 flex flex-col justify-between py-1">
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">
+                            ★ Editor's Choice
+                          </span>
+                          <span className="text-[10px] text-slate-400">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
+                        </div>
+                        <h3 className="font-bold text-sm sm:text-base mt-1.5 text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors line-clamp-1">{locStory.title}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {locStory.author}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">{locStory.description}</p>
                       </div>
-                      <h3 className="font-bold text-sm sm:text-base mt-1.5 text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors line-clamp-1">{story.title}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {story.author}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">{story.description}</p>
-                    </div>
-                    <div className="pt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()} votes
-                      </span>
-                      <Link href={`/story/${story.slug}`} className="text-xs font-bold text-amber-600 hover:underline">
-                        Read Story →
-                      </Link>
+                      <div className="pt-2 flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                          <Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()} votes
+                        </span>
+                        <Link href={`/story/${story.slug}`} className="text-xs font-bold text-amber-600 hover:underline">
+                          Read Story →
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -340,33 +352,36 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mustReadFanfiction.map((story) => (
-                <div key={story.id} className="flex bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-purple-200/60 dark:border-purple-900/50 p-4 gap-4 hover:shadow-lg transition-all">
-                  <img src={story.cover} alt={story.title} className="w-28 sm:w-32 aspect-[3/4] object-cover rounded-xl" />
-                  <div className="flex-1 flex flex-col justify-between py-1">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-purple-600 uppercase bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded">
-                          {translateGenre ? translateGenre(story.genre) : story.genre}
-                        </span>
-                        <span className="text-[10px] text-slate-400">• {story.chapters.length} {t?.chapters || 'Chapters'}</span>
+              {mustReadFanfiction.map((story) => {
+                const locStory = translateStory ? translateStory(story) : story;
+                return (
+                  <div key={story.id} className="flex bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-purple-200/60 dark:border-purple-900/50 p-4 gap-4 hover:shadow-lg transition-all">
+                    <img src={story.cover} alt={locStory.title} className="w-28 sm:w-32 aspect-[3/4] object-cover rounded-xl" />
+                    <div className="flex-1 flex flex-col justify-between py-1">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-purple-600 uppercase bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded">
+                            {translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}
+                          </span>
+                          <span className="text-[10px] text-slate-400">• {story.chapters.length} {t?.chapters || 'Chapters'}</span>
+                        </div>
+                        <h3 className="font-bold text-base sm:text-lg mt-1.5 text-slate-900 dark:text-white">{locStory.title}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {locStory.author}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{locStory.description}</p>
                       </div>
-                      <h3 className="font-bold text-base sm:text-lg mt-1.5 text-slate-900 dark:text-white">{story.title}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {story.author}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{story.description}</p>
-                    </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
-                        <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()}</span>
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-3 text-xs text-slate-500">
+                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
+                          <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()}</span>
+                        </div>
+                        <Link href={`/story/${story.slug}`} className="text-xs font-bold text-purple-600 hover:underline">
+                          Start Reading →
+                        </Link>
                       </div>
-                      <Link href={`/story/${story.slug}`} className="text-xs font-bold text-purple-600 hover:underline">
-                        Start Reading →
-                      </Link>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -391,7 +406,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500 transition-colors">
-                    {g.name}
+                    {translateGenre ? translateGenre(g.slug) : g.name}
                   </span>
                   <span className="text-[10px] text-slate-400">{g.count} titles</span>
                 </div>
@@ -412,29 +427,32 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {houseOriginals.map((story) => (
-                <div key={story.id} className="bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-700/80 hover:border-brand-500 transition-all flex flex-col justify-between">
-                  <div className="relative h-48 w-full overflow-hidden">
-                    <img src={story.cover} alt={story.title} className="w-full h-full object-cover" />
-                    <div className="absolute top-3 left-3 bg-brand-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-                      HOUSE ORIGINAL
+              {houseOriginals.map((story) => {
+                const locStory = translateStory ? translateStory(story) : story;
+                return (
+                  <div key={story.id} className="bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-700/80 hover:border-brand-500 transition-all flex flex-col justify-between">
+                    <div className="relative h-48 w-full overflow-hidden">
+                      <img src={story.cover} alt={locStory.title} className="w-full h-full object-cover" />
+                      <div className="absolute top-3 left-3 bg-brand-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                        HOUSE ORIGINAL
+                      </div>
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <h3 className="font-extrabold text-lg text-white">{locStory.title}</h3>
+                        <p className="text-xs text-slate-400">{t?.by || 'By'} {locStory.author}</p>
+                        <p className="text-xs text-slate-300 mt-2 line-clamp-3 leading-relaxed">{locStory.description}</p>
+                      </div>
+                      <div className="pt-3 border-t border-slate-700 flex items-center justify-between text-xs">
+                        <span className="text-slate-400">{story.reads.toLocaleString()} Reads</span>
+                        <Link href={`/story/${story.slug}`} className="font-bold text-brand-400 hover:text-brand-300">
+                          Dive In →
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <h3 className="font-extrabold text-lg text-white">{story.title}</h3>
-                      <p className="text-xs text-slate-400">By {story.author}</p>
-                      <p className="text-xs text-slate-300 mt-2 line-clamp-3 leading-relaxed">{story.description}</p>
-                    </div>
-                    <div className="pt-3 border-t border-slate-700 flex items-center justify-between text-xs">
-                      <span className="text-slate-400">{story.reads.toLocaleString()} Reads</span>
-                      <Link href={`/story/${story.slug}`} className="font-bold text-brand-400 hover:text-brand-300">
-                        Dive In →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

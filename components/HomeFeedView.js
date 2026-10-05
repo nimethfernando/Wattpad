@@ -52,6 +52,9 @@ export default function HomeFeedView() {
     followingAuthors = [],
     followAuthor,
     t,
+    translateGenre,
+    translateStory,
+    dayLabels,
     emergingGenres = [],
     genreEngagement = {},
     addGenreToFavorites,
@@ -121,7 +124,8 @@ export default function HomeFeedView() {
   const libraryStories = library.map(id => visibleStories.find(s => s.id === id)).filter(Boolean);
   const houseOriginals = visibleStories.filter(s => s.isOriginal);
 
-  const streakDays = readingStreak?.dayLabels || ["M", "T", "W", "T", "F", "S", "S"];
+  const localizedActiveStory = activeStory ? (translateStory ? translateStory(activeStory) : activeStory) : null;
+  const streakDays = dayLabels || readingStreak?.dayLabels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const streakActive = readingStreak?.daysActive || [true, true, true, true, true, false, false];
 
   return (
@@ -137,10 +141,10 @@ export default function HomeFeedView() {
           <div>
             <div className="flex items-center justify-between gap-2 pb-4">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-                <Clock className="w-3.5 h-3.5" /> Jump Back In • Resume Reading
+                <Clock className="w-3.5 h-3.5" /> {t.jumpBackIn || 'Jump Back In • Resume Reading'}
               </span>
               <span className="text-[11px] text-slate-400">
-                Updated {activeProgress.lastReadAt || 'recently'}
+                {t.updated || 'Updated'} {activeProgress.lastReadAt === 'New' ? (t.new || 'New') : (activeProgress.lastReadAt || t.recently || 'recently')}
               </span>
             </div>
 
@@ -148,7 +152,7 @@ export default function HomeFeedView() {
               <Link href={`/read/${activeStory?.slug}`} className="shrink-0 group">
                 <img 
                   src={activeStory?.cover} 
-                  alt={activeStory?.title} 
+                  alt={localizedActiveStory?.title || activeStory?.title} 
                   className="w-20 sm:w-24 aspect-[3/4] object-cover rounded-xl shadow-lg ring-2 ring-white/10 group-hover:scale-105 transition-transform" 
                 />
               </Link>
@@ -156,21 +160,21 @@ export default function HomeFeedView() {
               <div className="flex-1 space-y-2">
                 <Link href={`/story/${activeStory?.slug}`} className="hover:underline">
                   <h2 className="text-xl sm:text-2xl font-black text-white line-clamp-1">
-                    {activeStory?.title}
+                    {localizedActiveStory?.title || activeStory?.title}
                   </h2>
                 </Link>
                 <p className="text-xs text-slate-300">
-                  By <strong className="text-white font-bold">{activeStory?.author}</strong> • {activeStory?.genre}
+                  {t.by || 'By'} <strong className="text-white font-bold">{localizedActiveStory?.author || activeStory?.author}</strong> • {translateGenre ? translateGenre(localizedActiveStory?.genre || activeStory?.genre) : (localizedActiveStory?.genre || activeStory?.genre)}
                 </p>
                 <p className="text-xs font-semibold text-brand-400">
-                  Chapter {activeProgress.chapterNumber}: {activeProgress.chapterTitle}
+                  {t.chapterShort || t.chapters || 'Chapter'} {activeProgress.chapterNumber}: {activeProgress.chapterTitle}
                 </p>
 
                 {/* Reading Progress Bar */}
                 <div className="space-y-1 pt-1 max-w-md">
                   <div className="flex justify-between text-[11px] font-bold text-slate-400">
-                    <span>Progress</span>
-                    <span className="text-white">{activeProgress.progressPercent || 40}% completed</span>
+                    <span>{t.progress || 'Progress'}</span>
+                    <span className="text-white">{activeProgress.progressPercent || 40}% {t.completed || 'completed'}</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                     <div 
@@ -185,7 +189,7 @@ export default function HomeFeedView() {
 
           <div className="pt-6 mt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs text-slate-400">
-              {activeStory?.chapters?.length || 1} Total Chapters published
+              {activeStory?.chapters?.length || 1} {t.totalChaptersPublished || 'Total Chapters published'}
             </span>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
@@ -193,13 +197,13 @@ export default function HomeFeedView() {
                 href={`/story/${activeStory?.slug}`}
                 className="flex-1 sm:flex-initial text-center text-xs font-bold text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-full hover:bg-white/5 transition-colors"
               >
-                Table of Contents
+                {t.tableOfContents || 'Table of Contents'}
               </Link>
               <Link 
                 href={`/read/${activeStory?.slug}`}
                 className="flex-1 sm:flex-initial text-center px-5 sm:px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-black text-xs shadow-lg shadow-brand-500/25 flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-all cursor-pointer"
               >
-                <span>Resume Reading</span>
+                <span>{t.resumeReading || t.readNow || 'Resume Reading'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -212,14 +216,14 @@ export default function HomeFeedView() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-orange-500 fill-orange-500 animate-pulse" />
-                <h3 className="font-black text-sm uppercase tracking-wider">Reading Streak</h3>
+                <h3 className="font-black text-sm uppercase tracking-wider">{t.readingStreak || 'Reading Streak'}</h3>
               </div>
               <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
                 (readingStreak?.currentStreak ?? 0) > 0 
                   ? 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400' 
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
               }`}>
-                {(readingStreak?.currentStreak ?? 0) > 0 ? 'ACTIVE' : 'READY'}
+                {(readingStreak?.currentStreak ?? 0) > 0 ? (t.active || 'ACTIVE') : (t.ready || 'READY')}
               </span>
             </div>
 
@@ -228,10 +232,12 @@ export default function HomeFeedView() {
                 <span className="text-4xl font-black text-slate-900 dark:text-white">
                   {readingStreak?.currentStreak ?? 0}
                 </span>
-                <span className="text-xs font-bold uppercase text-slate-400">Days in a row</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t.daysInARow || 'Days in a row'}</span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                You've read <strong>{readingStreak?.chaptersReadThisWeek ?? 0} chapters</strong> this week. Keep reading today to maintain your streak!
+                {t.streakDescription
+                  ? t.streakDescription.replace('{count}', readingStreak?.chaptersReadThisWeek ?? 0)
+                  : `You've read ${readingStreak?.chaptersReadThisWeek ?? 0} chapters this week. Keep reading today to maintain your streak!`}
               </p>
             </div>
 
@@ -256,8 +262,8 @@ export default function HomeFeedView() {
           </div>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-semibold">Weekly Goal: 15 Ch.</span>
-            <span className="font-extrabold text-brand-600 dark:text-brand-400">93% Achieved</span>
+            <span className="text-slate-400 font-semibold">{t.weeklyGoal || 'Weekly Goal'}: 15 {t.chapterShort || 'Ch.'}</span>
+            <span className="font-extrabold text-brand-600 dark:text-brand-400">93% {t.achieved || 'Achieved'}</span>
           </div>
         </div>
 
@@ -271,11 +277,11 @@ export default function HomeFeedView() {
               <Sparkles className="w-5 h-5 text-brand-500" />
               <h2 className="text-lg sm:text-xl font-black">{t.tailoredForYou || 'Tailored For You'}</h2>
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60">
-                {t.personalizedFeed ? 'Personalized' : 'Personalized'}
+                {t.personalized || 'Personalized'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              {t.personalizedFeed || 'Curated from your favorite genres'}: <strong className="text-slate-700 dark:text-slate-300">{favoriteGenres.join(', ')}</strong>
+              {t.curatedFromGenres || t.personalizedFeed || 'Curated from your favorite genres'}: <strong className="text-slate-700 dark:text-slate-300">{favoriteGenres.map(g => translateGenre ? translateGenre(g) : g).join(', ')}</strong>
             </p>
           </div>
 
@@ -286,7 +292,7 @@ export default function HomeFeedView() {
               title="Simulate Taste Pop-up (e.g. user started reading Romance)"
             >
               <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
-              <span>⚡ Test Taste Pop-up</span>
+              <span>⚡ {t.testTastePopup || 'Test Taste Pop-up'}</span>
             </button>
 
             <button
@@ -294,7 +300,7 @@ export default function HomeFeedView() {
               className="self-start sm:self-auto text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{t.filterGenre || 'Customize Genres'}</span>
+              <span>{t.customizeGenres || t.filterGenre || 'Customize Genres'}</span>
             </button>
           </div>
         </div>
@@ -328,7 +334,7 @@ export default function HomeFeedView() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Sparkles className="w-5 h-5 text-rose-500 fill-rose-500 animate-pulse" />
                   <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                    {t.trendingInRecentReading || 'Trending In Your Recent Reading'}: {genre}
+                    {t.trendingInRecentReading || 'Trending In Your Recent Reading'}: {translateGenre ? translateGenre(genre) : genre}
                   </h2>
                   <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300/60 dark:border-rose-800">
                     ⚡ {t.newlyDetectedTaste || 'Auto-Detected Taste'} • {readCount} {t.reads || 'Reads'}
@@ -351,7 +357,7 @@ export default function HomeFeedView() {
                   href={`/browse?genre=${encodeURIComponent(genre.toLowerCase())}`} 
                   className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 px-3 py-1.5 rounded-full border border-rose-200 dark:border-rose-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                 >
-                  <span>{t.exploreAll || 'Explore All'} {genre}</span>
+                  <span>{t.exploreAll || 'Explore All'} {translateGenre ? translateGenre(genre) : genre}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -385,7 +391,7 @@ export default function HomeFeedView() {
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Live leaderboard updated automatically as community members read chapters across the library
+              {t.liveLeaderboardDesc || 'Live leaderboard updated automatically as community members read chapters across the library'}
             </p>
           </div>
 
@@ -420,7 +426,7 @@ export default function HomeFeedView() {
               <UserCheck className="w-5 h-5 text-emerald-500" />
               <h2 className="text-lg sm:text-xl font-black">{t.updatesFromFollowed || 'Updates From Writers You Follow'}</h2>
             </div>
-            <p className="text-xs text-slate-400">Latest serialized chapter drops from authors in your network</p>
+            <p className="text-xs text-slate-400">{t.latestDropsDesc || 'Latest serialized chapter drops from authors in your network'}</p>
           </div>
           <Link href="/browse?tab=authors" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
             <span>{t.discoverAuthors || 'Discover Authors'}</span>
@@ -444,10 +450,10 @@ export default function HomeFeedView() {
         ) : (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 text-center space-y-3">
             <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
-              You haven't followed any authors with new chapters yet.
+              {t.noFollowedAuthors || "You haven't followed any authors with new chapters yet."}
             </p>
             <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-              Follow creators to receive instant notifications when they publish new serialized chapters!
+              {t.followCreatorsDesc || "Follow creators to receive instant notifications when they publish new serialized chapters!"}
             </p>
             <div className="flex items-center justify-center gap-4 pt-2">
               <button
@@ -473,7 +479,7 @@ export default function HomeFeedView() {
           <div className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-brand-500" />
             <h2 className="text-lg sm:text-xl font-black">{t.myPersonalShelf || 'My Personal Shelf'}</h2>
-            <span className="text-xs text-slate-400 font-bold">({libraryStories.length} {t.library || 'books'})</span>
+            <span className="text-xs text-slate-400 font-bold">({libraryStories.length} {t.books || 'books'})</span>
           </div>
           <Link href="/library" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
             <span>{t.viewAll || 'View All'}</span>
@@ -489,38 +495,41 @@ export default function HomeFeedView() {
           </div>
         ) : (
           <div className="flex items-stretch gap-4 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x">
-            {libraryStories.map(story => (
-              <div 
-                key={story.id} 
-                className="w-40 sm:w-44 shrink-0 snap-start bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-2">
-                    <img src={story.cover} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    <button
-                      onClick={() => removeFromLibrary(story.id)}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 text-white hover:bg-rose-500 transition-colors cursor-pointer"
-                      title={t.removeFromLibrary || 'Remove from Shelf'}
-                    >
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    </button>
+            {libraryStories.map(story => {
+              const locLibStory = translateStory ? translateStory(story) : story;
+              return (
+                <div 
+                  key={story.id} 
+                  className="w-40 sm:w-44 shrink-0 snap-start bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-2">
+                      <img src={story.cover} alt={locLibStory.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <button
+                        onClick={() => removeFromLibrary(story.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                        title={t.removeFromLibrary || 'Remove from Shelf'}
+                      >
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      </button>
+                    </div>
+                    <Link href={`/story/${story.slug}`}>
+                      <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-2 hover:text-brand-500">
+                        {locLibStory.title}
+                      </h3>
+                    </Link>
+                    <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{locLibStory.author}</p>
                   </div>
-                  <Link href={`/story/${story.slug}`}>
-                    <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-2 hover:text-brand-500">
-                      {story.title}
-                    </h3>
-                  </Link>
-                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{story.author}</p>
-                </div>
 
-                <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>{story.chapters?.length || 1} {t.chapters || 'Ch.'}</span>
-                  <Link href={`/read/${story.slug}`} className="font-extrabold text-brand-600 dark:text-brand-400 hover:underline">
-                    {t.readNow || 'Read'} →
-                  </Link>
+                  <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>{story.chapters?.length || 1} {t.chapterShort || t.chapters || 'Ch.'}</span>
+                    <Link href={`/read/${story.slug}`} className="font-extrabold text-brand-600 dark:text-brand-400 hover:underline">
+                      {t.readNow || 'Read'} →
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -538,15 +547,17 @@ export default function HomeFeedView() {
               <div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
-                  <h2 className="text-lg sm:text-xl font-black">{t.becauseYouFavorite || 'Because You Favorite'}: {genre}</h2>
+                  <h2 className="text-lg sm:text-xl font-black">{t.becauseYouFavorite || 'Because You Favorite'}: {translateGenre ? translateGenre(genre) : genre}</h2>
                 </div>
-                <p className="text-xs text-slate-400">Top-rated serialized novels matching your {genre} reading preference</p>
+                <p className="text-xs text-slate-400">
+                  {t.matchingPreferenceDesc ? t.matchingPreferenceDesc.replace('{genre}', translateGenre ? translateGenre(genre) : genre) : `Top-rated serialized novels matching your ${genre} reading preference`}
+                </p>
               </div>
               <Link 
                 href={`/browse?genre=${encodeURIComponent(genre.toLowerCase())}`} 
                 className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
               >
-                <span>{t.exploreAll || 'See More in'} {genre}</span>
+                <span>{t.exploreAll || 'See More in'} {translateGenre ? translateGenre(genre) : genre}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -578,7 +589,7 @@ export default function HomeFeedView() {
             <p className="text-xs text-slate-400">{t.houseOriginalsDesc || t.houseOriginalsSub || 'Flagship serialized masterworks produced in collaboration with our editorial studio'}</p>
           </div>
           <Link href="/browse?filter=originals" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-            <span>{t.viewAll || 'All Originals'}</span>
+            <span>{t.allOriginals || t.viewAll || 'All Originals'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -612,7 +623,8 @@ export default function HomeFeedView() {
 
 // Reusable Wattpad-style Card Component with 3-Dot Quick Actions
 function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideStory }) {
-  const { isInWishlist, toggleWishlist, t, translateGenre } = useApp();
+  const { isInWishlist, toggleWishlist, t, translateGenre, translateStory } = useApp();
+  const localizedStory = translateStory ? translateStory(story) : story;
   const isWish = isInWishlist ? isInWishlist(story.id) : false;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -638,7 +650,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
         <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-3">
           <img 
             src={story.cover} 
-            alt={story.title} 
+            alt={localizedStory.title || story.title} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
           />
 
@@ -653,7 +665,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                 ? 'bg-amber-950/80 text-amber-200 border-amber-600/40'
                 : 'bg-slate-950/80 text-slate-300 border-slate-700/50'
             }`}>
-              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${story.ranking.tag}`}</span>
+              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag}`}</span>
             </div>
           )}
 
@@ -672,7 +684,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
             )}
             {story.contentType === 'picture_book' && (
               <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md">
-                🎨 Illustrated
+                🎨 {t?.illustrated || 'Illustrated'}
               </span>
             )}
           </div>
@@ -703,7 +715,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                   ? 'bg-emerald-500 text-white shadow-md'
                   : 'bg-black/50 hover:bg-black/80 text-white'
               }`}
-              title={isInLib ? "Saved in Library" : "Add to Library"}
+              title={isInLib ? (t?.savedInLibrary || "Saved in Library") : (t?.addToLibrary || "Add to Library")}
             >
               {isInLib ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
             </button>
@@ -716,7 +728,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
                   setMenuOpen(!menuOpen);
                 }}
                 className="p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all cursor-pointer"
-                title="More story options"
+                title={t?.moreStoryOptions || t?.moreOptions || "More story options"}
               >
                 <MoreVertical className="w-3.5 h-3.5" />
               </button>
@@ -775,12 +787,12 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
 
         <Link href={`/story/${story.slug}`}>
           <h3 className="font-extrabold text-sm text-slate-900 dark:text-white line-clamp-1 hover:text-brand-500 transition-colors">
-            {story.title}
+            {localizedStory.title || story.title}
           </h3>
         </Link>
-        <p className="text-xs text-slate-400 mt-0.5">{t?.by || 'By'} {story.author}</p>
+        <p className="text-xs text-slate-400 mt-0.5">{t?.by || 'By'} {localizedStory.author || story.author}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-          {story.description}
+          {localizedStory.description || story.description}
         </p>
       </div>
 

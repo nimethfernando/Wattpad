@@ -16,7 +16,7 @@ import {
   initialFeatureFlags,
   initialCmsConfig
 } from '@/lib/data';
-import { translations, getTranslatedGenre } from '@/lib/translations';
+import { translations, getTranslatedGenre, getLocalizedStory, getTranslatedDay, dayTranslations } from '@/lib/translations';
 import { 
   calculateAgeFromDob, 
   canUserAccessContent, 
@@ -537,6 +537,22 @@ export function AppProvider({ children }) {
 
   const translateGenre = useCallback((nameOrSlug) => {
     return getTranslatedGenre(nameOrSlug, lang);
+  }, [lang]);
+
+  const translateStory = useCallback((story) => {
+    return getLocalizedStory(story, lang);
+  }, [lang]);
+
+  const dayLabels = useMemo(() => {
+    return dayTranslations[lang]?.days || dayTranslations.en.days;
+  }, [lang]);
+
+  const dayLabelsShort = useMemo(() => {
+    return dayTranslations[lang]?.daysShort || dayTranslations.en.daysShort;
+  }, [lang]);
+
+  const translateDay = useCallback((day) => {
+    return getTranslatedDay(day, lang);
   }, [lang]);
 
   const localizedGenres = useMemo(() => {
@@ -1833,6 +1849,11 @@ export function AppProvider({ children }) {
       setGenres,
       translateGenre,
       getTranslatedGenre: translateGenre,
+      translateStory,
+      getLocalizedStory: translateStory,
+      dayLabels,
+      dayLabelsShort,
+      translateDay,
       testimonials,
       setTestimonials,
       contests,
