@@ -77,8 +77,12 @@ export async function POST(request) {
       });
     }
 
-    // 2. AUTHOR TIP / DONATION FLOW (With Direct Bank Payout via Stripe Connect)
+    // 2. AUTHOR TIP / DONATION FLOW (With Direct Bank Payout via Stripe Connect: 90% Author / 10% Platform)
     const tipAmountCents = Math.round(Number(amount || 5) * 100);
+    const platformFeePercent = 0.10; // 10% Platform Commission
+    const authorPayoutPercent = 0.90; // 90% Direct to Author
+    const applicationFeeCents = Math.round(tipAmountCents * platformFeePercent);
+    const authorPayoutCents = tipAmountCents - applicationFeeCents;
 
     const sessionParams = {
       payment_method_types: ['card'],
@@ -90,7 +94,9 @@ export async function POST(request) {
             currency: 'usd',
             product_data: {
               name: `Reader Tip to ${author}`,
-              description: storyTitle ? `For "${storyTitle}"` : `Support for author ${author}`,
+              description: storyTitle 
+                ? `For "${storyTitle}" (90% to Author, 10% Platform fee)` 
+                : `Direct creator support for ${author} (90% to Author, 10% Platform fee)`,
               images: [`${appUrl}/tab-icon.png`],
             },
             unit_amount: tipAmountCents,
@@ -105,6 +111,9 @@ export async function POST(request) {
         donorName,
         storyTitle: storyTitle || '',
         donorMessage: donorMessage || '',
+        revenueSplit: '90/10',
+        authorPayoutUSD: (authorPayoutCents / 100).toFixed(2),
+        platformFeeUSD: (applicationFeeCents / 100).toFixed(2),
       },
       success_url: finalSuccessUrl,
       cancel_url: finalCancelUrl,
@@ -113,9 +122,6 @@ export async function POST(request) {
     // If author has connected their bank account through Stripe Connect Express:
     // Route 90% directly to the author's bank account, retain 10% platform fee
     if (authorStripeAccountId) {
-      const platformFeePercent = 0.10; // 10% platform fee
-      const applicationFeeCents = Math.round(tipAmountCents * platformFeePercent);
-
       sessionParams.payment_intent_data = {
         application_fee_amount: applicationFeeCents,
         transfer_data: {

@@ -1591,11 +1591,26 @@ export default function AdminPanel() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Total Processed:</span>
-                <span className="text-xs font-extrabold text-emerald-500">
-                  ${(transactions || []).filter(t => t.status === 'succeeded').reduce((sum, t) => sum + (t.amount || 0), 0).toFixed(2)}
-                </span>
+              {/* Financial KPI Summary Cards */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs flex items-center gap-1.5">
+                  <span className="text-slate-400">Total Volume:</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white">
+                    ${(transactions || []).filter(t => t.status === 'succeeded').reduce((sum, t) => sum + (t.amount || 0), 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-xs flex items-center gap-1.5">
+                  <span className="text-emerald-700 dark:text-emerald-300 font-bold">Author Payouts (90%):</span>
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                    ${(transactions || []).filter(t => t.status === 'succeeded').reduce((sum, t) => sum + (t.authorPayout !== undefined ? t.authorPayout : (t.type === 'subscription' ? 0 : (t.amount || 0) * 0.9)), 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 text-xs flex items-center gap-1.5">
+                  <span className="text-purple-700 dark:text-purple-300 font-bold">Platform Net (10% + VIP):</span>
+                  <span className="font-extrabold text-purple-600 dark:text-purple-400">
+                    ${(transactions || []).filter(t => t.status === 'succeeded').reduce((sum, t) => sum + (t.platformCommission !== undefined ? t.platformCommission : (t.type === 'subscription' ? (t.amount || 0) : (t.amount || 0) * 0.1)), 0).toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1607,7 +1622,9 @@ export default function AdminPanel() {
                       <th className="p-4">Transaction ID</th>
                       <th className="p-4">Description</th>
                       <th className="p-4">Payment Method</th>
-                      <th className="p-4">Amount</th>
+                      <th className="p-4">Gross Amount</th>
+                      <th className="p-4">Author (90%)</th>
+                      <th className="p-4">Platform (10%)</th>
                       <th className="p-4">Status</th>
                       <th className="p-4">Date</th>
                       <th className="p-4 text-right">Actions</th>
@@ -1631,6 +1648,17 @@ export default function AdminPanel() {
                         </td>
                         <td className="p-4 font-extrabold text-slate-900 dark:text-white">
                           ${tx.amount?.toFixed(2)}
+                        </td>
+                        <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">
+                          {tx.type === 'subscription' ? (
+                            <span className="text-slate-400 text-[11px] font-normal">—</span>
+                          ) : (
+                            <span>${(tx.authorPayout !== undefined ? tx.authorPayout : (tx.amount * 0.9)).toFixed(2)}</span>
+                          )}
+                        </td>
+                        <td className="p-4 font-bold text-purple-600 dark:text-purple-400">
+                          ${(tx.platformCommission !== undefined ? tx.platformCommission : (tx.type === 'subscription' ? tx.amount : tx.amount * 0.1)).toFixed(2)}
+                          {tx.type === 'subscription' && <span className="text-[10px] text-purple-400 block font-normal">VIP Pass</span>}
                         </td>
                         <td className="p-4">
                           <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${

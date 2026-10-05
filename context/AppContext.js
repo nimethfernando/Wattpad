@@ -1134,29 +1134,43 @@ export function AppProvider({ children }) {
     setPaymentModalOpen(true);
   };
 
-  const addTransaction = ({ type, amount, plan = null, cardBrand = 'visa', cardLast4 = '4242', author, authorUsername, storyTitle }) => {
+  const addTransaction = ({ type, amount, plan = null, cardBrand = 'visa', cardLast4 = '4242', author, authorUsername, storyTitle, donorName, message }) => {
+    const totalAmount = Number(amount) || 0;
+    const isDonation = type === 'donation' || type === 'tip';
+    // 90% goes directly to the author, 10% platform commission
+    const authorPayout = isDonation ? Number((totalAmount * 0.90).toFixed(2)) : 0;
+    const platformCommission = isDonation ? Number((totalAmount * 0.10).toFixed(2)) : totalAmount;
+
     const newTx = {
       id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
       date: new Date().toISOString().split('T')[0],
       type,
       plan,
-      amount: Number(amount) || 0,
+      amount: totalAmount,
+      authorPayout,
+      platformCommission,
+      revenueSplit: isDonation ? '90% Author / 10% Platform' : '100% Platform VIP',
       cardBrand,
       cardLast4,
-      user: user?.name || "Anonymous Reader",
-      author: author || "Platform",
-      authorUsername: authorUsername || "avoralibrary",
-      storyTitle: storyTitle || "Platform VIP",
-      status: "Completed"
+      user: donorName || user?.name || "Anonymous Reader",
+      author: author || (isDonation ? "Author" : "Platform"),
+      authorUsername: authorUsername || (isDonation ? "author" : "avoralibrary"),
+      storyTitle: storyTitle || (isDonation ? "Serialized Novel" : "Avora VIP Membership"),
+      description: isDonation ? `Reader tip to ${author || 'Author'}` : (plan || 'VIP Membership'),
+      message: message || '',
+      status: "succeeded"
     };
 
     setTransactions(prev => [newTx, ...prev]);
-    addAuditLog(type === 'subscription' ? 'VIP Pass Subscribed' : 'Author Tip Sent', `$${amount} to ${author || 'Platform'}`);
+    addAuditLog(
+      type === 'subscription' ? 'VIP Pass Subscribed' : 'Author Tip Sent (90/10 Split)', 
+      `$${totalAmount.toFixed(2)} ($${authorPayout.toFixed(2)} to ${author || 'Author'}, $${platformCommission.toFixed(2)} Platform fee)`
+    );
     return newTx;
   };
 
   const refundTransaction = (txId) => {
-    setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'Refunded' } : tx));
+    setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'refunded' } : tx));
     addAuditLog('Transaction Refunded', `Transaction ID: ${txId}`);
   };
 

@@ -196,6 +196,23 @@ export default function PaymentModal() {
                 <span className="text-slate-400">Total Charged</span>
                 <span className="text-base font-black text-brand-600 dark:text-brand-400">${finalAmount.toFixed(2)} USD</span>
               </div>
+              {mode !== 'subscribe' && (
+                <div className="py-2 my-1 border-y border-slate-200 dark:border-slate-700/60 space-y-1.5 bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 rounded-xl">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                      <Heart className="w-3 h-3 text-emerald-500 fill-emerald-500" />
+                      Author Payout (90%)
+                    </span>
+                    <span className="font-black text-emerald-700 dark:text-emerald-300">
+                      ${(finalAmount * 0.90).toFixed(2)} USD
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Platform Commission (10%)</span>
+                    <span>${(finalAmount * 0.10).toFixed(2)} USD</span>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Payment Method</span>
                 <span className="font-bold uppercase flex items-center gap-1.5">
@@ -294,6 +311,31 @@ export default function PaymentModal() {
                     onChange={(e) => setDonorMessage(e.target.value)}
                     className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500"
                   />
+                </div>
+
+                {/* 90/10 Revenue Split Transparency Card */}
+                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 space-y-1.5 text-[11px]">
+                  <div className="flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-300">
+                    <span className="flex items-center gap-1.5">
+                      <Heart className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
+                      Fair Creator Split (90 / 10)
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full font-black">
+                      90% to Author
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 dark:text-slate-300 pt-0.5">
+                    <span>Direct Author Payout (90%):</span>
+                    <span className="font-extrabold text-emerald-700 dark:text-emerald-300">
+                      ${(finalAmount * 0.90).toFixed(2)} USD
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-500 text-[10px]">
+                    <span>Platform Commission &amp; Processing (10%):</span>
+                    <span className="font-semibold">
+                      ${(finalAmount * 0.10).toFixed(2)} USD
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
