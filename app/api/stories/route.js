@@ -3,6 +3,7 @@ import { initialStories, initialGenres } from '@/lib/data';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
 import { computeStoryRankings } from '@/lib/rankingEngine';
+import { getStoriesFromDb, saveStoryToDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,20 @@ export async function GET(request) {
     const search = searchParams.get('search');
     const contentType = searchParams.get('type'); // 'story' | 'picture_book'
 
+    // Fetch persistent database stories
+    const dbStories = await getStoriesFromDb().catch(() => []);
+
+    // Merge persistent database stories with seed dataset
+    const storiesMap = new Map();
+    // 1. Load seed stories
+    initialStories.forEach(s => storiesMap.set(String(s.slug || s.id), s));
+    // 2. Overlay & add DB stories (giving DB priority for updated reads/chapters)
+    dbStories.forEach(s => storiesMap.set(String(s.slug || s.id), { ...storiesMap.get(String(s.slug || s.id)), ...s }));
+
+    const allStories = Array.from(storiesMap.values());
+
     // Core Backend Rule: Filter stories based on user's DOB and age policy
-    let accessibleStories = filterStoriesForUser(initialStories, user);
+    let accessibleStories = filterStoriesForUser(allStories, user);
 
     if (genre && genre !== 'all') {
       accessibleStories = accessibleStories.filter(s => 
@@ -31,9 +44,9 @@ export async function GET(request) {
     if (search && search.trim()) {
       const q = search.toLowerCase().trim();
       accessibleStories = accessibleStories.filter(s => 
-        s.title.toLowerCase().includes(q) ||
-        s.author.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q) ||
+        s.title?.toLowerCase().includes(q) ||
+        s.author?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q) ||
         s.tags?.some(t => t.toLowerCase().includes(q))
       );
     }
@@ -47,6 +60,8 @@ export async function GET(request) {
       accessibleStories.sort((a, b) => (b.reads || 0) - (a.reads || 0));
     } else if (sort === 'trending') {
       accessibleStories.sort((a, b) => ((b.reads || 0) + (b.votes || 0) * 5) - ((a.reads || 0) + (a.votes || 0) * 5));
+    } else if (sort === 'newest') {
+      accessibleStories.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
     }
 
     const accessibleGenres = filterGenresForUser(initialGenres, user);
@@ -67,6 +82,34 @@ export async function GET(request) {
     console.error('Error fetching stories API:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error fetching stories' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const { title } = body;
+
+    if (!title || !title.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Story title is required.' },
+        { status: 400 }
+      );
+    }
+
+    const saved = await saveStoryToDb(body);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Story published and persisted to database.',
+      story: saved.story
+    });
+  } catch (error) {
+    console.error('Error creating story API:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Internal server error saving story.' },
       { status: 500 }
     );
   }

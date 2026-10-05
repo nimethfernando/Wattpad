@@ -33,8 +33,9 @@ import {
 import { canUserAccessContent } from '@/lib/agePolicy';
 
 export default function ReaderPage() {
-  const params = useParams();
-  const { slug } = params;
+  const params = useParams() || {};
+  const rawSlug = params?.slug;
+  const slug = typeof rawSlug === 'string' ? rawSlug : (Array.isArray(rawSlug) ? rawSlug[0] : '');
   const router = useRouter();
   const { 
     stories, 
@@ -269,6 +270,35 @@ export default function ReaderPage() {
     setReplyToId(null);
     setReplyText('');
   };
+
+  // Story existence check
+  if (!story) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-4 shadow-2xl">
+          <BookOpen className="w-12 h-12 text-slate-400 mx-auto" />
+          <h2 className="text-2xl font-black">Story Not Found</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The serialized story or chapter you are looking for does not exist or may have been unpublished.
+          </p>
+          <div className="pt-2 flex flex-col gap-2.5">
+            <Link
+              href="/browse"
+              className="w-full py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-md shadow-brand-500/25 transition-all text-center text-white"
+            >
+              Browse Stories
+            </Link>
+            <Link
+              href="/"
+              className="w-full py-3 rounded-full border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-800 transition-all text-center"
+            >
+              Return Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Core Platform-Level Rule: DOB Age Access Enforcement
   const accessCheck = canUserAccessContent(user, story);

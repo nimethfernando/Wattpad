@@ -3,17 +3,6 @@ import { stripe, isStripeConfigured } from '@/lib/stripe';
 
 export async function POST(request) {
   try {
-    if (!isStripeConfigured() || !stripe) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Stripe is not configured yet. Please add STRIPE_SECRET_KEY to your .env.local file.',
-          sandboxMode: true
-        },
-        { status: 503 }
-      );
-    }
-
     const body = await request.json();
     const {
       mode = 'donate', // 'donate' | 'subscribe'
@@ -31,6 +20,20 @@ export async function POST(request) {
     } = body;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    if (!isStripeConfigured() || !stripe) {
+      const simulatedUrl = mode === 'subscribe'
+        ? `${appUrl}/settings?payment=success&mode=subscribe&plan=${plan}&simulated=true`
+        : `${appUrl}/settings?payment=success&mode=donate&amount=${amount}&author=${encodeURIComponent(author)}&simulated=true`;
+
+      return NextResponse.json({
+        success: true,
+        sessionId: `sim_sess_${Date.now()}`,
+        url: simulatedUrl,
+        sandbox: true,
+        message: 'Stripe API key not configured. Operating in simulated sandbox checkout mode.'
+      });
+    }
     const finalSuccessUrl = successUrl || `${appUrl}/settings?payment=success&session_id={CHECKOUT_SESSION_ID}`;
     const finalCancelUrl = cancelUrl || `${appUrl}/settings?payment=cancelled`;
 

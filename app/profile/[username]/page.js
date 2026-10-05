@@ -25,8 +25,9 @@ import {
 import { filterStoriesForUser } from '@/lib/agePolicy';
 
 export default function ProfilePage() {
-  const params = useParams();
-  const { username } = params;
+  const params = useParams() || {};
+  const rawUsername = params?.username;
+  const username = typeof rawUsername === 'string' ? rawUsername : (Array.isArray(rawUsername) ? rawUsername[0] : '');
   const { 
     stories, 
     followingAuthors, 

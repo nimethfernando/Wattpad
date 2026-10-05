@@ -2,15 +2,35 @@ import { NextResponse } from 'next/server';
 import { initialStories } from '@/lib/data';
 import { canUserAccessContent } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
+import { getStoryBySlugFromDb, saveStoryToDb, deleteStoryFromDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request, { params }) {
-  try {
-    const { slug } = await params;
-    const { user, age, experienceMode } = await getServerUserContext();
+async function resolveRouteParams(context) {
+  if (!context) return {};
+  if (context.params && typeof context.params.then === 'function') {
+    return await context.params;
+  }
+  return context.params || {};
+}
 
-    const story = initialStories.find(s => s.slug === slug);
+export async function GET(request, context) {
+  try {
+    const { slug } = await resolveRouteParams(context);
+    const { user } = await getServerUserContext();
+
+    if (!slug) {
+      return NextResponse.json({ success: false, error: 'Slug parameter is required' }, { status: 400 });
+    }
+
+    // 1. Try DB first
+    let story = await getStoryBySlugFromDb(slug).catch(() => null);
+
+    // 2. Fall back to seed initialStories
+    if (!story) {
+      story = initialStories.find(s => s.slug === slug || String(s.id) === String(slug));
+    }
+
     if (!story) {
       return NextResponse.json(
         { success: false, error: 'Story not found' },
@@ -48,8 +68,51 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Error fetching story detail API:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: error.message || 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+export async function PUT(request, context) {
+  try {
+    const { slug } = await resolveRouteParams(context);
+    const body = await request.json();
+
+    const updatedStory = {
+      ...body,
+      slug: slug || body.slug
+    };
+
+    const saved = await saveStoryToDb(updatedStory);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Story updated successfully',
+      story: saved.story
+    });
+  } catch (error) {
+    console.error('Error updating story API:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request, context) {
+  try {
+    const { slug } = await resolveRouteParams(context);
+
+    if (!slug) {
+      return NextResponse.json({ success: false, error: 'Slug is required for deletion' }, { status: 400 });
+    }
+
+    await deleteStoryFromDb(slug);
+
+    return NextResponse.json({
+      success: true,
+      message: `Story "${slug}" deleted successfully`
+    });
+  } catch (error) {
+    console.error('Error deleting story API:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

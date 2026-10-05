@@ -29,8 +29,9 @@ import {
 import { canUserAccessContent } from '@/lib/agePolicy';
 
 export default function StoryDetailPage() {
-  const params = useParams();
-  const { slug } = params;
+  const params = useParams() || {};
+  const rawSlug = params?.slug;
+  const slug = typeof rawSlug === 'string' ? rawSlug : (Array.isArray(rawSlug) ? rawSlug[0] : '');
   const { 
     stories, 
     followingAuthors, 

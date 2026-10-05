@@ -3,18 +3,34 @@ import { initialStories } from '@/lib/data';
 import { canUserAccessContent } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
 import { computeStoryRankings } from '@/lib/rankingEngine';
+import { getStoryBySlugFromDb, incrementStoryReadsInDb, getStoriesFromDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request, { params }) {
+async function resolveRouteParams(context) {
+  if (!context) return {};
+  if (context.params && typeof context.params.then === 'function') {
+    return await context.params;
+  }
+  return context.params || {};
+}
+
+export async function GET(request, context) {
   try {
-    const { slug } = await params;
-    const { user, age } = await getServerUserContext();
+    const { slug } = await resolveRouteParams(context);
+    const { user } = await getServerUserContext();
     const { searchParams } = new URL(request.url);
     const chapterId = searchParams.get('chapterId');
 
-    const rankedStories = computeStoryRankings(initialStories);
-    const story = rankedStories.find(s => s.slug === slug);
+    // 1. Fetch DB stories and merge with initialStories
+    const dbStories = await getStoriesFromDb().catch(() => []);
+    const storiesMap = new Map();
+    initialStories.forEach(s => storiesMap.set(String(s.slug || s.id), s));
+    dbStories.forEach(s => storiesMap.set(String(s.slug || s.id), { ...storiesMap.get(String(s.slug || s.id)), ...s }));
+
+    const rankedStories = computeStoryRankings(Array.from(storiesMap.values()));
+    const story = rankedStories.find(s => s.slug === slug || String(s.id) === String(slug));
+
     if (!story) {
       return NextResponse.json({ success: false, error: 'Story not found' }, { status: 404 });
     }
@@ -57,44 +73,38 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error('Error fetching reader API:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
-    const { slug } = await params;
+    const { slug } = await resolveRouteParams(context);
     const body = await request.json().catch(() => ({}));
     const { chapterId, count = 1 } = body;
 
-    const story = initialStories.find(s => s.slug === slug);
-    if (!story) {
-      return NextResponse.json({ success: false, error: 'Story not found' }, { status: 404 });
-    }
-
     const readIncrement = Math.max(1, Math.min(1000, Number(count) || 1));
-    story.reads = (story.reads || 0) + readIncrement;
 
-    if (chapterId && Array.isArray(story.chapters)) {
-      const ch = story.chapters.find(c => String(c.id) === String(chapterId));
-      if (ch) {
-        ch.reads = (ch.reads || 0) + readIncrement;
+    // Persist increment in database and persistent storage
+    await incrementStoryReadsInDb(slug, chapterId, readIncrement);
+
+    // Also update seed object in-memory if it exists there
+    const seedStory = initialStories.find(s => s.slug === slug || String(s.id) === String(slug));
+    if (seedStory) {
+      seedStory.reads = (seedStory.reads || 0) + readIncrement;
+      if (chapterId && Array.isArray(seedStory.chapters)) {
+        const ch = seedStory.chapters.find(c => String(c.id) === String(chapterId));
+        if (ch) ch.reads = (ch.reads || 0) + readIncrement;
       }
     }
 
-    const rankedStories = computeStoryRankings(initialStories);
-    const updatedStory = rankedStories.find(s => s.slug === slug);
-
     return NextResponse.json({
       success: true,
-      message: 'Read recorded and rankings updated',
-      reads: updatedStory.reads,
-      ranking: updatedStory.ranking,
-      globalRank: updatedStory.globalRank
+      message: 'Read count persisted to database and live ranking updated.',
+      reads: (seedStory?.reads || 0) + readIncrement
     });
   } catch (error) {
     console.error('Error recording read:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
-

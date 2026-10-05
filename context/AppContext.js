@@ -421,6 +421,23 @@ export function AppProvider({ children }) {
         console.error("Could not load story read counts from localStorage", e);
       }
 
+      // Hydrate stories from backend API (MariaDB + persistent db-store)
+      fetch('/api/stories')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.success && Array.isArray(data.stories) && data.stories.length > 0) {
+            setStories(prev => {
+              const storyMap = new Map();
+              prev.forEach(s => storyMap.set(String(s.slug || s.id), s));
+              data.stories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+              return computeStoryRankings(Array.from(storyMap.values()));
+            });
+          }
+        })
+        .catch(err => {
+          console.warn("Could not fetch stories from API on initial mount:", err);
+        });
+
       setIsHydrated(true);
     }
   }, []);
@@ -981,7 +998,8 @@ export function AppProvider({ children }) {
     }
   };
 
-  const publishStory = (newStory) => {
+  const publishStory = async (newStory) => {
+    // Optimistically update client state
     setStories(prev => {
       const updated = computeStoryRankings([newStory, ...prev]);
       if (typeof window !== 'undefined') {
@@ -994,24 +1012,54 @@ export function AppProvider({ children }) {
       return updated;
     });
     addAuditLog("Story Published", newStory.title);
+
+    // Persist to backend database via API route
+    try {
+      const res = await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStory)
+      });
+      const data = await res.json();
+      if (data?.success && data?.story) {
+        setStories(prev => {
+          const replaced = prev.map(s => (s.id === newStory.id || s.slug === newStory.slug) ? { ...s, ...data.story } : s);
+          return computeStoryRankings(replaced);
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to persist story to /api/stories:", err);
+    }
   };
 
-  const deleteStory = (storyId) => {
-    const target = stories.find(s => s.id === storyId);
+  const deleteStory = async (storyId) => {
+    const target = stories.find(s => s.id === storyId || s.slug === storyId);
     setStories(prev => {
-      const updated = computeStoryRankings(prev.filter(s => s.id !== storyId));
+      const updated = computeStoryRankings(prev.filter(s => s.id !== storyId && s.slug !== storyId));
       if (typeof window !== 'undefined') {
         try {
           const savedCustom = localStorage.getItem('avora_custom_stories');
           if (savedCustom) {
             const list = JSON.parse(savedCustom);
-            localStorage.setItem('avora_custom_stories', JSON.stringify(list.filter(s => s.id !== storyId)));
+            localStorage.setItem('avora_custom_stories', JSON.stringify(list.filter(s => s.id !== storyId && s.slug !== storyId)));
           }
         } catch (e) {}
       }
       return updated;
     });
     if (target) addAuditLog("Story Deleted", target.title);
+
+    // Persist deletion to backend database via API route
+    const identifier = target?.slug || storyId;
+    if (identifier) {
+      try {
+        await fetch(`/api/stories/${encodeURIComponent(identifier)}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.warn("Failed to delete story from /api/stories:", err);
+      }
+    }
   };
 
   const saveReadingProgress = (storyId, chapterId, paragraphIndex = 0, scrollOffset = 0) => {
@@ -1377,6 +1425,17 @@ export function AppProvider({ children }) {
 
     addAuditLog('Bank Details Saved', `${formattedDetails.bankName} (••••${last4})`);
     
+    // Asynchronously persist to backend database
+    fetch('/api/user/bank-details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bankDetails: formattedDetails,
+        userEmail: user?.email || null,
+        username: user?.username || null
+      })
+    }).catch(err => console.warn('Failed to sync bank details to API:', err));
+
     sendNotification({
       title: "Bank Details Linked Successfully",
       message: `Your ${formattedDetails.bankName} account has been verified for 90% direct author royalties and reader tips.`,
@@ -1412,6 +1471,16 @@ export function AppProvider({ children }) {
     }));
 
     addAuditLog('Bank Details Removed', user?.name || 'Author');
+
+    // Asynchronously delete from backend database
+    fetch('/api/user/bank-details', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userEmail: user?.email || null,
+        username: user?.username || null
+      })
+    }).catch(err => console.warn('Failed to remove bank details via API:', err));
   };
 
   // Auth Modal & OAuth methods

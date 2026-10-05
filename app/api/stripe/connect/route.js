@@ -4,20 +4,20 @@ import { stripe, isStripeConfigured } from '@/lib/stripe';
 // POST /api/stripe/connect: Creates a Stripe Connect Account & Onboarding Link for Authors
 export async function POST(request) {
   try {
-    if (!isStripeConfigured() || !stripe) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Stripe is not configured. Add STRIPE_SECRET_KEY to enable bank payouts.',
-        },
-        { status: 503 }
-      );
-    }
-
     const body = await request.json();
     const { authorEmail, authorUsername, authorName, existingAccountId } = body;
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    if (!isStripeConfigured() || !stripe) {
+      const simulatedId = existingAccountId || `acct_sim_${Date.now()}`;
+      return NextResponse.json({
+        success: true,
+        accountId: simulatedId,
+        url: `${appUrl}/settings?payout_onboarding=complete&stripe_account_id=${simulatedId}&author=${encodeURIComponent(authorUsername || 'author')}&simulated=true`,
+        sandbox: true,
+        message: 'Stripe Connect unconfigured. Operating in sandbox onboarding mode.'
+      });
+    }
 
     let accountId = existingAccountId;
 

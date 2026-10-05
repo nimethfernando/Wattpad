@@ -7,11 +7,28 @@ import { useApp } from '@/context/AppContext';
 import { Calendar, Clock, ArrowLeft, Share2 } from 'lucide-react';
 
 export default function BlogArticlePage() {
-  const params = useParams();
-  const { slug } = params;
+  const params = useParams() || {};
+  const rawSlug = params?.slug;
+  const slug = typeof rawSlug === 'string' ? rawSlug : (Array.isArray(rawSlug) ? rawSlug[0] : '');
   const { blogPosts } = useApp();
 
-  const post = blogPosts.find(p => p.slug === slug) || blogPosts[0];
+  const post = (blogPosts || []).find(p => p.slug === slug) || (blogPosts && blogPosts[0]) || null;
+
+  if (!post) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center space-y-4">
+          <h1 className="text-2xl font-black">Editorial Not Found</h1>
+          <p className="text-xs text-slate-500">The requested article could not be located.</p>
+          <Link href="/blog" className="px-5 py-2.5 rounded-full bg-brand-500 text-white font-bold text-xs">
+            Back to Editorials
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
