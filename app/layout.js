@@ -7,6 +7,7 @@ import EmergingGenreModal from '@/components/EmergingGenreModal';
 import AuthProvider from '@/components/AuthProvider';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import PaymentModal from '@/components/PaymentModal';
+import BankDetailsModal from '@/components/BankDetailsModal';
 import Mascot3D from '@/components/Mascot3D';
 
 export const viewport = {
@@ -52,6 +53,7 @@ export default function RootLayout({ children }) {
             <AgeVerificationModal />
             <EmergingGenreModal />
             <PaymentModal />
+            <BankDetailsModal />
             <Mascot3D />
           </AppProvider>
         </AuthProvider>

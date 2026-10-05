@@ -96,6 +96,10 @@ export function AppProvider({ children }) {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState({ mode: 'donate', story: null, author: null, plan: null });
 
+  // Author Bank & Direct Payout Details Modal State
+  const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
+  const [bankDetailsModalTarget, setBankDetailsModalTarget] = useState(null);
+
   // Onboarding & Reader Preferences State
   const [onboardingModalOpen, setOnboardingModalOpen] = useState(false);
   const [userPreferences, setUserPreferences] = useState({
@@ -276,6 +280,15 @@ export function AppProvider({ children }) {
             if (parsedUser.age !== null && parsedUser.age < 18 && parsedUser.role !== 'admin') {
               parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
               parsedUser.hideMature = true;
+            }
+          }
+          if (!parsedUser.bankDetails) {
+            const matchedAuthor = initialRegisteredUsers.find(ru => 
+              (ru.email && parsedUser.email && ru.email.toLowerCase() === parsedUser.email.toLowerCase()) || 
+              (ru.username && parsedUser.username && ru.username.toLowerCase() === parsedUser.username.toLowerCase())
+            );
+            if (matchedAuthor?.bankDetails) {
+              parsedUser.bankDetails = matchedAuthor.bankDetails;
             }
           }
           setUser(parsedUser);
@@ -1282,6 +1295,109 @@ export function AppProvider({ children }) {
     return newUser;
   };
 
+  // Author Bank & Direct Deposit Management
+  const openBankDetailsModal = (targetUser = null) => {
+    setBankDetailsModalTarget(targetUser);
+    setBankDetailsModalOpen(true);
+  };
+
+  const closeBankDetailsModal = () => {
+    setBankDetailsModalOpen(false);
+    setBankDetailsModalTarget(null);
+  };
+
+  const updateBankDetails = (bankDetails, targetUserId = null) => {
+    const rawAcc = (bankDetails.accountNumber || '').trim();
+    const last4 = rawAcc.slice(-4) || '4242';
+    const maskedAcc = rawAcc.length > 4 ? `••••••••${last4}` : rawAcc;
+    const cleanRouting = (bankDetails.routingNumber || '').trim();
+    const maskedRouting = cleanRouting.length > 4 ? `••••${cleanRouting.slice(-4)}` : cleanRouting;
+
+    const formattedDetails = {
+      accountHolderName: bankDetails.accountHolderName?.trim() || '',
+      bankName: bankDetails.bankName?.trim() || '',
+      accountType: bankDetails.accountType || 'checking',
+      country: bankDetails.country || 'United States',
+      currency: bankDetails.currency || 'USD',
+      routingNumber: maskedRouting,
+      accountNumber: maskedAcc,
+      last4,
+      status: 'verified',
+      updatedAt: new Date().toISOString().split('T')[0],
+      payoutSplit: '90% Author / 10% Platform'
+    };
+
+    if (targetUserId) {
+      setRegisteredUsers(prev => prev.map(u => {
+        if (u.id === targetUserId) {
+          return { ...u, bankDetails: formattedDetails };
+        }
+        return u;
+      }));
+      addAuditLog('Author Bank Details Updated by Admin', `User ID ${targetUserId}: ${formattedDetails.bankName} (••••${last4})`);
+      return formattedDetails;
+    }
+
+    setUser(prev => {
+      const nextUser = {
+        ...prev,
+        bankDetails: formattedDetails
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(nextUser));
+        } catch (e) {}
+      }
+      return nextUser;
+    });
+
+    setRegisteredUsers(prev => prev.map(u => {
+      if ((user?.email && u.email?.toLowerCase() === user.email.toLowerCase()) || 
+          (user?.username && u.username?.toLowerCase() === user.username.toLowerCase())) {
+        return { ...u, bankDetails: formattedDetails };
+      }
+      return u;
+    }));
+
+    addAuditLog('Bank Details Saved', `${formattedDetails.bankName} (••••${last4})`);
+    
+    sendNotification({
+      title: "Bank Details Linked Successfully",
+      message: `Your ${formattedDetails.bankName} account has been verified for 90% direct author royalties and reader tips.`,
+      type: "system"
+    });
+
+    return formattedDetails;
+  };
+
+  const removeBankDetails = (targetUserId = null) => {
+    if (targetUserId) {
+      setRegisteredUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, bankDetails: null } : u));
+      addAuditLog('Author Bank Details Removed by Admin', `User ID ${targetUserId}`);
+      return;
+    }
+
+    setUser(prev => {
+      const nextUser = { ...prev, bankDetails: null };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(nextUser));
+        } catch (e) {}
+      }
+      return nextUser;
+    });
+
+    setRegisteredUsers(prev => prev.map(u => {
+      if ((user?.email && u.email?.toLowerCase() === user.email.toLowerCase()) || 
+          (user?.username && u.username?.toLowerCase() === user.username.toLowerCase())) {
+        return { ...u, bankDetails: null };
+      }
+      return u;
+    }));
+
+    addAuditLog('Bank Details Removed', user?.name || 'Author');
+  };
+
   // Auth Modal & OAuth methods
   const openAuthModal = (mode = 'login', message = '', action = null) => {
     setAuthModalMode(mode);
@@ -1773,6 +1889,13 @@ export function AppProvider({ children }) {
       paymentModalData,
       setPaymentModalData,
       openPaymentModal,
+      bankDetailsModalOpen,
+      setBankDetailsModalOpen,
+      bankDetailsModalTarget,
+      openBankDetailsModal,
+      closeBankDetailsModal,
+      updateBankDetails,
+      removeBankDetails,
       notifications,
       setNotifications,
       sendNotification,

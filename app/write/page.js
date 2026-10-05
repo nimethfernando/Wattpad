@@ -25,13 +25,14 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Layers,
-  FileText
+  FileText,
+  Building2
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
 export default function AuthorStudio() {
   const router = useRouter();
-  const { genres, stories, setStories, deleteStory, user, publishStory, t } = useApp();
+  const { genres, stories, setStories, deleteStory, user, publishStory, openBankDetailsModal, t } = useApp();
   const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'stories' | 'analytics'
 
   // Story Form State
@@ -231,6 +232,15 @@ export default function AuthorStudio() {
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" /> Creator Analytics
+            </button>
+            <button 
+              type="button"
+              onClick={() => openBankDetailsModal()}
+              className="shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 shadow-sm"
+              title="Add or update your bank payout account for 90% royalties"
+            >
+              <Building2 className="w-3.5 h-3.5" /> 
+              <span>{user?.bankDetails ? `Bank (${user.bankDetails.bankName})` : '+ Add Bank Details'}</span>
             </button>
           </div>
         </div>

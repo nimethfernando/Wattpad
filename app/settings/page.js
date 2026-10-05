@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { Settings, ShieldCheck, KeyRound, Bell, CheckCircle, Sparkles, CreditCard, AlertCircle, DollarSign, ArrowUpRight } from 'lucide-react';
+import { Settings, ShieldCheck, KeyRound, Bell, CheckCircle, Sparkles, CreditCard, AlertCircle, DollarSign, ArrowUpRight, Building2, Edit2, PlusCircle } from 'lucide-react';
 
 export default function SettingsPage() {
   const { 
@@ -14,6 +14,7 @@ export default function SettingsPage() {
     subscription, 
     cancelSubscription, 
     openPaymentModal, 
+    openBankDetailsModal,
     featureFlags, 
     setAgeVerificationModalOpen,
     toggleExperienceMode,
@@ -363,6 +364,83 @@ export default function SettingsPage() {
                 <span>View Stripe Dashboard</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
+            </div>
+
+            {/* Direct Bank Deposit (ACH / Wire / IBAN) */}
+            <div className="p-5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      Direct Deposit Bank Account
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Direct ACH / Wire bank payouts for your 90% author revenue share
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => openBankDetailsModal()}
+                  className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  {user?.bankDetails ? (
+                    <>
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit Bank Details</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>+ Add Bank Details</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {user?.bankDetails ? (
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Bank Name</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white truncate block">
+                      {user.bankDetails.bankName}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Account Holder</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white truncate block">
+                      {user.bankDetails.accountHolderName}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Account Number</span>
+                    <span className="font-mono font-extrabold text-slate-900 dark:text-white block">
+                      {user.bankDetails.accountNumber}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Status &amp; Country</span>
+                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Verified ({user.bankDetails.currency})
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span>⚠️ No bank details connected yet. Link your bank account to receive automated 90% author payouts directly.</span>
+                  <button
+                    type="button"
+                    onClick={() => openBankDetailsModal()}
+                    className="font-bold underline text-amber-900 dark:text-amber-200 cursor-pointer shrink-0"
+                  >
+                    Link Now →
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
