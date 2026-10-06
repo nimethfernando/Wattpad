@@ -169,7 +169,7 @@ export default function LoginPage() {
           {/* 2. EMAIL FORM */}
           <form onSubmit={handleEmailLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-500 mb-1">Email or Username</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email or Username</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -178,14 +178,14 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="reader@avoralibrary.com"
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-bold text-slate-500">Password</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Password</label>
                 <Link 
                   href="/forgot-password"
                   className="text-brand-500 font-bold hover:underline"
@@ -201,7 +201,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>

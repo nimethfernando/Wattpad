@@ -17,6 +17,34 @@ html.dark,
 [data-theme="dark"] {
   --bg-color: #090d16;
   --text-color: #f1f5f9;
+  color-scheme: dark;
+}
+
+html.light,
+.light {
+  color-scheme: light;
+}
+
+/* Ensure all input, select, and textarea fields are cleanly visible across themes */
+input,
+textarea,
+select {
+  color: #0f172a;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: #f8fafc !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 body {

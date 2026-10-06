@@ -163,7 +163,7 @@ export default function RegisterPage() {
           {/* 2. REGISTRATION FORM */}
           <form onSubmit={handleRegister} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-500 mb-1">Username</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Username</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -172,13 +172,13 @@ export default function RegisterPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="e.g. ElenaWrites"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-500 mb-1">Email Address</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -187,13 +187,13 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-500 mb-1">Password</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -202,7 +202,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="At least 8 characters"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function RegisterPage() {
                   onChange={(e) => setBirthdate(e.target.value)}
                   max={new Date().toISOString().split('T')[0]}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none focus:ring-2 focus:ring-brand-500 text-xs border border-slate-200 dark:border-slate-700"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold outline-none focus:ring-2 focus:ring-brand-500 text-xs border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
 
