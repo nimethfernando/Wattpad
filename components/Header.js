@@ -107,18 +107,17 @@ export default function Header() {
         
         {/* Brand Logo & Nav */}
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform ring-1 ring-amber-400/40 shrink-0 bg-slate-950">
-              <img src="/tab-icon.png" alt="Avora Library Logo" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">
-                Avora<span className="text-brand-500 dark:text-amber-400">Library</span>
-              </span>
-              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 -mt-0.5 hidden sm:block">
-                Serialized Fiction
-              </span>
-            </div>
+          <Link href="/" className="flex items-center group shrink-0 py-1" title="Avora Library">
+            <img 
+              src="/logo.png" 
+              alt="Avora Library" 
+              className="h-8 sm:h-9 md:h-10 w-auto object-contain dark:hidden group-hover:scale-105 transition-transform" 
+            />
+            <img 
+              src="/logo-dark.png" 
+              alt="Avora Library" 
+              className="h-8 sm:h-9 md:h-10 w-auto object-contain hidden dark:block group-hover:scale-105 transition-transform" 
+            />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -526,12 +525,8 @@ export default function Header() {
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-950 shrink-0">
-                    <img src="/tab-icon.png" alt="Logo" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Avora<span className="text-brand-500">Menu</span>
-                  </span>
+                  <img src="/logo.png" alt="Avora Library" className="h-7 w-auto object-contain dark:hidden" />
+                  <img src="/logo-dark.png" alt="Avora Library" className="h-7 w-auto object-contain hidden dark:block" />
                 </div>
                 <button 
                   onClick={() => setMobileMenuOpen(false)}

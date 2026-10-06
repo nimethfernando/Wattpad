@@ -67,13 +67,17 @@ export default function Footer() {
           
           {/* Brand & Language Column */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg overflow-hidden shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 shrink-0 bg-slate-950">
-                <img src="/tab-icon.png" alt="Avora Library Logo" className="w-full h-full object-cover" />
-              </div>
-              <span className="font-black text-lg text-slate-900 dark:text-white">
-                Avora<span className="text-brand-500">Library</span>
-              </span>
+            <Link href="/" className="flex items-center group py-1" title="Avora Library">
+              <img 
+                src="/logo.png" 
+                alt="Avora Library" 
+                className="h-8 w-auto object-contain dark:hidden group-hover:scale-105 transition-transform" 
+              />
+              <img 
+                src="/logo-dark.png" 
+                alt="Avora Library" 
+                className="h-8 w-auto object-contain hidden dark:block group-hover:scale-105 transition-transform" 
+              />
             </Link>
             <p className="max-w-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {footerConfig.tagline}
