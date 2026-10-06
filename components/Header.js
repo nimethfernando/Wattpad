@@ -431,18 +431,18 @@ export default function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => openAuthModal('login')} 
-                className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 hover:text-brand-500 transition-colors cursor-pointer shrink-0"
+              <Link 
+                href="/login" 
+                className="text-xs font-bold px-3 sm:px-3.5 py-1.5 rounded-full text-slate-800 dark:text-white hover:text-brand-500 dark:hover:text-amber-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-sm"
               >
-                {t.login}
-              </button>
-              <button 
-                onClick={() => openAuthModal('register')} 
+                {t.login || 'Log in'}
+              </Link>
+              <Link 
+                href="/register" 
                 className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all cursor-pointer shrink-0"
               >
-                {t.signup}
-              </button>
+                {t.signup || 'Sign up'}
+              </Link>
             </div>
           )}
 
@@ -700,6 +700,27 @@ export default function Header() {
                   <span>Modern Light</span>
                 </span>
               </div>
+
+              {/* Guest Authentication in Mobile Drawer */}
+              {!user && (
+                <div className="pt-2 flex flex-col gap-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-slate-800 dark:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-brand-500 dark:text-amber-400" />
+                    <span>{t.login || 'Log in'}</span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 shadow-sm transition-colors"
+                  >
+                    <span>{t.signup || 'Sign up'}</span>
+                  </Link>
+                </div>
+              )}
 
               {/* Logout Button */}
               {user && (

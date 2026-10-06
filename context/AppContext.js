@@ -38,7 +38,13 @@ export function isUserAdmin(userOrEmail) {
   const email = typeof userOrEmail === 'string' ? userOrEmail : (userOrEmail.email || '');
   const cleanEmail = (email || '').trim().toLowerCase();
   const role = typeof userOrEmail === 'object' ? userOrEmail.role : null;
-  return role === 'admin' || ADMIN_EMAILS.includes(cleanEmail) || cleanEmail.includes('admin');
+  return role === 'admin' || 
+         cleanEmail === 'gbncircle@gmail.com' || 
+         cleanEmail === 'gbncircle' || 
+         cleanEmail === 'groupditya@gmail.com' || 
+         cleanEmail === 'groupditya' || 
+         ADMIN_EMAILS.includes(cleanEmail) || 
+         cleanEmail.includes('admin');
 }
 
 export function AppProvider({ children }) {
@@ -1637,13 +1643,15 @@ export function AppProvider({ children }) {
   const loginWithEmail = (email, password) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const username = cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail;
-    const isAdmin = isUserAdmin(cleanEmail);
+    const isSuperAdmin = cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle';
+    const isDityaAdmin = cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya';
+    const isAdmin = isSuperAdmin || isDityaAdmin || isUserAdmin(cleanEmail);
     const isAuthor = cleanEmail.includes('author') || cleanEmail.includes('elena');
     const emailUser = {
-      id: cleanEmail === 'gbncircle@gmail.com' ? 10 : (cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now()),
-      username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader')),
-      name: cleanEmail === 'gbncircle@gmail.com' ? 'GBN Circle (Admin)' : (cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader'))),
-      email: cleanEmail.includes('@') ? cleanEmail : `${username || 'reader'}@avoralibrary.com`,
+      id: isSuperAdmin ? 10 : (isDityaAdmin ? 2 : Date.now()),
+      username: isSuperAdmin ? 'gbncircle' : (isDityaAdmin ? 'groupditya' : (username || 'reader')),
+      name: isSuperAdmin ? 'GBN Circle (Admin)' : (isDityaAdmin ? 'Ditya (Admin)' : (cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader'))),
+      email: cleanEmail.includes('@') ? cleanEmail : (isSuperAdmin ? 'gbncircle@gmail.com' : (isDityaAdmin ? 'groupditya@gmail.com' : `${username || 'reader'}@avoralibrary.com`)),
       provider: "email",
       role: isAdmin ? 'admin' : (isAuthor ? 'author' : 'reader'),
       avatar: isAdmin 

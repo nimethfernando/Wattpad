@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
     const cleanEmail = email.trim().toLowerCase();
     const loggedInUser = loginWithEmail(email, password);
-    if (cleanEmail === 'gbncircle@gmail.com') {
+    if (cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle' || cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya') {
       router.push('/admin');
     } else {
       router.push('/home');
@@ -169,39 +169,39 @@ export default function LoginPage() {
           {/* 2. EMAIL FORM */}
           <form onSubmit={handleEmailLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email or Username</label>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Email or Username</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                 <input 
                   type="text" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="reader@avoralibrary.com"
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="gbncircle@gmail.com or username"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300">Password</label>
+                <label className="font-bold text-slate-800 dark:text-slate-200">Password</label>
                 <Link 
                   href="/forgot-password"
-                  className="text-brand-500 font-bold hover:underline"
+                  className="text-brand-500 dark:text-amber-400 font-bold hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                 <input 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 transition-all shadow-inner"
                 />
               </div>
             </div>

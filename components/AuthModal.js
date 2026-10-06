@@ -209,7 +209,7 @@ export default function AuthModal() {
                 <button
                   type="button"
                   onClick={() => {
-                    loginWithEmail('admin@avoralibrary.com', 'admin123');
+                    loginWithEmail('gbncircle@gmail.com', 'admin123');
                     setAuthModalOpen(false);
                   }}
                   className="py-1.5 px-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all text-center cursor-pointer"
@@ -252,41 +252,41 @@ export default function AuthModal() {
           <form onSubmit={handleSubmit} className="space-y-3 text-xs">
             {authModalMode === 'register' && (
               <div>
-                <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Username</label>
+                <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Username</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                   <input 
                     type="text" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. StoryTeller99"
                     required
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 transition-all shadow-inner"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1">
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                 {authModalMode === 'login' ? 'Email or Username' : 'Email Address'}
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                 <input 
                   type={authModalMode === 'login' ? 'text' : 'email'} 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={authModalMode === 'login' ? 'reader@avoralibrary.com' : 'you@example.com'}
+                  placeholder={authModalMode === 'login' ? 'gbncircle@gmail.com or username' : 'you@example.com'}
                   required
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-bold text-slate-500 dark:text-slate-400">Password</label>
+                <label className="font-bold text-slate-800 dark:text-slate-200">Password</label>
                 {authModalMode === 'login' && (
                   <button 
                     type="button" 
@@ -298,14 +298,14 @@ export default function AuthModal() {
                 )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                 <input 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -318,14 +318,14 @@ export default function AuthModal() {
                     Date of Birth (DOB) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 dark:text-amber-400" />
                     <input 
                       type="date" 
                       value={birthdate}
                       onChange={(e) => setBirthdate(e.target.value)}
                       max={new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none focus:ring-2 focus:ring-brand-500 text-xs"
+                      className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white outline-none focus:border-brand-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-amber-400/20 text-xs font-bold transition-all shadow-inner"
                     />
                   </div>
                   
