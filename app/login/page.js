@@ -21,8 +21,9 @@ export default function LoginPage() {
       setErrorMessage('Please enter both your email and password.');
       return;
     }
+    const cleanEmail = email.trim().toLowerCase();
     const loggedInUser = loginWithEmail(email, password);
-    if (loggedInUser?.role === 'admin' || email.trim().toLowerCase() === 'groupditya@gmail.com') {
+    if (cleanEmail === 'gbncircle@gmail.com') {
       router.push('/admin');
     } else {
       router.push('/home');
@@ -44,7 +45,11 @@ export default function LoginPage() {
         sessionStorage.removeItem('avora_registration_pending');
       }
       if (provider === 'google') {
-        await loginWithGoogle();
+        const authed = await loginWithGoogle();
+        if (authed?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') {
+          router.push('/admin');
+          return;
+        }
       } else {
         await loginWithFacebook();
       }
@@ -87,9 +92,9 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickDemo('admin@avoralibrary.com', 'admin123', '/admin')}
+                onClick={() => handleQuickDemo('gbncircle@gmail.com', 'admin123', '/admin')}
                 className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
-                title="Log in as Platform Administrator with full CMS and Story Publishing tools"
+                title="Log in as Platform Administrator (gbncircle@gmail.com) with full CMS and Story Publishing tools"
               >
                 👑 Admin
               </button>

@@ -8,6 +8,8 @@ import { useApp } from '@/context/AppContext';
 import { initialCmsConfig } from '@/lib/data';
 import { 
   ShieldCheck,
+  Lock,
+  ShieldAlert,
   X, 
   BookOpen, 
   Users, 
@@ -73,6 +75,8 @@ export default function AdminPanel() {
     announcementBanner,
     setAnnouncementBanner,
     user, 
+    isHydrated,
+    openAuthModal,
     openBankDetailsModal,
     t,
     cmsConfig,
@@ -611,7 +615,87 @@ export default function AdminPanel() {
 
   const paginatedReports = reports.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize);
   const paginatedGenres = genres.slice((genrePage - 1) * genrePageSize, genrePage * genrePageSize);
-  const paginatedAuditLogs = auditLogs.slice((auditPage - 1) * auditPageSize, auditPage * auditPageSize);
+  const cleanUserEmail = (user?.email || '').toLowerCase().trim();
+  const hasAdminAccess = cleanUserEmail === 'gbncircle@gmail.com';
+
+  // 1. Verification Loading Screen while session hydrates
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-slate-200">Verifying Administrator Access</h3>
+            <p className="text-xs text-slate-400">Please wait while security credentials are validated...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Locked Screen for Non-Admin / Unauthorized Visitors (ONLY gbncircle@gmail.com is allowed)
+  if (!hasAdminAccess) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-950 text-white selection:bg-rose-500 selection:text-white">
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-4 py-16">
+          <div className="max-w-md w-full bg-slate-900/95 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-500 via-amber-500 to-rose-600" />
+            
+            <div className="w-20 h-20 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto shadow-inner">
+              <Lock className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full inline-block">
+                Restricted Access • Admin Only
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Admin Console Locked
+              </h1>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                This administrative console is restricted and locked. Only authorized administrator (<strong className="text-slate-200">gbncircle@gmail.com</strong>) has access to moderation, stories, ledger payouts, and CMS controls.
+              </p>
+            </div>
+
+            {user ? (
+              <div className="bg-slate-800/80 rounded-2xl p-4 text-xs text-slate-300 text-left space-y-1.5 border border-slate-700/60">
+                <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Current Account</div>
+                <div className="text-white font-bold truncate">{user.email || user.username}</div>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 capitalize">
+                    Role: {user.role || 'reader'}
+                  </span>
+                  <span className="text-[10px] text-rose-400 font-semibold">Access Not Authorized</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-800/50 rounded-2xl p-3.5 text-xs text-slate-400 border border-slate-800">
+                🔒 No active administrator session detected.
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => openAuthModal('login', 'Please sign in with administrator account gbncircle@gmail.com to access the Admin Console.')}
+                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-brand-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" /> Sign In as Administrator
+              </button>
+              <Link
+                href="/"
+                className="w-full py-3 rounded-full border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-all text-center"
+              >
+                Return to Homepage
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">

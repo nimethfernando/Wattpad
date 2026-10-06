@@ -31,6 +31,16 @@ import {
 
 const AppContext = createContext();
 
+export const ADMIN_EMAILS = ['gbncircle@gmail.com', 'groupditya@gmail.com'];
+
+export function isUserAdmin(userOrEmail) {
+  if (!userOrEmail) return false;
+  const email = typeof userOrEmail === 'string' ? userOrEmail : (userOrEmail.email || '');
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const role = typeof userOrEmail === 'object' ? userOrEmail.role : null;
+  return role === 'admin' || ADMIN_EMAILS.includes(cleanEmail) || cleanEmail.includes('admin');
+}
+
 export function AppProvider({ children }) {
   // Multilingual & Theme
   const [lang, setLang] = useState('en');
@@ -171,12 +181,12 @@ export function AppProvider({ children }) {
         }
 
         const cleanEmail = (email || '').trim().toLowerCase();
-        const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
+        const isAdmin = isUserAdmin(cleanEmail);
 
         const authenticatedUser = {
           id: session.user.id || Date.now(),
-          username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username,
-          name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name,
+          username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username),
+          name: cleanEmail === 'gbncircle@gmail.com' ? 'GBN Circle (Admin)' : (cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name),
           email,
           provider: "google",
           role: isAdmin ? "admin" : "reader",
@@ -269,7 +279,7 @@ export function AppProvider({ children }) {
         const savedUser = localStorage.getItem('avora_user');
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
-          if (parsedUser?.email && (parsedUser.email.toLowerCase() === 'groupditya@gmail.com' || parsedUser.email.toLowerCase().includes('admin'))) {
+          if (parsedUser?.email && isUserAdmin(parsedUser)) {
             parsedUser.role = 'admin';
             parsedUser.isAgeVerified = true;
             parsedUser.hideMature = false;
@@ -1510,13 +1520,13 @@ export function AppProvider({ children }) {
       const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
       const avatar = customUser.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80";
 
-      const cleanEmail = email.toLowerCase();
-      const isAdmin = cleanEmail === 'groupditya@gmail.com' || cleanEmail.includes('admin');
+      const cleanEmail = email.toLowerCase().trim();
+      const isAdmin = isUserAdmin(cleanEmail);
 
       const googleUser = {
-        id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
-        username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username,
-        name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name,
+        id: cleanEmail === 'gbncircle@gmail.com' ? 4 : (cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now()),
+        username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username),
+        name: cleanEmail === 'gbncircle@gmail.com' ? 'GBN Circle (Admin)' : (cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : name),
         email,
         provider: "google",
         role: isAdmin ? "admin" : "reader",
@@ -1627,12 +1637,12 @@ export function AppProvider({ children }) {
   const loginWithEmail = (email, password) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const username = cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail;
-    const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
+    const isAdmin = isUserAdmin(cleanEmail);
     const isAuthor = cleanEmail.includes('author') || cleanEmail.includes('elena');
     const emailUser = {
-      id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
-      username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader'),
-      name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader')),
+      id: cleanEmail === 'gbncircle@gmail.com' ? 10 : (cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now()),
+      username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader')),
+      name: cleanEmail === 'gbncircle@gmail.com' ? 'GBN Circle (Admin)' : (cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (cleanEmail.includes('@') ? username.replace(/[._-]/g, ' ') : (username || 'Reader'))),
       email: cleanEmail.includes('@') ? cleanEmail : `${username || 'reader'}@avoralibrary.com`,
       provider: "email",
       role: isAdmin ? 'admin' : (isAuthor ? 'author' : 'reader'),
@@ -1677,16 +1687,16 @@ export function AppProvider({ children }) {
 
   const registerWithEmail = ({ username, email, password, birthdate, age = null, experienceMode = 'mature', isAgeConfirmed }) => {
     const cleanEmail = (email || '').trim().toLowerCase();
-    const isAdmin = cleanEmail.includes('admin') || cleanEmail === 'groupditya@gmail.com';
+    const isAdmin = isUserAdmin(cleanEmail);
     const calculatedAge = age !== null ? age : (birthdate ? calculateAgeFromDob(birthdate) : null);
     const enforcedMode = (calculatedAge !== null && calculatedAge < 18) 
       ? EXPERIENCE_MODES.KIDS 
       : (experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
 
     const newUser = {
-      id: cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now(),
-      username: cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader'),
-      name: cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (username || 'Reader'),
+      id: cleanEmail === 'gbncircle@gmail.com' ? 10 : (cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now()),
+      username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : (username || 'reader')),
+      name: cleanEmail === 'gbncircle@gmail.com' ? 'GBN Circle (Admin)' : (cleanEmail === 'groupditya@gmail.com' ? 'Ditya (Admin)' : (username || 'Reader')),
       email: cleanEmail || email,
       provider: "email",
       birthdate,
@@ -2041,7 +2051,11 @@ export function AppProvider({ children }) {
       addGenreToFavorites,
       dismissEmergingGenre,
       triggerEmergingModal,
-      recordGenreInteraction
+      recordGenreInteraction,
+      isHydrated,
+      isAdmin: isUserAdmin(user),
+      isUserAdmin,
+      ADMIN_EMAILS
     }}>
       {children}
     </AppContext.Provider>

@@ -66,7 +66,8 @@ export default function RegisterPage() {
         isAgeConfirmed
       });
 
-      if (registered?.role === 'admin' || email.trim().toLowerCase() === 'groupditya@gmail.com') {
+      const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail === 'gbncircle@gmail.com') {
         router.push('/admin');
       } else {
         router.push('/home');

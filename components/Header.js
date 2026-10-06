@@ -30,6 +30,7 @@ export default function Header() {
     setLang, 
     t, 
     user, 
+    isAdmin,
     setUser, 
     logoutUser,
     notifications, 
@@ -142,7 +143,7 @@ export default function Header() {
             <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
               <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
             </Link>
-            {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
+            {(user?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') && (
               <Link href="/admin" className="hidden 2xl:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
               </Link>
@@ -402,7 +403,7 @@ export default function Header() {
                       <Settings className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0" />
                       <span className="truncate">{t.accountSettings || t.settings || 'Account Settings'}</span>
                     </Link>
-                    {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
+                    {(user?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') && (
                       <Link 
                         href="/admin" 
                         onClick={() => setShowProfileMenu(false)}
@@ -660,7 +661,7 @@ export default function Header() {
                   </>
                 )}
 
-                {(user?.role === 'admin' || user?.email?.toLowerCase() === 'groupditya@gmail.com') && (
+                {(user?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') && (
                   <Link 
                     href="/admin" 
                     onClick={() => setMobileMenuOpen(false)}
