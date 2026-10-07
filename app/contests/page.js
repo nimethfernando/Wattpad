@@ -103,7 +103,7 @@ export default function ContestsPage() {
                       <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Categories</span>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {c.categories.map((cat, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 font-semibold">
+                          <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold">
                             {cat}
                           </span>
                         ))}
@@ -144,8 +144,8 @@ export default function ContestsPage() {
             {/* Submission Form Sidebar */}
             <div className="lg:col-span-4 space-y-6">
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
-                <h3 className="font-black text-base">Submit Your Serial Novel</h3>
-                <p className="text-xs text-slate-500">
+                <h3 className="font-black text-base text-slate-900 dark:text-white">Submit Your Serial Novel</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Selected Contest: <strong className="text-slate-900 dark:text-white">{selectedContest.title}</strong>
                 </p>
 
@@ -157,23 +157,27 @@ export default function ContestsPage() {
 
                 <form onSubmit={handleSubmitEntry} className="space-y-4 text-xs">
                   <div>
-                    <label className="block font-bold text-slate-400 mb-1">Select Story from Your Portfolio</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">Select Story from Your Portfolio</label>
                     <select 
                       value={submissionStoryId}
                       onChange={(e) => setSubmissionStoryId(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
                     >
                       {stories.map(s => (
-                        <option key={s.id} value={s.id}>{s.title} ({s.chapters.length} Ch.)</option>
+                        <option key={s.id} value={s.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-1">
+                          {s.title} ({s.chapters.length} Ch.)
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-400 mb-1">Target Category</label>
-                    <select className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none">
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">Target Category</label>
+                    <select className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer">
                       {selectedContest.categories.map((cat, i) => (
-                        <option key={i} value={cat}>{cat}</option>
+                        <option key={i} value={cat} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-1">
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -207,7 +211,7 @@ export default function ContestsPage() {
                 .map(c => (
                 <div key={c.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <h3 className="font-black text-base">{c.title}</h3>
+                    <h3 className="font-black text-base text-slate-900 dark:text-white">{c.title}</h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
                       HALL OF FAME
                     </span>
@@ -218,7 +222,7 @@ export default function ContestsPage() {
                       <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs">
                         <div>
                           <span className="font-bold text-amber-600 block text-[10px] uppercase">{w.category}</span>
-                          <h4 className="font-extrabold text-sm">{w.story}</h4>
+                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{w.story}</h4>
                           <p className="text-slate-400 text-[11px]">By {w.author}</p>
                         </div>
                         <Star className="w-5 h-5 text-amber-500 fill-amber-500" />

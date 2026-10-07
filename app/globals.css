@@ -28,13 +28,26 @@ html.light,
 /* Ensure all input, select, and textarea fields are cleanly visible across themes */
 input,
 textarea,
-select {
+select,
+option {
+  color: #0f172a;
+}
+
+option {
+  background-color: #ffffff;
   color: #0f172a;
 }
 
 .dark input,
 .dark textarea,
 .dark select {
+  color: #f8fafc !important;
+}
+
+.dark option,
+html.dark option,
+[data-theme="dark"] option {
+  background-color: #1e293b !important;
   color: #f8fafc !important;
 }
 
