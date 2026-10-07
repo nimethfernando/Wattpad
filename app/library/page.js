@@ -212,7 +212,7 @@ export default function LibraryPage() {
                                 )}
                               </div>
                               <Link href={`/story/${story.slug}`}>
-                                <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
+                                <h3 className="font-extrabold text-base line-clamp-1 text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400 transition-colors mt-0.5">
                                   {story.title}
                                 </h3>
                               </Link>
@@ -329,7 +329,7 @@ export default function LibraryPage() {
                                  )}
                               </div>
                               <Link href={`/story/${story.slug}`}>
-                                <h3 className="font-extrabold text-base line-clamp-1 group-hover:text-brand-500 transition-colors mt-0.5">
+                                <h3 className="font-extrabold text-base line-clamp-1 text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400 transition-colors mt-0.5">
                                    {story.title}
                                  </h3>
                               </Link>

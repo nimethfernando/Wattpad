@@ -469,7 +469,7 @@ export default function BrowsePage() {
                       </div>
 
                       <Link href={`/story/${story.slug}`}>
-                        <h3 className="font-extrabold text-sm sm:text-base mt-1.5 line-clamp-1 group-hover:text-brand-500 transition-colors">
+                        <h3 className="font-extrabold text-sm sm:text-base mt-1.5 line-clamp-1 text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400 transition-colors">
                           {story.title}
                         </h3>
                       </Link>

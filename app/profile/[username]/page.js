@@ -238,7 +238,7 @@ export default function ProfilePage() {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-bold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{story.title}</h3>
+                    <h3 className="font-bold text-sm sm:text-base mt-1 line-clamp-1 text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400 transition-colors">{story.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{story.description}</p>
                   </div>
                   <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800 mt-2">

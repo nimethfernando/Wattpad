@@ -112,6 +112,17 @@ export default function ReaderPage() {
     }
   }, [story?.id, chapter?.id]);
 
+  // Update browser tab title to show chapter and story title
+  useEffect(() => {
+    if (story) {
+      const chNum = chapter?.number ?? (currentChapterIndex + 1);
+      const chTitle = chapter?.title ? `Ch. ${chNum}: ${chapter.title}` : `Chapter ${chNum}`;
+      document.title = `${chTitle} | ${story.title} - Avora Library`;
+    } else {
+      document.title = 'Avora Library';
+    }
+  }, [story?.title, chapter?.title, chapter?.number, currentChapterIndex]);
+
   const triggerChapterCompletion = () => {
     const pieces = Array.from({ length: 45 }).map((_, i) => ({
       id: i,

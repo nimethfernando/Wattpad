@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -61,6 +61,14 @@ export default function StoryDetailPage() {
   const [showReadingListModal, setShowReadingListModal] = useState(false);
 
   const story = stories.find(s => s.slug === slug);
+
+  useEffect(() => {
+    if (story?.title) {
+      document.title = `${story.title} - Avora Library`;
+    } else {
+      document.title = 'Avora Library';
+    }
+  }, [story?.title]);
 
   if (!story) {
     return (
@@ -517,7 +525,7 @@ export default function StoryDetailPage() {
                 <Link key={rel.id} href={`/story/${rel.slug}`} className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all">
                   <img src={rel.cover} alt={rel.title} className="aspect-[3/4] object-cover group-hover:scale-105 transition-transform" />
                   <div className="p-3">
-                    <h4 className="font-bold text-xs truncate group-hover:text-brand-500">{rel.title}</h4>
+                    <h4 className="font-bold text-xs truncate text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400">{rel.title}</h4>
                     <p className="text-[11px] text-slate-400">By {rel.author}</p>
                   </div>
                 </Link>

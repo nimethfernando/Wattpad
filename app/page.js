@@ -55,7 +55,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafbfc] text-slate-900 transition-colors">
+    <div className="min-h-screen flex flex-col bg-[#fafbfc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
       {/* Dual-State View Switcher (Wattpad Feed vs Public Landing) */}
@@ -272,7 +272,7 @@ export default function HomePage() {
                           </span>
                         )}
                       </div>
-                      <h3 className="font-extrabold text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-brand-500 transition-colors">{locStory.title}</h3>
+                      <h3 className="font-extrabold text-sm sm:text-base mt-1 line-clamp-1 text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-amber-400 transition-colors">{locStory.title}</h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t?.by || 'By'} {locStory.author}</p>
                     </div>
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
