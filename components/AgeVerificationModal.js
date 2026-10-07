@@ -12,6 +12,8 @@ export default function AgeVerificationModal() {
     updateUserAgeAndDob 
   } = useApp();
 
+  const isMandatory = Boolean(user && (!user.isAgeVerified || !user.birthdate) && user.role !== 'admin');
+
   const [dob, setDob] = useState(user?.birthdate || '2005-01-01');
   const [selectedExperience, setSelectedExperience] = useState(
     user?.experienceMode || EXPERIENCE_MODES.KIDS
@@ -19,14 +21,24 @@ export default function AgeVerificationModal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Synchronize state when user changes
+  useEffect(() => {
+    if (user?.birthdate) {
+      setDob(user.birthdate);
+    }
+    if (user?.experienceMode) {
+      setSelectedExperience(user.experienceMode);
+    }
+  }, [user]);
+
   const calculatedAge = calculateAgeFromDob(dob);
   const isUnder18 = calculatedAge !== null && calculatedAge < 18;
   const isUnder13 = calculatedAge !== null && calculatedAge < 13;
 
-  // Close modal on Escape key press
+  // Close modal on Escape key press (only if not mandatory)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isMandatory) {
         setAgeVerificationModalOpen(false);
       }
     };
@@ -34,7 +46,7 @@ export default function AgeVerificationModal() {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [ageVerificationModalOpen, setAgeVerificationModalOpen]);
+  }, [ageVerificationModalOpen, setAgeVerificationModalOpen, isMandatory]);
 
   if (!ageVerificationModalOpen) return null;
 
@@ -83,33 +95,47 @@ export default function AgeVerificationModal() {
   return (
     <div 
       className="fixed inset-0 z-[120] overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onClick={() => setAgeVerificationModalOpen(false)}
+      onClick={() => {
+        if (!isMandatory) setAgeVerificationModalOpen(false);
+      }}
     >
       <div 
         className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={() => setAgeVerificationModalOpen(false)}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          aria-label="Close modal"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Close Button - hidden if verification is mandatory */}
+        {!isMandatory && (
+          <button
+            type="button"
+            onClick={() => setAgeVerificationModalOpen(false)}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-            Age Verification & Access Control
+            {isMandatory ? 'Welcome! Confirm Your Age' : 'Age Verification & Access Control'}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-            Avora Library protects readers by ensuring content access is strictly tailored to your verified Date of Birth.
+            {isMandatory
+              ? 'To protect all readers and personalize your library experience, please confirm your Date of Birth before continuing.'
+              : 'Avora Library protects readers by ensuring content access is strictly tailored to your verified Date of Birth.'}
           </p>
         </div>
+
+        {isMandatory && (
+          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-semibold flex items-center gap-2">
+            <Sparkles className="w-4 h-4 shrink-0 text-amber-500" />
+            <span>Setup Step: Enter your Date of Birth to complete your profile setup.</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">

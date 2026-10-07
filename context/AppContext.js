@@ -221,14 +221,9 @@ export function AppProvider({ children }) {
           }
         }
 
-        // Only prompt for DOB if this authentication was explicitly triggered by user registration
-        if (typeof window !== 'undefined') {
-          const isRegistrationPending = sessionStorage.getItem('avora_registration_pending') === 'true';
-          sessionStorage.removeItem('avora_registration_pending');
-
-          if (isRegistrationPending && !isAgeVerified) {
-            setAgeVerificationModalOpen(true);
-          }
+        // If user is not yet age-verified and not admin, prompt for DOB verification!
+        if (!isAdmin && (!isAgeVerified || !savedDob)) {
+          setAgeVerificationModalOpen(true);
         }
 
         if (typeof window !== 'undefined') {
@@ -297,6 +292,9 @@ export function AppProvider({ children }) {
               parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
               parsedUser.hideMature = true;
             }
+          } else if (parsedUser.role !== 'admin' && !isUserAdmin(parsedUser)) {
+            parsedUser.isAgeVerified = false;
+            setAgeVerificationModalOpen(true);
           }
           if (!parsedUser.bankDetails) {
             const matchedAuthor = initialRegisteredUsers.find(ru => 
@@ -1529,6 +1527,37 @@ export function AppProvider({ children }) {
       const cleanEmail = email.toLowerCase().trim();
       const isAdmin = isUserAdmin(cleanEmail);
 
+      let savedDob = null;
+      let savedAge = null;
+      let savedMode = EXPERIENCE_MODES.KIDS;
+      let isAgeVerified = false;
+
+      const existing = (registeredUsers || []).find(u => u.email?.toLowerCase() === cleanEmail);
+      if (existing && existing.birthdate) {
+        savedDob = existing.birthdate;
+        savedAge = existing.age ?? calculateAgeFromDob(savedDob);
+        savedMode = existing.experienceMode || ((savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+        isAgeVerified = true;
+      } else if (typeof window !== 'undefined') {
+        try {
+          const rawUser = localStorage.getItem('avora_user');
+          if (rawUser) {
+            const u = JSON.parse(rawUser);
+            if (u.email?.toLowerCase() === cleanEmail && u.birthdate) {
+              savedDob = u.birthdate;
+              savedAge = u.age ?? calculateAgeFromDob(savedDob);
+              savedMode = (savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : (u.experienceMode || EXPERIENCE_MODES.MATURE);
+              isAgeVerified = true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (isAdmin) {
+        isAgeVerified = true;
+        savedMode = EXPERIENCE_MODES.MATURE;
+      }
+
       const googleUser = {
         id: cleanEmail === 'gbncircle@gmail.com' ? 4 : (cleanEmail === 'groupditya@gmail.com' ? 2 : Date.now()),
         username: cleanEmail === 'gbncircle@gmail.com' ? 'gbncircle' : (cleanEmail === 'groupditya@gmail.com' ? 'groupditya' : username),
@@ -1538,8 +1567,11 @@ export function AppProvider({ children }) {
         role: isAdmin ? "admin" : "reader",
         avatar,
         badges: isAdmin ? ["Platform Admin", "Google Verified"] : ["Google Verified", "Avid Reader"],
-        isAgeVerified: true,
-        hideMature: false,
+        birthdate: savedDob,
+        age: savedAge,
+        experienceMode: isAdmin ? EXPERIENCE_MODES.MATURE : savedMode,
+        isAgeVerified: isAdmin ? true : isAgeVerified,
+        hideMature: isAdmin ? false : (savedMode === EXPERIENCE_MODES.KIDS),
         hasCompletedOnboarding: true,
         userPreferences: {
           goals: isAdmin ? "Platform Administration & Moderation" : "I'm here to read stories",
@@ -1554,6 +1586,11 @@ export function AppProvider({ children }) {
           localStorage.setItem('avora_user_preferences', JSON.stringify(googleUser.userPreferences));
           localStorage.setItem('avora_user_onboarding', 'true');
           document.cookie = `avora_session=${encodeURIComponent(googleUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+          if (savedDob) {
+            document.cookie = `avora_dob=${encodeURIComponent(savedDob)}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `avora_age=${encodeURIComponent(String(savedAge))}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `avora_experience_mode=${encodeURIComponent(savedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+          }
         } catch (e) {
           console.error("Failed to save google user to localStorage", e);
         }
@@ -1568,6 +1605,10 @@ export function AppProvider({ children }) {
         if (window.location.pathname !== '/admin') {
           window.location.href = '/admin';
         }
+      }
+
+      if (!isAdmin && !isAgeVerified) {
+        setAgeVerificationModalOpen(true);
       }
 
       return googleUser;
@@ -1647,6 +1688,39 @@ export function AppProvider({ children }) {
     const isDityaAdmin = cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya';
     const isAdmin = isSuperAdmin || isDityaAdmin || isUserAdmin(cleanEmail);
     const isAuthor = cleanEmail.includes('author') || cleanEmail.includes('elena');
+
+    let savedDob = null;
+    let savedAge = null;
+    let savedMode = EXPERIENCE_MODES.KIDS;
+    let isAgeVerified = false;
+
+    // Check if user already exists with birthdate in registeredUsers or localStorage
+    const existing = (registeredUsers || []).find(u => u.email?.toLowerCase() === cleanEmail);
+    if (existing && existing.birthdate) {
+      savedDob = existing.birthdate;
+      savedAge = existing.age ?? calculateAgeFromDob(savedDob);
+      savedMode = existing.experienceMode || ((savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+      isAgeVerified = true;
+    } else if (typeof window !== 'undefined') {
+      try {
+        const rawUser = localStorage.getItem('avora_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (u.email?.toLowerCase() === cleanEmail && u.birthdate) {
+            savedDob = u.birthdate;
+            savedAge = u.age ?? calculateAgeFromDob(savedDob);
+            savedMode = (savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : (u.experienceMode || EXPERIENCE_MODES.MATURE);
+            isAgeVerified = true;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (isAdmin) {
+      isAgeVerified = true;
+      savedMode = EXPERIENCE_MODES.MATURE;
+    }
+
     const emailUser = {
       id: isSuperAdmin ? 10 : (isDityaAdmin ? 2 : Date.now()),
       username: isSuperAdmin ? 'gbncircle' : (isDityaAdmin ? 'groupditya' : (username || 'reader')),
@@ -1660,8 +1734,11 @@ export function AppProvider({ children }) {
             ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80"
             : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80"),
       badges: isAdmin ? ["Platform Admin", "Editorial Lead"] : (isAuthor ? ["Verified Author", "Rising Creator"] : ["Member", "Avid Reader"]),
-      isAgeVerified: true,
-      hideMature: false,
+      birthdate: savedDob,
+      age: savedAge,
+      experienceMode: isAdmin ? EXPERIENCE_MODES.MATURE : savedMode,
+      isAgeVerified: isAdmin ? true : isAgeVerified,
+      hideMature: isAdmin ? false : (savedMode === EXPERIENCE_MODES.KIDS),
       hasCompletedOnboarding: true,
       userPreferences: {
         goals: isAdmin ? "Platform Administration & Moderation" : (isAuthor ? "Publishing original serials" : "I'm here to read stories"),
@@ -1676,6 +1753,11 @@ export function AppProvider({ children }) {
         localStorage.setItem('avora_user_preferences', JSON.stringify(emailUser.userPreferences));
         localStorage.setItem('avora_user_onboarding', 'true');
         document.cookie = `avora_session=${encodeURIComponent(emailUser.email)}; path=/; max-age=2592000; SameSite=Lax`;
+        if (savedDob) {
+          document.cookie = `avora_dob=${encodeURIComponent(savedDob)}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_age=${encodeURIComponent(String(savedAge))}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `avora_experience_mode=${encodeURIComponent(savedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+        }
       } catch (e) {}
     }
 
@@ -1688,6 +1770,10 @@ export function AppProvider({ children }) {
       if (window.location.pathname !== '/admin') {
         window.location.href = '/admin';
       }
+    }
+
+    if (!isAdmin && !isAgeVerified) {
+      setAgeVerificationModalOpen(true);
     }
 
     return emailUser;
