@@ -47,6 +47,16 @@ export function isUserAdmin(userOrEmail) {
          cleanEmail.includes('admin');
 }
 
+export function getUserStorageKey(userOrEmail) {
+  if (!userOrEmail) return 'guest';
+  const email = typeof userOrEmail === 'string' 
+    ? userOrEmail 
+    : (userOrEmail.email || userOrEmail.username || String(userOrEmail.id || ''));
+  const clean = (email || '').trim().toLowerCase();
+  if (!clean) return 'guest';
+  return clean.replace(/[^a-z0-9_]/g, '_');
+}
+
 export function AppProvider({ children }) {
   // Multilingual & Theme
   const [lang, setLang] = useState('en');
@@ -80,6 +90,77 @@ export function AppProvider({ children }) {
     dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     daysActive: [false, false, false, false, false, false, false]
   });
+
+  // User-Scoped Data Isolation State & Refs
+  const activeUserKeyRef = useRef(null);
+  const isSwitchingUserRef = useRef(false);
+
+  // Load isolated user data (Library, Reading Progress, Wishlist, Lists, Streaks)
+  const loadUserDataForUser = (userKey) => {
+    if (typeof window === 'undefined') return;
+
+    // 1. Library
+    try {
+      const savedLib = localStorage.getItem(`avora_library_${userKey}`);
+      setLibrary(savedLib !== null ? JSON.parse(savedLib) : []);
+    } catch (e) {
+      setLibrary([]);
+    }
+
+    // 2. Reading Progress
+    try {
+      const savedProg = localStorage.getItem(`avora_reading_progress_${userKey}`);
+      setReadingProgress(savedProg !== null ? JSON.parse(savedProg) : {});
+    } catch (e) {
+      setReadingProgress({});
+    }
+
+    // 3. Wishlist
+    try {
+      const savedWish = localStorage.getItem(`avora_wishlist_${userKey}`);
+      setWishlist(savedWish !== null ? JSON.parse(savedWish) : []);
+    } catch (e) {
+      setWishlist([]);
+    }
+
+    // 4. Reading Lists
+    try {
+      const savedLists = localStorage.getItem(`avora_reading_lists_${userKey}`);
+      setReadingLists(savedLists !== null ? JSON.parse(savedLists) : []);
+    } catch (e) {
+      setReadingLists([]);
+    }
+
+    // 5. Reading Streak
+    try {
+      const savedStreak = localStorage.getItem(`avora_reading_streak_${userKey}`);
+      if (savedStreak !== null) {
+        setReadingStreak(JSON.parse(savedStreak));
+      } else {
+        setReadingStreak({
+          currentStreak: 0,
+          chaptersReadThisWeek: 0,
+          dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          daysActive: [false, false, false, false, false, false, false]
+        });
+      }
+    } catch (e) {
+      setReadingStreak({
+        currentStreak: 0,
+        chaptersReadThisWeek: 0,
+        dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        daysActive: [false, false, false, false, false, false, false]
+      });
+    }
+
+    // 6. Following Authors
+    try {
+      const savedFollowing = localStorage.getItem(`avora_following_${userKey}`);
+      setFollowingAuthors(savedFollowing !== null ? JSON.parse(savedFollowing) : []);
+    } catch (e) {
+      setFollowingAuthors([]);
+    }
+  };
 
   // Dual-State Home Feed View Mode: 'landing' (public default) or 'feed' (authenticated)
   const [homeFeedViewMode, setHomeFeedViewMode] = useState('landing');
@@ -276,6 +357,29 @@ export function AppProvider({ children }) {
   // Sync User Session, Reading Progress & Preferences from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // One-time legacy cleanup to guarantee user library & progress isolation
+      try {
+        const legacyMigrated = localStorage.getItem('avora_legacy_scoped_migrated');
+        if (!legacyMigrated) {
+          const legacyLib = localStorage.getItem('avora_library');
+          const legacyProg = localStorage.getItem('avora_reading_progress');
+          const legacyWish = localStorage.getItem('avora_wishlist');
+          
+          // Assign legacy read history to nimethgithmal (User 1 who read the books)
+          if (legacyLib) {
+            localStorage.setItem('avora_library_nimethgithmal_gmail_com', legacyLib);
+            if (legacyProg) localStorage.setItem('avora_reading_progress_nimethgithmal_gmail_com', legacyProg);
+            if (legacyWish) localStorage.setItem('avora_wishlist_nimethgithmal_gmail_com', legacyWish);
+          }
+          // Remove global shared keys so other accounts (like nimeth42) start with clean, isolated library
+          localStorage.removeItem('avora_library');
+          localStorage.removeItem('avora_reading_progress');
+          localStorage.removeItem('avora_wishlist');
+          localStorage.setItem('avora_legacy_scoped_migrated', 'true');
+        }
+      } catch (e) {}
+
+      let initialKey = 'guest';
       try {
         const savedUser = localStorage.getItem('avora_user');
         if (savedUser) {
@@ -306,20 +410,47 @@ export function AppProvider({ children }) {
             }
           }
           setUser(parsedUser);
+          initialKey = getUserStorageKey(parsedUser);
           setHomeFeedViewMode('feed');
         }
       } catch (e) {
         console.error("Could not load user from localStorage", e);
       }
 
-      try {
-        const saved = localStorage.getItem('avora_reading_progress');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setReadingProgress(prev => ({ ...prev, ...parsed }));
-        }
-      } catch (e) {
-        console.error("Could not load reading progress from localStorage", e);
+      // Load user-scoped library and reading data for active user (or guest)
+      activeUserKeyRef.current = initialKey;
+      loadUserDataForUser(initialKey);
+
+      // Hydrate from backend API if logged-in user
+      if (initialKey !== 'guest') {
+        fetch(`/api/user/library?user=${encodeURIComponent(initialKey)}`)
+          .then(res => res.json())
+          .then(resData => {
+            if (resData?.success && resData.data) {
+              const d = resData.data;
+              if (Array.isArray(d.library) && d.library.length > 0) {
+                setLibrary(d.library);
+                try { localStorage.setItem(`avora_library_${initialKey}`, JSON.stringify(d.library)); } catch (e) {}
+              }
+              if (d.readingProgress && Object.keys(d.readingProgress).length > 0) {
+                setReadingProgress(d.readingProgress);
+                try { localStorage.setItem(`avora_reading_progress_${initialKey}`, JSON.stringify(d.readingProgress)); } catch (e) {}
+              }
+              if (Array.isArray(d.wishlist) && d.wishlist.length > 0) {
+                setWishlist(d.wishlist);
+                try { localStorage.setItem(`avora_wishlist_${initialKey}`, JSON.stringify(d.wishlist)); } catch (e) {}
+              }
+              if (Array.isArray(d.readingLists) && d.readingLists.length > 0) {
+                setReadingLists(d.readingLists);
+                try { localStorage.setItem(`avora_reading_lists_${initialKey}`, JSON.stringify(d.readingLists)); } catch (e) {}
+              }
+              if (d.readingStreak) {
+                setReadingStreak(d.readingStreak);
+                try { localStorage.setItem(`avora_reading_streak_${initialKey}`, JSON.stringify(d.readingStreak)); } catch (e) {}
+              }
+            }
+          })
+          .catch(() => {});
       }
 
       try {
@@ -372,20 +503,6 @@ export function AppProvider({ children }) {
         }
       } catch (e) {
         console.error("Could not load CMS config from localStorage", e);
-      }
-
-      // Sync Wish List and Library from localStorage
-      try {
-        const savedWishlist = localStorage.getItem('avora_wishlist');
-        if (savedWishlist) {
-          setWishlist(JSON.parse(savedWishlist));
-        }
-        const savedLib = localStorage.getItem('avora_library');
-        if (savedLib) {
-          setLibrary(JSON.parse(savedLib));
-        }
-      } catch (e) {
-        console.error("Could not load wishlist/library from localStorage", e);
       }
 
       // Sync Custom Stories from localStorage
@@ -477,23 +594,158 @@ export function AppProvider({ children }) {
     }
   }, [user, isHydrated]);
 
-  // Sync Wishlist to localStorage
+  // Switch and isolate user data when active user changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && isHydrated) {
-      try {
-        localStorage.setItem('avora_wishlist', JSON.stringify(wishlist));
-      } catch (e) {}
-    }
-  }, [wishlist, isHydrated]);
+    if (!isHydrated) return;
+    const currentKey = getUserStorageKey(user);
 
-  // Sync Library to localStorage
+    if (activeUserKeyRef.current === null) {
+      activeUserKeyRef.current = currentKey;
+      return;
+    }
+
+    if (activeUserKeyRef.current !== currentKey) {
+      isSwitchingUserRef.current = true;
+      activeUserKeyRef.current = currentKey;
+      loadUserDataForUser(currentKey);
+
+      // Hydrate from backend API if authenticated user
+      if (currentKey !== 'guest') {
+        fetch(`/api/user/library?user=${encodeURIComponent(currentKey)}`)
+          .then(res => res.json())
+          .then(resData => {
+            if (resData?.success && resData.data) {
+              const d = resData.data;
+              if (Array.isArray(d.library) && d.library.length > 0) {
+                setLibrary(d.library);
+                try { localStorage.setItem(`avora_library_${currentKey}`, JSON.stringify(d.library)); } catch (e) {}
+              }
+              if (d.readingProgress && Object.keys(d.readingProgress).length > 0) {
+                setReadingProgress(d.readingProgress);
+                try { localStorage.setItem(`avora_reading_progress_${currentKey}`, JSON.stringify(d.readingProgress)); } catch (e) {}
+              }
+              if (Array.isArray(d.wishlist) && d.wishlist.length > 0) {
+                setWishlist(d.wishlist);
+                try { localStorage.setItem(`avora_wishlist_${currentKey}`, JSON.stringify(d.wishlist)); } catch (e) {}
+              }
+              if (Array.isArray(d.readingLists) && d.readingLists.length > 0) {
+                setReadingLists(d.readingLists);
+                try { localStorage.setItem(`avora_reading_lists_${currentKey}`, JSON.stringify(d.readingLists)); } catch (e) {}
+              }
+              if (d.readingStreak) {
+                setReadingStreak(d.readingStreak);
+                try { localStorage.setItem(`avora_reading_streak_${currentKey}`, JSON.stringify(d.readingStreak)); } catch (e) {}
+              }
+            }
+          })
+          .catch(() => {});
+      }
+
+      setTimeout(() => {
+        isSwitchingUserRef.current = false;
+      }, 80);
+    }
+  }, [user, isHydrated]);
+
+  // Sync Library to user-scoped localStorage & backend
   useEffect(() => {
-    if (typeof window !== 'undefined' && isHydrated) {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
       try {
-        localStorage.setItem('avora_library', JSON.stringify(library));
+        localStorage.setItem(`avora_library_${key}`, JSON.stringify(library));
+      } catch (e) {}
+
+      if (user && key !== 'guest') {
+        fetch('/api/user/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: key, library })
+        }).catch(() => {});
+      }
+    }
+  }, [library, user, isHydrated]);
+
+  // Sync Reading Progress to user-scoped localStorage & backend
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
+      try {
+        localStorage.setItem(`avora_reading_progress_${key}`, JSON.stringify(readingProgress));
+      } catch (e) {}
+
+      if (user && key !== 'guest') {
+        fetch('/api/user/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: key, readingProgress })
+        }).catch(() => {});
+      }
+    }
+  }, [readingProgress, user, isHydrated]);
+
+  // Sync Wishlist to user-scoped localStorage & backend
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
+      try {
+        localStorage.setItem(`avora_wishlist_${key}`, JSON.stringify(wishlist));
+      } catch (e) {}
+
+      if (user && key !== 'guest') {
+        fetch('/api/user/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: key, wishlist })
+        }).catch(() => {});
+      }
+    }
+  }, [wishlist, user, isHydrated]);
+
+  // Sync Reading Lists to user-scoped localStorage & backend
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
+      try {
+        localStorage.setItem(`avora_reading_lists_${key}`, JSON.stringify(readingLists));
+      } catch (e) {}
+
+      if (user && key !== 'guest') {
+        fetch('/api/user/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: key, readingLists })
+        }).catch(() => {});
+      }
+    }
+  }, [readingLists, user, isHydrated]);
+
+  // Sync Reading Streak to user-scoped localStorage & backend
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
+      try {
+        localStorage.setItem(`avora_reading_streak_${key}`, JSON.stringify(readingStreak));
+      } catch (e) {}
+
+      if (user && key !== 'guest') {
+        fetch('/api/user/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: key, readingStreak })
+        }).catch(() => {});
+      }
+    }
+  }, [readingStreak, user, isHydrated]);
+
+  // Sync Following Authors to user-scoped localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isHydrated && !isSwitchingUserRef.current) {
+      const key = getUserStorageKey(user);
+      try {
+        localStorage.setItem(`avora_following_${key}`, JSON.stringify(followingAuthors));
       } catch (e) {}
     }
-  }, [library, isHydrated]);
+  }, [followingAuthors, user, isHydrated]);
 
   // Trigger onboarding modal if user has not completed onboarding
   useEffect(() => {
@@ -1110,7 +1362,8 @@ export function AppProvider({ children }) {
       const updated = { ...prev, [storyId]: newProgress };
       if (typeof window !== 'undefined') {
         try {
-          localStorage.setItem('avora_reading_progress', JSON.stringify(updated));
+          const key = getUserStorageKey(user);
+          localStorage.setItem(`avora_reading_progress_${key}`, JSON.stringify(updated));
         } catch (e) {
           console.error("Could not save reading progress", e);
         }
@@ -1119,7 +1372,16 @@ export function AppProvider({ children }) {
     });
 
     if (user && !library.includes(storyId)) {
-      setLibrary(prev => [...prev, storyId]);
+      setLibrary(prev => {
+        const next = [...prev, storyId];
+        if (typeof window !== 'undefined') {
+          const key = getUserStorageKey(user);
+          try {
+            localStorage.setItem(`avora_library_${key}`, JSON.stringify(next));
+          } catch (e) {}
+        }
+        return next;
+      });
     }
   };
 
@@ -1144,7 +1406,16 @@ export function AppProvider({ children }) {
       storyIds,
       isPublic: true
     };
-    setReadingLists(prev => [newList, ...prev]);
+    setReadingLists(prev => {
+      const next = [newList, ...prev];
+      if (typeof window !== 'undefined') {
+        const key = getUserStorageKey(user);
+        try {
+          localStorage.setItem(`avora_reading_lists_${key}`, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
   };
 
   // Wattpad-style Library Management
@@ -1154,7 +1425,16 @@ export function AppProvider({ children }) {
       return;
     }
     if (!library.includes(storyId)) {
-      setLibrary(prev => [...prev, storyId]);
+      setLibrary(prev => {
+        const next = [...prev, storyId];
+        if (typeof window !== 'undefined') {
+          const key = getUserStorageKey(user);
+          try {
+            localStorage.setItem(`avora_library_${key}`, JSON.stringify(next));
+          } catch (e) {}
+        }
+        return next;
+      });
       const targetStory = stories.find(s => s.id === storyId);
       setNotifications(prev => [
         { 
@@ -1170,7 +1450,16 @@ export function AppProvider({ children }) {
   };
 
   const removeFromLibrary = (storyId) => {
-    setLibrary(prev => prev.filter(id => id !== storyId));
+    setLibrary(prev => {
+      const next = prev.filter(id => id !== storyId);
+      if (typeof window !== 'undefined') {
+        const key = getUserStorageKey(user);
+        try {
+          localStorage.setItem(`avora_library_${key}`, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
   };
 
   const isInLibrary = (storyId) => {
@@ -1185,7 +1474,16 @@ export function AppProvider({ children }) {
       return;
     }
     if (!wishlist.includes(numId)) {
-      setWishlist(prev => [...prev, numId]);
+      setWishlist(prev => {
+        const next = [...prev, numId];
+        if (typeof window !== 'undefined') {
+          const key = getUserStorageKey(user);
+          try {
+            localStorage.setItem(`avora_wishlist_${key}`, JSON.stringify(next));
+          } catch (e) {}
+        }
+        return next;
+      });
       const targetStory = stories.find(s => s.id === numId);
       sendNotification({
         title: "Added to Wish List! 🎁",
@@ -1197,7 +1495,16 @@ export function AppProvider({ children }) {
 
   const removeFromWishlist = (storyId) => {
     const numId = Number(storyId);
-    setWishlist(prev => prev.filter(id => id !== numId));
+    setWishlist(prev => {
+      const next = prev.filter(id => id !== numId);
+      if (typeof window !== 'undefined') {
+        const key = getUserStorageKey(user);
+        try {
+          localStorage.setItem(`avora_wishlist_${key}`, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
   };
 
   const isInWishlist = (storyId) => {
@@ -1848,7 +2155,21 @@ export function AppProvider({ children }) {
 
   // Logout & Clear Session
   const logoutUser = () => {
+    isSwitchingUserRef.current = true;
     setUser(null);
+    setLibrary([]);
+    setWishlist([]);
+    setReadingProgress({});
+    setReadingLists([]);
+    setReadingStreak({
+      currentStreak: 0,
+      chaptersReadThisWeek: 0,
+      dayLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      daysActive: [false, false, false, false, false, false, false]
+    });
+    setFollowingAuthors([]);
+    activeUserKeyRef.current = 'guest';
+
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('avora_user');
@@ -1859,6 +2180,9 @@ export function AppProvider({ children }) {
     }
     signOut({ redirect: false });
     setHomeFeedViewMode('landing');
+    setTimeout(() => {
+      isSwitchingUserRef.current = false;
+    }, 80);
   };
 
   // Public Conversations Wall
@@ -2149,6 +2473,7 @@ export function AppProvider({ children }) {
       isHydrated,
       isAdmin: isUserAdmin(user),
       isUserAdmin,
+      getUserStorageKey,
       ADMIN_EMAILS
     }}>
       {children}
