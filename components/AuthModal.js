@@ -176,49 +176,6 @@ export default function AuthModal() {
             </button>
           </div>
 
-
-          {/* Quick Demo Access (1-Click) */}
-          {authModalMode === 'login' && (
-            <div className="mb-4 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 dark:from-slate-800/60 dark:to-slate-800/30 p-3 rounded-2xl border border-brand-200/80 dark:border-slate-700/80 space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-bold text-brand-700 dark:text-brand-300">
-                <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-brand-500" /> Instant 1-Click Demo</span>
-                <span className="text-[10px] text-slate-400">No Password</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 text-[10px] font-extrabold">
-                <button
-                  type="button"
-                  onClick={() => {
-                    loginWithEmail('gbncircle@gmail.com', 'admin123');
-                    setAuthModalOpen(false);
-                  }}
-                  className="py-1.5 px-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all text-center cursor-pointer"
-                >
-                  👑 Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    loginWithEmail('reader@avoralibrary.com', 'password123');
-                    setAuthModalOpen(false);
-                  }}
-                  className="py-1.5 px-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all text-center cursor-pointer"
-                >
-                  📖 Reader
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    loginWithEmail('elena.author@avoralibrary.com', 'password123');
-                    setAuthModalOpen(false);
-                  }}
-                  className="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all text-center cursor-pointer"
-                >
-                  ✍️ Author
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Divider OR */}
           <div className="relative flex items-center justify-center mb-4">
             <div className="border-t border-slate-200 dark:border-slate-800 w-full"></div>

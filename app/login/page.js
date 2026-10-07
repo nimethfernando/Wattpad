@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useApp } from '@/context/AppContext';
-import { BookOpen, Mail, Lock, AlertCircle, Sparkles } from 'lucide-react';
+import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,13 +30,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemo = (demoEmail, demoPass, targetRoute = '/home') => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    loginWithEmail(demoEmail, demoPass);
-    router.push(targetRoute);
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -52,7 +45,7 @@ export default function LoginPage() {
       router.push('/home');
     } catch (err) {
       console.error('Google login error:', err);
-      setErrorMessage('Authentication error. Please try again or use 1-Click Demo login.');
+      setErrorMessage('Authentication error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,45 +67,6 @@ export default function LoginPage() {
             <p className="text-xs text-slate-400">
               Sign in to sync your serialized library, vote on chapters, and engage with authors.
             </p>
-          </div>
-
-          {/* Quick Demo Access Bar */}
-          <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 dark:from-slate-800/80 dark:to-slate-800/40 p-4 rounded-2xl border border-brand-200/80 dark:border-slate-700/80 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-brand-500" /> Instant 1-Click Demo
-              </span>
-              <span className="text-[10px] text-slate-400">No Password Required</span>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('gbncircle@gmail.com', 'admin123', '/admin')}
-                className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
-                title="Log in as Platform Administrator (gbncircle@gmail.com) with full CMS and Story Publishing tools"
-              >
-                👑 Admin
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('reader@avoralibrary.com', 'password123', '/home')}
-                className="p-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
-                title="Log in as Avid Reader with personalized shelves & reading history"
-              >
-                📖 Reader
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('elena.author@avoralibrary.com', 'password123', '/write')}
-                className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] shadow-sm transition-all hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
-                title="Log in as Serial Author with writing studio & story publishing"
-              >
-                ✍️ Author
-              </button>
-            </div>
           </div>
 
           {errorMessage && (
