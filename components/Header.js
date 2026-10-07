@@ -125,14 +125,24 @@ export default function Header() {
             <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
               <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
             </Link>
-            <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-              <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
-              {library.length > 0 && (
-                <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
-                  {library.length}
-                </span>
-              )}
-            </Link>
+            {user ? (
+              <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+                <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
+                {library.length > 0 && (
+                  <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
+                    {library.length}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAuthModal('login', 'Sign in to access your personal library and reading lists.')}
+                className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+              >
+                <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
+              </button>
+            )}
             <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
               <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
             </Link>
@@ -599,20 +609,35 @@ export default function Header() {
                 >
                   <Compass className="w-4 h-4 text-brand-500" /> {t.browse}
                 </Link>
-                <Link 
-                  href="/library" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <BookMarked className="w-4 h-4 text-brand-500" /> {t.myPersonalShelf || t.library || 'My Library'}
-                  </span>
-                  {library.length > 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-500 text-white">
-                      {library.length}
+                {user ? (
+                  <Link 
+                    href="/library" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <BookMarked className="w-4 h-4 text-brand-500" /> {t.myPersonalShelf || t.library || 'My Library'}
                     </span>
-                  )}
-                </Link>
+                    {library.length > 0 && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-500 text-white">
+                        {library.length}
+                      </span>
+                    )}
+                  </Link>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login', 'Sign in to access your personal library.');
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3">
+                      <BookMarked className="w-4 h-4 text-brand-500" /> {t.myPersonalShelf || t.library || 'My Library'}
+                    </span>
+                  </button>
+                )}
                 <Link 
                   href="/community" 
                   onClick={() => setMobileMenuOpen(false)}

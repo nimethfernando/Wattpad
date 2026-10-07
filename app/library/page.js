@@ -76,6 +76,50 @@ export default function LibraryPage() {
     setShowCreateModal(false);
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+        <Header />
+
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
+          <div className="max-w-md w-full text-center bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6 animate-in fade-in duration-200">
+            <div className="w-16 h-16 rounded-3xl bg-brand-500/10 text-brand-600 flex items-center justify-center mx-auto shadow-inner">
+              <BookMarked className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white">
+                Personal Library & Bookshelf
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Your private library, reading progress, and custom reading lists are securely tied to your personal account. Sign in to access your bookshelf or create a free account.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => openAuthModal('login', 'Sign in to access your private bookshelf and reading progress.')}
+                className="flex-1 py-3 px-5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold text-xs shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => openAuthModal('register', 'Create an account to build your private library.')}
+                className="flex-1 py-3 px-5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.99] font-bold text-xs transition-all cursor-pointer"
+              >
+                Create Account
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />

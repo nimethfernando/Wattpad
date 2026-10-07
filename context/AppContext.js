@@ -99,6 +99,21 @@ export function AppProvider({ children }) {
   const loadUserDataForUser = (userKey) => {
     if (typeof window === 'undefined') return;
 
+    // Unauthenticated guests never have access to any library or reading records
+    if (!userKey || userKey === 'guest') {
+      setLibrary([]);
+      setReadingProgress({});
+      setWishlist([]);
+      setReadingLists([]);
+      setFollowingAuthors([]);
+      try {
+        localStorage.removeItem('avora_library_guest');
+        localStorage.removeItem('avora_reading_progress_guest');
+        localStorage.removeItem('avora_wishlist_guest');
+      } catch (e) {}
+      return;
+    }
+
     // 1. Library
     try {
       const savedLib = localStorage.getItem(`avora_library_${userKey}`);
@@ -746,6 +761,17 @@ export function AppProvider({ children }) {
       } catch (e) {}
     }
   }, [followingAuthors, user, isHydrated]);
+
+  // Strict Privacy Safeguard: Ensure guests/logged-out visitors never hold any private library or reading data
+  useEffect(() => {
+    if (!user && isHydrated) {
+      setLibrary([]);
+      setReadingProgress({});
+      setWishlist([]);
+      setReadingLists([]);
+      setFollowingAuthors([]);
+    }
+  }, [user, isHydrated]);
 
   // Trigger onboarding modal if user has not completed onboarding
   useEffect(() => {

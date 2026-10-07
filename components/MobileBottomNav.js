@@ -41,9 +41,10 @@ export default function MobileBottomNav() {
     },
     {
       label: t.library || 'Library',
-      href: '/library',
+      href: user ? '/library' : '#',
       icon: BookMarked,
-      badge: library.length > 0 ? library.length : null,
+      onClick: !user ? () => openAuthModal('login', 'Sign in to access your personal library.') : null,
+      badge: user && library.length > 0 ? library.length : null,
       isActive: pathname === '/library'
     },
     {
