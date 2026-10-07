@@ -139,7 +139,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link href="/community" className="hover:text-brand-500">Fandom Spaces</Link></li>
               <li><Link href="/write" className="hover:text-brand-500">Author Studio</Link></li>
-              <li><Link href="/writers" className="hover:text-brand-500 font-semibold text-brand-600 dark:text-brand-400">Writer Hub</Link></li>
+              <li><Link href="/writers" className="hover:text-brand-500">Writer Hub</Link></li>
               <li><Link href="/guidelines" className="hover:text-brand-500">{t.guidelines}</Link></li>
               <li><Link href="/blog" className="hover:text-brand-500">{t.blog}</Link></li>
             </ul>
