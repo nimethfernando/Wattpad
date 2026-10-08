@@ -18,6 +18,11 @@ const providers = [
 const handler = NextAuth({
   providers,
   secret: process.env.NEXTAUTH_SECRET || "ditya-group-jwt-secret-key-at-least-32-chars-random-production",
+  trustHost: true,
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
   callbacks: {
     async session({ session, token }) {
       if (session?.user) {

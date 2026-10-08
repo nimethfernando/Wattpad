@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -14,6 +14,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const authError = params.get('error');
+      if (authError === 'OAuthCallback') {
+        setErrorMessage('Google sign-in could not be completed. This happens if the session timed out, cookies were cleared, or your Google account is not added as a test user in Google Cloud Console.');
+      } else if (authError === 'OAuthSignin' || authError === 'OAuthCreateAccount') {
+        setErrorMessage('Could not connect to Google. Please try again.');
+      } else if (authError) {
+        setErrorMessage('Authentication error. Please try logging in again.');
+      }
+    }
+  }, []);
 
   const handleEmailLogin = (e) => {
     e.preventDefault();
