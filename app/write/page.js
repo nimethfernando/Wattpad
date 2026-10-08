@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -30,114 +30,1091 @@ import {
   X,
   HelpCircle,
   ChevronRight,
-  Hash
+  Hash,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  Quote,
+  Wand2,
+  Type,
+  Sliders,
+  Check,
+  RefreshCw,
+  Sun,
+  Moon,
+  Coffee,
+  Code
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
-function insertFormatIntoText(currentText, setText, prefix, defaultPlaceholder = '', isBreak = false, suffix = '') {
-  if (isBreak) {
-    const divider = currentText.endsWith('\n\n') ? '* * *\n\n' : (currentText ? '\n\n* * *\n\n' : '* * *\n\n');
-    setText(currentText + divider);
-    return;
+export const PRESET_COVERS = [
+  {
+    title: 'Fantasy Castle',
+    genre: 'fantasy',
+    url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+    emoji: '🏰'
+  },
+  {
+    title: 'Romance Sunset',
+    genre: 'romance',
+    url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80',
+    emoji: '💖'
+  },
+  {
+    title: 'Cyberpunk Neon',
+    genre: 'sci-fi',
+    url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80',
+    emoji: '🌃'
+  },
+  {
+    title: 'Mystery Fog',
+    genre: 'mystery',
+    url: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=800&q=80',
+    emoji: '🕵️'
+  },
+  {
+    title: 'Dark Academia',
+    genre: 'thriller',
+    url: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80',
+    emoji: '📚'
+  },
+  {
+    title: 'Cosmic Starfield',
+    genre: 'adventure',
+    url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80',
+    emoji: '🌌'
   }
-  if (suffix) {
-    const insertion = `${prefix}${defaultPlaceholder}${suffix}`;
-    setText(currentText ? `${currentText} ${insertion}` : insertion);
-    return;
+];
+
+export const CHAPTER_TEMPLATES = [
+  {
+    id: 'classic_novel',
+    name: 'Classic Novel Chapter',
+    badge: 'Popular',
+    desc: 'Prologue hook, atmospheric description, scene break, dialogue quote & discovery.',
+    content: `## Prologue: Before the Shadows Fell
+
+The autumn wind swept through the high stone battlements of the ancient city, carrying with it the cold scent of impending rain.
+
+Elena wrapped her woollen cloak tighter around her trembling shoulders, her eyes fixed on the distant lantern light flickering in the watchtower.
+
+* * *
+
+### ACT I: THE HIDDEN LIBRARY
+
+Deep beneath the royal archives, a chamber had been sealed three centuries ago by the High Council. No key had turned in its bronze lock since the Great Reckoning.
+
+> "True power is never found in the crown, but in the forgotten truths written in the dust."
+
+She reached out her hand, and the ancient bronze mechanism hummed softly to life, awaiting her command.`
+  },
+  {
+    id: 'romance_scene',
+    name: 'Romantic Encounter',
+    badge: 'Dialogue-Driven',
+    desc: 'Emotional character interaction, cozy setting, romantic dialogue callout, and romantic cliffhanger.',
+    content: `## Scene 1: The Rainy Cafe on Rue Saint-Honoré
+
+It started with a misplaced umbrella and an apologetic smile under the warm glow of the streetlamps.
+
+> "Excuse me, I believe this belongs to you," he said, holding the silver-handled umbrella with a quiet smile.
+
+Their eyes met, and for a fleeting second, the roar of the bustling evening traffic seemed to fade into complete silence. Neither of them moved to break the spell.
+
+* * *
+
+### LATER THAT EVENING
+
+Neither of them wanted the walk along the river to end. The rain had softened into a gentle mist, wrapping the city in quiet mystery.`
+  },
+  {
+    id: 'mystery_investigation',
+    name: 'Mystery & Investigation',
+    badge: 'Thrilling',
+    desc: 'Crime scene details, forensic timestamp, clue callout, and investigative tension.',
+    content: `## 2:43 AM: The Shattered Mirror
+
+The detective stepped carefully across the velvet rug, avoiding the glinting shards of glass scattered across the study floor.
+
+### LOCATION: PENTHOUSE ARCHIVES
+
+The mahogany jewelry box sat completely untouched on the dresser, yet the antique mirror above it was shattered violently from the inside out.
+
+> "Look closely at the strike marks. The blow came from behind the glass, not from inside this room."
+
+He crouched down, retrieving a small silver key with an eagle crest engraved into the head.`
   }
-  const lead = currentText ? (currentText.endsWith('\n\n') ? '' : currentText.endsWith('\n') ? '\n' : '\n\n') : '';
-  const insertion = `${lead}${prefix}${defaultPlaceholder}\n\n`;
-  setText(currentText + insertion);
+];
+
+// Helper: Convert serialized paragraphs into visual WYSIWYG HTML
+export function chapterContentToHtml(rawText) {
+  if (!rawText || !rawText.trim()) {
+    return '<p class="book-paragraph"><br></p>';
+  }
+
+  const blocks = rawText.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const htmlParts = [];
+
+  for (const block of blocks) {
+    if (block === '* * *' || block === '---' || block === '***' || block === '— — —' || block === '✦ ✦ ✦') {
+      htmlParts.push('<div class="book-scene-break" contenteditable="false"><span class="break-line"></span><span class="break-symbol">✦ ✦ ✦</span><span class="break-line"></span></div>');
+    } else if (block.startsWith('## ')) {
+      htmlParts.push(`<h2 class="book-subheading">${formatInlineToHtml(block.slice(3))}</h2>`);
+    } else if (block.startsWith('### ')) {
+      htmlParts.push(`<h3 class="book-section">${formatInlineToHtml(block.slice(4))}</h3>`);
+    } else if (block.startsWith('# ')) {
+      htmlParts.push(`<h1 class="book-heading">${formatInlineToHtml(block.slice(2))}</h1>`);
+    } else if (block.startsWith('> ')) {
+      htmlParts.push(`<blockquote class="book-quote">${formatInlineToHtml(block.slice(2))}</blockquote>`);
+    } else if (block.startsWith('![') && block.includes('](') && block.endsWith(')')) {
+      const match = block.match(/\!\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        const alt = match[1] || 'Illustration';
+        const src = match[2];
+        htmlParts.push(`<div class="book-img-box" contenteditable="false"><img src="${src}" alt="${alt}" class="book-img" /><p class="book-caption">${alt}</p></div>`);
+      } else {
+        htmlParts.push(`<p class="book-paragraph">${formatInlineToHtml(block)}</p>`);
+      }
+    } else {
+      htmlParts.push(`<p class="book-paragraph">${formatInlineToHtml(block)}</p>`);
+    }
+  }
+
+  return htmlParts.join('\n');
 }
 
-function BookFormattingToolbar({ onInsert, showGuide, setShowGuide }) {
+function formatInlineToHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function serializeInlineNode(node) {
+  if (!node) return '';
+  if (node.nodeType === 3) {
+    return node.textContent;
+  }
+  if (node.nodeType === 1) {
+    const tag = node.tagName.toLowerCase();
+    if (tag === 'br') return '\n';
+    if (tag === 'strong' || tag === 'b') {
+      const inner = Array.from(node.childNodes).map(serializeInlineNode).join('');
+      return inner.trim() ? `**${inner}**` : '';
+    }
+    if (tag === 'em' || tag === 'i') {
+      const inner = Array.from(node.childNodes).map(serializeInlineNode).join('');
+      return inner.trim() ? `*${inner}*` : '';
+    }
+    if (tag === 'u') {
+      const inner = Array.from(node.childNodes).map(serializeInlineNode).join('');
+      return inner.trim() ? `<u>${inner}</u>` : '';
+    }
+    return Array.from(node.childNodes).map(serializeInlineNode).join('');
+  }
+  return '';
+}
+
+// Helper: Convert WYSIWYG DOM back to serialized paragraphs for reader & storage
+export function domToChapterContent(element) {
+  if (!element) return '';
+  const blocks = [];
+  const children = element.childNodes;
+
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i];
+
+    if (node.nodeType === 3) {
+      const text = node.textContent.trim();
+      if (text) blocks.push(text);
+      continue;
+    }
+
+    if (node.nodeType === 1) {
+      const tag = node.tagName.toLowerCase();
+
+      // Scene break
+      if (node.classList?.contains('book-scene-break') || tag === 'hr') {
+        blocks.push('* * *');
+        continue;
+      }
+
+      // Image box
+      if (node.classList?.contains('book-img-box') || tag === 'img') {
+        const img = tag === 'img' ? node : node.querySelector('img');
+        if (img) {
+          const alt = img.getAttribute('alt') || 'Illustration';
+          const src = img.getAttribute('src') || '';
+          if (src) blocks.push(`![${alt}](${src})`);
+        }
+        continue;
+      }
+
+      // Headings
+      if (tag === 'h1') {
+        const t = node.textContent.trim();
+        if (t) blocks.push(`# ${t}`);
+        continue;
+      }
+      if (tag === 'h2') {
+        const t = node.textContent.trim();
+        if (t) blocks.push(`## ${t}`);
+        continue;
+      }
+      if (tag === 'h3') {
+        const t = node.textContent.trim();
+        if (t) blocks.push(`### ${t}`);
+        continue;
+      }
+      if (tag === 'blockquote') {
+        const t = node.textContent.trim();
+        if (t) blocks.push(`> ${t}`);
+        continue;
+      }
+
+      // Nested scene break or image
+      if (node.querySelector && node.querySelector('.book-scene-break')) {
+        blocks.push('* * *');
+        continue;
+      }
+      if (node.querySelector && node.querySelector('.book-img-box')) {
+        const img = node.querySelector('img');
+        if (img) {
+          const alt = img.getAttribute('alt') || 'Illustration';
+          const src = img.getAttribute('src') || '';
+          if (src) blocks.push(`![${alt}](${src})`);
+        }
+        continue;
+      }
+
+      // Regular paragraph or div
+      const inline = serializeInlineNode(node).trim();
+      if (inline && inline !== '<br>') {
+        blocks.push(inline);
+      }
+    }
+  }
+
+  return blocks.join('\n\n');
+}
+
+// Inline token renderer for Reader Preview
+function formatInlineText(text) {
+  if (!text) return '';
+  const tokens = text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g);
+  return tokens.map((token, idx) => {
+    if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+      return <strong key={idx} className="font-extrabold">{token.slice(2, -2)}</strong>;
+    }
+    if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
+      return <em key={idx} className="italic">{token.slice(1, -1)}</em>;
+    }
+    return token;
+  });
+}
+
+// -------------------------------------------------------------
+// Visual WYSIWYG Book Editor for Authors & Non-Coders
+// -------------------------------------------------------------
+export function VisualBookEditor({
+  value = '',
+  onChange,
+  placeholder = 'Write your chapter here...',
+  storyTitle = 'Your Story',
+  chapterTitle = 'Chapter 1',
+  authorName = 'Author',
+  minHeight = 'min-h-[420px]'
+}) {
+  const [activeTab, setActiveTab] = useState('visual'); // 'visual' | 'preview'
+  const [isRawMode, setIsRawMode] = useState(false);
+  const [showTips, setShowTips] = useState(false);
+  
+  // Reader preview customization
+  const [readerTheme, setReaderTheme] = useState('white'); // 'white' | 'sepia' | 'dark'
+  const [readerFontSize, setReaderFontSize] = useState(18); // 16, 18, 20
+  const [readerFontFamily, setReaderFontFamily] = useState('serif'); // 'serif' | 'sans'
+
+  // Image modal state
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [imgUrl, setImgUrl] = useState('');
+  const [imgCaption, setImgCaption] = useState('');
+
+  // Templates modal state
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+
+  const editorRef = useRef(null);
+  const isInternalChangeRef = useRef(false);
+
+  // Sync external value changes into editor innerHTML (e.g. templates, resets, chapter switches)
+  useEffect(() => {
+    if (isInternalChangeRef.current) {
+      isInternalChangeRef.current = false;
+      return;
+    }
+    if (editorRef.current) {
+      const currentContent = domToChapterContent(editorRef.current);
+      if (currentContent !== value) {
+        editorRef.current.innerHTML = chapterContentToHtml(value);
+      }
+    }
+  }, [value]);
+
+  const handleEditorInput = () => {
+    if (!editorRef.current) return;
+    isInternalChangeRef.current = true;
+    const serialized = domToChapterContent(editorRef.current);
+    if (onChange) {
+      onChange(serialized);
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    if (text) {
+      const paras = text.split(/\r?\n\r?\n/).filter(p => p.trim());
+      if (paras.length > 1) {
+        const html = paras.map(p => `<p class="book-paragraph">${p.replace(/\n/g, '<br>')}</p>`).join('');
+        document.execCommand('insertHTML', false, html);
+      } else {
+        document.execCommand('insertText', false, text);
+      }
+      handleEditorInput();
+    }
+  };
+
+  const insertHtmlAtCursor = (htmlToInsert) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (editorRef.current.contains(range.commonAncestorContainer)) {
+        document.execCommand('insertHTML', false, htmlToInsert);
+        handleEditorInput();
+        return;
+      }
+    }
+    editorRef.current.innerHTML += htmlToInsert;
+    handleEditorInput();
+  };
+
+  const formatCommand = (cmd, val = null) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(cmd, false, val);
+    handleEditorInput();
+  };
+
+  const insertSubheading = () => {
+    insertHtmlAtCursor('<h2 class="book-subheading">Scene Title</h2><p class="book-paragraph"><br></p>');
+  };
+
+  const insertSection = () => {
+    insertHtmlAtCursor('<h3 class="book-section">LOCATION / TIME / POV</h3><p class="book-paragraph"><br></p>');
+  };
+
+  const insertSceneBreak = () => {
+    insertHtmlAtCursor('<div class="book-scene-break" contenteditable="false"><span class="break-line"></span><span class="break-symbol">✦ ✦ ✦</span><span class="break-line"></span></div><p class="book-paragraph"><br></p>');
+  };
+
+  const insertQuote = () => {
+    insertHtmlAtCursor('<blockquote class="book-quote">"Speak your dialogue or thought here..."</blockquote><p class="book-paragraph"><br></p>');
+  };
+
+  const handleInsertImageSubmit = (e) => {
+    e.preventDefault();
+    if (!imgUrl.trim()) return;
+    const safeCaption = imgCaption.trim() || 'Illustration';
+    insertHtmlAtCursor(`<div class="book-img-box" contenteditable="false"><img src="${imgUrl.trim()}" alt="${safeCaption}" class="book-img" /><p class="book-caption">${safeCaption}</p></div><p class="book-paragraph"><br></p>`);
+    setImgUrl('');
+    setImgCaption('');
+    setImageModalOpen(false);
+  };
+
+  const handleApplyTemplate = (tpl) => {
+    if (value && value.trim() && !window.confirm('Applying this starter template will replace your current text in this chapter. Continue?')) {
+      return;
+    }
+    isInternalChangeRef.current = false;
+    if (onChange) {
+      onChange(tpl.content);
+    }
+    if (editorRef.current) {
+      editorRef.current.innerHTML = chapterContentToHtml(tpl.content);
+    }
+    setTemplateModalOpen(false);
+  };
+
+  const handleClearEditor = () => {
+    if (window.confirm('Are you sure you want to clear this entire chapter?')) {
+      isInternalChangeRef.current = false;
+      if (onChange) onChange('');
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '<p class="book-paragraph"><br></p>';
+      }
+    }
+  };
+
+  // Word count & read time
+  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+  // Parsed blocks for Live Reader Preview
+  const previewBlocks = value.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+
   return (
-    <div className="space-y-2 mb-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80">
-        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+    <div className="space-y-3">
+      {/* 1. Header Navigation: Visual Book Writer vs Live Reader Preview */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
           <button
             type="button"
-            onClick={() => onInsert('## ', 'Scene Title')}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
-            title="Insert Subheading (Scene Title)"
+            onClick={() => setActiveTab('visual')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'visual'
+                ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
           >
-            <span className="font-mono text-[10px] opacity-70">##</span> Subheading
+            <PenTool className="w-3.5 h-3.5" />
+            <span>Visual Book Writer</span>
           </button>
 
           <button
             type="button"
-            onClick={() => onInsert('### ', 'Location, Time or POV')}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
-            title="Insert Section Header (Location/Time/POV)"
+            onClick={() => setActiveTab('preview')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'preview'
+                ? 'bg-brand-500 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
           >
-            <span className="font-mono text-[10px] opacity-70">###</span> Section
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onInsert('\n\n* * *\n\n', '', true)}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
-            title="Insert Scene Break Divider (✦ ✦ ✦)"
-          >
-            ✦ Scene Break
-          </button>
-
-          <span className="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-1"></span>
-
-          <button
-            type="button"
-            onClick={() => onInsert('**', 'bold text', false, '**')}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-black text-xs border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
-            title="Bold Text"
-          >
-            <strong>B</strong>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onInsert('*', 'italic text', false, '*')}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 italic font-serif text-xs border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
-            title="Italic Text"
-          >
-            <em>I</em>
+            <Eye className="w-3.5 h-3.5" />
+            <span>Live Reader Preview</span>
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowGuide(!showGuide)}
-          className="text-[11px] font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>Formatting Tips</span>
-        </button>
+        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <span className="font-semibold flex items-center gap-1">
+            <span>📝</span> {wordCount.toLocaleString()} words
+          </span>
+          <span className="hidden sm:inline font-semibold">
+            ⏱️ ~{readTimeMinutes} min read
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowTips(!showTips)}
+            className="text-brand-600 dark:text-brand-400 font-bold hover:underline flex items-center gap-1 cursor-pointer text-xs"
+            title="Formatting Tips"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Writer Guide</span>
+          </button>
+        </div>
       </div>
 
-      {showGuide && (
-        <div className="p-3 bg-brand-500/10 dark:bg-brand-950/40 border border-brand-500/20 rounded-xl text-xs space-y-1.5 animate-in fade-in duration-150">
+      {/* Guide Banner */}
+      {showTips && (
+        <div className="p-3.5 bg-brand-500/10 dark:bg-brand-950/40 border border-brand-500/20 rounded-2xl text-xs space-y-2 animate-in fade-in duration-150">
           <div className="flex items-center justify-between font-bold text-brand-700 dark:text-brand-300">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> Book Formatting Guide
+              <Sparkles className="w-4 h-4" /> Non-Coder Book Writing Guide
             </span>
-            <button type="button" onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-              <X className="w-3.5 h-3.5" />
+            <button type="button" onClick={() => setShowTips(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <div>
-              <p className="font-semibold text-slate-800 dark:text-slate-200">📌 Subheadings & Sections:</p>
-              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 font-mono">## Scene Title</code> on a new line for scene subheadings.</p>
-              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 font-mono">### Time/Place</code> for section timestamps & POV.</p>
+          <div className="grid sm:grid-cols-3 gap-3 text-[11px] text-slate-600 dark:text-slate-300">
+            <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60">
+              <p className="font-bold text-slate-800 dark:text-slate-200">1. Subheadings & Sections</p>
+              <p className="mt-0.5">Click <strong className="text-brand-600">+ Subheading</strong> to title a new scene with an orange accent bar, or <strong className="text-brand-600">+ Section</strong> for timestamps/POV.</p>
             </div>
-            <div>
-              <p className="font-semibold text-slate-800 dark:text-slate-200">✨ Scene Breaks & Text:</p>
-              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-amber-600 font-mono">* * *</code> or <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-amber-600 font-mono">---</code> for a book ornament (✦ ✦ ✦).</p>
-              <p>Use <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-200 font-mono">**bold**</code> and <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-200 font-mono">*italics*</code> in paragraphs.</p>
+            <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60">
+              <p className="font-bold text-slate-800 dark:text-slate-200">2. Scene Breaks (✦ ✦ ✦)</p>
+              <p className="mt-0.5">Click <strong className="text-amber-600">✦ Scene Break</strong> to insert an ornamental novel divider between major scenes.</p>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60">
+              <p className="font-bold text-slate-800 dark:text-slate-200">3. Interactive Comments</p>
+              <p className="mt-0.5">Press Enter to start a new paragraph. Every paragraph automatically becomes an interactive comment balloon for your readers!</p>
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 italic">Separate paragraphs with double Enter — each paragraph gets its own reader comment bubble!</p>
         </div>
       )}
+
+      {/* VIEW A: VISUAL BOOK WRITER */}
+      {activeTab === 'visual' && (
+        <div className="space-y-3">
+          {/* Visual Toolbar */}
+          <div className="p-2.5 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+            {/* Story Elements (1-Click Insertion) */}
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+              <button
+                type="button"
+                onClick={insertSubheading}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Insert Visual Subheading (Scene Title)"
+              >
+                <span className="w-1.5 h-3.5 bg-brand-500 rounded-full inline-block"></span>
+                <span>+ Subheading</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={insertSection}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+                title="Insert Section Header (Location, Time or POV)"
+              >
+                <Hash className="w-3 h-3 opacity-60 text-slate-500" />
+                <span>+ Section</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={insertSceneBreak}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+                title="Insert Visual Ornamental Divider (✦ ✦ ✦)"
+              >
+                <span>✦ Scene Break</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={insertQuote}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+                title="Insert Dialogue Callout or Character Quote"
+              >
+                <Quote className="w-3 h-3 text-brand-500" />
+                <span>Quote</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setImageModalOpen(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+                title="Insert Book Illustration with Caption"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+                <span>+ Image</span>
+              </button>
+
+              <span className="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></span>
+
+              {/* Text Styling */}
+              <button
+                type="button"
+                onClick={() => formatCommand('bold')}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-black text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center justify-center transition-all cursor-pointer"
+                title="Bold (Ctrl+B)"
+              >
+                <Bold className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => formatCommand('italic')}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 italic font-serif text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center justify-center transition-all cursor-pointer"
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => formatCommand('underline')}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center justify-center transition-all cursor-pointer"
+                title="Underline (Ctrl+U)"
+              >
+                <Underline className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Quick Templates & Actions */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setTemplateModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-amber-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all hover:brightness-105 cursor-pointer"
+                title="1-Click Starter Story Templates"
+              >
+                <Wand2 className="w-3 h-3" />
+                <span>Templates</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsRawMode(!isRawMode)}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+                title="Toggle Plain Text / Markdown Mode"
+              >
+                <Code className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRawMode ? 'Visual' : 'Raw'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearEditor}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Clear Chapter"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Visual Content Canvas */}
+          {isRawMode ? (
+            <textarea
+              rows={16}
+              value={value}
+              onChange={(e) => {
+                isInternalChangeRef.current = false;
+                if (onChange) onChange(e.target.value);
+              }}
+              placeholder={placeholder}
+              className="w-full p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm leading-relaxed"
+            />
+          ) : (
+            <div className="relative">
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleEditorInput}
+                onPaste={handlePaste}
+                data-placeholder={placeholder}
+                className={`w-full p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500/50 font-serif text-base sm:text-lg leading-relaxed shadow-xs ${minHeight} book-manuscript-canvas`}
+              />
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 px-1">
+            <span>💡 Double Enter starts a new paragraph. Formatting happens visually without typing code.</span>
+            <span>All changes are automatically synced for readers!</span>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW B: LIVE READER PREVIEW */}
+      {activeTab === 'preview' && (
+        <div className="space-y-4">
+          {/* Reader Preference Bar */}
+          <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Theme:</span>
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setReaderTheme('white')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                    readerTheme === 'white' ? 'bg-slate-100 text-slate-900 font-black shadow-2xs' : 'text-slate-500'
+                  }`}
+                >
+                  <Sun className="w-3 h-3 text-amber-500" /> Light
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReaderTheme('sepia')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                    readerTheme === 'sepia' ? 'bg-[#f4ebe1] text-[#4a3525] font-black shadow-2xs' : 'text-slate-500'
+                  }`}
+                >
+                  <Coffee className="w-3 h-3 text-[#9c6a46]" /> Sepia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReaderTheme('dark')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                    readerTheme === 'dark' ? 'bg-slate-800 text-white font-black shadow-2xs' : 'text-slate-500'
+                  }`}
+                >
+                  <Moon className="w-3 h-3 text-indigo-400" /> Dark
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setReaderFontFamily('serif')}
+                  className={`px-2 py-0.5 rounded text-xs font-serif ${readerFontFamily === 'serif' ? 'bg-brand-500 text-white font-bold' : 'text-slate-500'}`}
+                >
+                  Serif
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReaderFontFamily('sans')}
+                  className={`px-2 py-0.5 rounded text-xs font-sans ${readerFontFamily === 'sans' ? 'bg-brand-500 text-white font-bold' : 'text-slate-500'}`}
+                >
+                  Sans
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setReaderFontSize(Math.max(14, readerFontSize - 2))}
+                  className="px-2 py-0.5 rounded font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  A-
+                </button>
+                <span className="px-1 font-mono text-[11px] font-bold">{readerFontSize}px</span>
+                <button
+                  type="button"
+                  onClick={() => setReaderFontSize(Math.min(24, readerFontSize + 2))}
+                  className="px-2 py-0.5 rounded font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  A+
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Reader Paper Simulation */}
+          <div
+            className={`rounded-3xl p-6 sm:p-12 border transition-colors shadow-xl ${
+              readerTheme === 'white'
+                ? 'bg-white text-slate-900 border-slate-200'
+                : readerTheme === 'sepia'
+                ? 'bg-[#fbf7ee] text-[#4a3525] border-[#ebdccb]'
+                : 'bg-slate-950 text-slate-100 border-slate-800'
+            }`}
+          >
+            {/* Chapter Header */}
+            <header className="mb-10 text-center space-y-2 pb-6 border-b border-black/10 dark:border-white/10">
+              <span className="text-xs uppercase font-extrabold tracking-widest text-brand-600 dark:text-brand-400">
+                {chapterTitle || 'Chapter'}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black">{storyTitle || 'Untitled Story'}</h2>
+              <p className="text-xs opacity-70">
+                By {authorName} • Live Reader View
+              </p>
+            </header>
+
+            {/* Paragraphs */}
+            {previewBlocks.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 italic text-sm">
+                Chapter is currently empty. Switch back to "Visual Book Writer" to begin writing!
+              </div>
+            ) : (
+              <div
+                className={`space-y-6 ${readerFontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
+                style={{ fontSize: `${readerFontSize}px`, lineHeight: 1.8 }}
+              >
+                {previewBlocks.map((rawText, idx) => {
+                  const isSceneBreak = rawText === '---' || rawText === '***' || rawText === '* * *' || rawText === '— — —' || rawText === '✦ ✦ ✦';
+
+                  if (isSceneBreak) {
+                    return (
+                      <div key={idx} className="relative group py-6 my-4 flex items-center justify-center gap-4 text-brand-500/80 select-none">
+                        <span className="h-px w-20 sm:w-32 bg-gradient-to-r from-transparent via-slate-400/50 to-transparent"></span>
+                        <span className="font-serif text-sm tracking-widest text-slate-400">✦ ✦ ✦</span>
+                        <span className="h-px w-20 sm:w-32 bg-gradient-to-r from-transparent via-slate-400/50 to-transparent"></span>
+                        <span className="absolute right-[-10px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> 0
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (rawText.startsWith('## ')) {
+                    return (
+                      <div key={idx} className="relative group p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all mt-7 mb-2">
+                        <h3 className="text-xl sm:text-2xl font-bold text-brand-600 dark:text-brand-400 tracking-tight flex items-center gap-2.5 font-sans">
+                          <span className="w-1.5 h-5 bg-brand-500 rounded-full inline-block shrink-0"></span>
+                          <span>{formatInlineText(rawText.slice(3))}</span>
+                        </h3>
+                        <span className="absolute right-[-10px] top-3 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> 0
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (rawText.startsWith('### ')) {
+                    return (
+                      <div key={idx} className="relative group p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all mt-5 mb-1">
+                        <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 font-sans">
+                          {formatInlineText(rawText.slice(4))}
+                        </h4>
+                        <span className="absolute right-[-10px] top-2 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> 0
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (rawText.startsWith('> ')) {
+                    return (
+                      <div key={idx} className="relative group p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all my-4">
+                        <blockquote className="border-l-4 border-brand-500 pl-4 py-2 italic font-serif bg-brand-500/5 rounded-r-xl leading-relaxed">
+                          {formatInlineText(rawText.slice(2))}
+                        </blockquote>
+                        <span className="absolute right-[-10px] top-2 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> 0
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (rawText.startsWith('![') && rawText.includes('](') && rawText.endsWith(')')) {
+                    const match = rawText.match(/\!\[(.*?)\]\((.*?)\)/);
+                    if (match) {
+                      return (
+                        <div key={idx} className="relative group p-2 my-6 text-center">
+                          <img src={match[2]} alt={match[1]} className="max-h-96 rounded-2xl mx-auto shadow-md border object-cover" />
+                          {match[1] && match[1].toLowerCase() !== 'illustration' && (
+                            <p className="text-xs opacity-70 italic mt-2">{match[1]}</p>
+                          )}
+                          <span className="absolute right-[-10px] top-2 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" /> 0
+                          </span>
+                        </div>
+                      );
+                    }
+                  }
+
+                  return (
+                    <div key={idx} className="relative group p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                      <p className="leading-relaxed">
+                        {formatInlineText(rawText)}
+                      </p>
+                      <span className="absolute right-[-10px] top-2 opacity-0 group-hover:opacity-100 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" /> 0
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD ILLUSTRATION */}
+      {imageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-indigo-500" />
+                <h3 className="font-black text-base">Insert Book Illustration</h3>
+              </div>
+              <button type="button" onClick={() => setImageModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <span className="block text-xs font-bold text-slate-400 mb-1.5 uppercase">Quick Preset Artwork:</span>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { title: 'Ancient Citadel', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80' },
+                  { title: 'Enchanted Forest', url: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80' },
+                  { title: 'Neon Cybercity', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80' }
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setImgUrl(item.url);
+                      setImgCaption(item.title);
+                    }}
+                    className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-left transition-all cursor-pointer group"
+                  >
+                    <img src={item.url} alt={item.title} className="w-full aspect-video object-cover rounded-lg mb-1" />
+                    <span className="text-[10px] font-bold block truncate">{item.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleInsertImageSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Image URL</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={imgUrl}
+                  onChange={(e) => setImgUrl(e.target.value)}
+                  required
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Caption / Description (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. The Moonlit Gateway"
+                  value={imgCaption}
+                  onChange={(e) => setImgCaption(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setImageModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/25 cursor-pointer"
+                >
+                  Insert Image
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: STARTER STORY TEMPLATES */}
+      {templateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <Wand2 className="w-5 h-5 text-brand-500" />
+                <div>
+                  <h3 className="font-black text-base">Starter Book Templates</h3>
+                  <p className="text-xs text-slate-400">Choose a 1-click template to start your chapter with professional structure.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setTemplateModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {CHAPTER_TEMPLATES.map((tpl) => (
+                <div
+                  key={tpl.id}
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:border-brand-500 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">{tpl.name}</h4>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                        {tpl.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{tpl.desc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyTemplate(tpl)}
+                    className="shrink-0 px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20 cursor-pointer transition-all hover:scale-105"
+                  >
+                    Apply Template
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setTemplateModalOpen(false)}
+                className="px-5 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Component Styles */}
+      <style jsx global>{`
+        .book-manuscript-canvas {
+          font-variant-ligatures: common-ligatures;
+        }
+        .book-manuscript-canvas:empty:before {
+          content: attr(data-placeholder);
+          color: #94a3b8;
+          pointer-events: none;
+          display: block;
+        }
+        .book-subheading {
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: #ea580c;
+          border-left: 4px solid #ea580c;
+          padding-left: 0.75rem;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          line-height: 1.3;
+        }
+        .book-section {
+          font-size: 0.8rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #64748b;
+          margin-top: 1.25rem;
+          margin-bottom: 0.5rem;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+        .book-scene-break {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1rem;
+          margin: 1.75rem 0;
+          user-select: none;
+        }
+        .book-scene-break .break-line {
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+        }
+        .book-scene-break .break-symbol {
+          font-family: serif;
+          font-size: 0.875rem;
+          letter-spacing: 0.25em;
+          color: #ea580c;
+          font-weight: bold;
+        }
+        .book-quote {
+          border-left: 4px solid #ea580c;
+          padding: 0.75rem 1rem;
+          margin: 1.25rem 0;
+          font-style: italic;
+          background: rgba(234, 88, 12, 0.05);
+          border-radius: 0 0.75rem 0.75rem 0;
+        }
+        .book-img-box {
+          margin: 1.5rem 0;
+          text-align: center;
+          user-select: none;
+        }
+        .book-img {
+          max-height: 22rem;
+          border-radius: 1rem;
+          margin: 0 auto;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          display: block;
+        }
+        .book-caption {
+          font-size: 0.75rem;
+          font-style: italic;
+          color: #94a3b8;
+          margin-top: 0.5rem;
+        }
+        .book-paragraph {
+          margin-bottom: 1.15rem;
+          line-height: 1.85;
+        }
+      `}</style>
     </div>
   );
 }
@@ -166,7 +1143,6 @@ export default function AuthorStudio() {
   ]);
   const [existingPublishSuccess, setExistingPublishSuccess] = useState(false);
   const [existingPublishing, setExistingPublishing] = useState(false);
-  const [showExistingGuide, setShowExistingGuide] = useState(false);
 
   // Story Form State (New Story)
   const [storyTitle, setStoryTitle] = useState('');
@@ -179,7 +1155,6 @@ export default function AuthorStudio() {
   const [copyright, setCopyright] = useState('All Rights Reserved');
   const [tagsInput, setTagsInput] = useState('magic, serialized, mystery');
   const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80');
-  const [showFormattingGuide, setShowFormattingGuide] = useState(false);
 
   // Modal State: "+ Add Chapter" from My Serials tab
   const [addChapterModalOpen, setAddChapterModalOpen] = useState(false);
@@ -190,7 +1165,6 @@ export default function AuthorStudio() {
   const [modalPages, setModalPages] = useState([]);
   const [modalPublishSuccess, setModalPublishSuccess] = useState(false);
   const [modalPublishing, setModalPublishing] = useState(false);
-  const [modalShowGuide, setModalShowGuide] = useState(false);
 
   // Picture Book Pages (One by one image uploading)
   const [pages, setPages] = useState([
@@ -672,26 +1646,23 @@ export default function AuthorStudio() {
                             ))}
                           </div>
                         ) : (
-                          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                              Chapter Body (Paragraphs & Scenes)
-                            </span>
-                            <BookFormattingToolbar 
-                              onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(existingChapterContent, setExistingChapterContent, prefix, placeholder, isBreak, suffix)}
-                              showGuide={showExistingGuide}
-                              setShowGuide={setShowExistingGuide}
-                            />
-                            <textarea 
-                              rows={16}
-                              placeholder="Write your serialized chapter here. Use the toolbar buttons above to insert ## Subheadings, ### Sections, and * * * Scene Breaks!"
+                          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                                Chapter Body (Paragraphs & Scenes)
+                              </span>
+                              <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full">
+                                Visual Book Writer Active
+                              </span>
+                            </div>
+                            <VisualBookEditor 
                               value={existingChapterContent}
-                              onChange={(e) => setExistingChapterContent(e.target.value)}
-                              required
-                              className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
+                              onChange={setExistingChapterContent}
+                              placeholder="Write your next serialized chapter here. Use the visual buttons above to add subheadings, scene breaks, and dialogue without needing any code!"
+                              storyTitle={currentStory.title}
+                              chapterTitle={existingChapterTitle || `Chapter ${existingChapterNumber}`}
+                              authorName={user?.name || "Author"}
                             />
-                            <p className="text-[11px] text-slate-400">
-                              Word count: ~{existingChapterContent.trim() ? existingChapterContent.trim().split(/\s+/).length : 0} words
-                            </p>
                           </div>
                         )}
 
@@ -776,7 +1747,7 @@ export default function AuthorStudio() {
                   {/* Content Canvas: Picture Book vs Novel */}
                   {contentType === 'story' ? (
                     /* Text Novel Canvas with Auto-Save */
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                           Chapter Body (Paragraphs & Scenes)
@@ -794,24 +1765,18 @@ export default function AuthorStudio() {
                         </div>
                       </div>
 
-                      <BookFormattingToolbar 
-                        onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(chapterContent, setChapterContent, prefix, placeholder, isBreak, suffix)}
-                        showGuide={showFormattingGuide}
-                        setShowGuide={setShowFormattingGuide}
-                      />
-
-                      <textarea 
-                        rows={16}
-                        placeholder="Begin drafting your serialized chapter here. Separate paragraphs with double newlines — each paragraph will automatically become an interactive discussion anchor for your readers!"
+                      <VisualBookEditor 
                         value={chapterContent}
-                        onChange={handleContentChange}
-                        required={contentType === 'story'}
-                        className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
+                        onChange={(val) => {
+                          setChapterContent(val);
+                          setAutoSaved(true);
+                          setTimeout(() => setAutoSaved(false), 2000);
+                        }}
+                        placeholder="Begin drafting your serialized chapter here. Use the visual buttons above to add subheadings, scene breaks, and dialogue without needing any code!"
+                        storyTitle={storyTitle || "Untitled Story"}
+                        chapterTitle={chapterTitle || "Chapter 1"}
+                        authorName={user?.name || "Author"}
                       />
-
-                      <p className="text-[11px] text-slate-400">
-                        Word count: ~{chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0} words
-                      </p>
                     </div>
                   ) : (
                 /* Picture Book / Comic Page Builder */
@@ -994,17 +1959,76 @@ export default function AuthorStudio() {
                   </p>
                 </div>
 
-                {/* Cover Image */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Cover Image URL</label>
-                  <input 
-                    type="url" 
-                    value={coverUrl}
-                    onChange={(e) => setCoverUrl(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none"
-                  />
-                  <div className="mt-2 w-24 aspect-[3/4] rounded-lg overflow-hidden border">
-                    <img src={coverUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                {/* Cover Image with 1-Click Presets */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-500">Book Cover Image</label>
+                    <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full">
+                      Non-Coder Friendly
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="block text-[11px] font-bold text-slate-400 mb-1.5">
+                      🎨 1-Click Preset Covers (Click to Pick):
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {PRESET_COVERS.map((preset, idx) => {
+                        const isSelected = coverUrl === preset.url;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setCoverUrl(preset.url);
+                              if (preset.genre && genres.some(g => g.slug === preset.genre)) {
+                                setSelectedGenre(preset.genre);
+                              }
+                            }}
+                            className={`group relative aspect-[3/4] rounded-xl overflow-hidden border text-left transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'ring-2 ring-brand-500 border-transparent shadow-md scale-[1.02]' 
+                                : 'border-slate-200 dark:border-slate-700 hover:border-brand-400 opacity-80 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5">
+                              <span className="text-[9px] font-black text-white leading-tight flex items-center gap-0.5 truncate">
+                                <span>{preset.emoji}</span> {preset.title}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px] shadow-sm">
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-400 mb-1">Or Paste Custom Image URL</label>
+                    <input 
+                      type="url" 
+                      value={coverUrl}
+                      onChange={(e) => setCoverUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+                    <div className="w-12 aspect-[3/4] rounded-lg overflow-hidden border shrink-0 bg-slate-200 dark:bg-slate-700">
+                      <img src={coverUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Active Cover Preview</span>
+                      <p className="text-xs font-bold truncate text-slate-700 dark:text-slate-300">
+                        {PRESET_COVERS.find(p => p.url === coverUrl)?.title || "Custom Story Cover"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -1403,26 +2427,19 @@ export default function AuthorStudio() {
                     ))}
                   </div>
                 ) : (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
                       Chapter Body (Paragraphs & Scenes)
                     </label>
-                    <BookFormattingToolbar 
-                      onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(modalChapterContent, setModalChapterContent, prefix, placeholder, isBreak, suffix)}
-                      showGuide={modalShowGuide}
-                      setShowGuide={setModalShowGuide}
-                    />
-                    <textarea 
-                      rows={12}
-                      placeholder="Write your next chapter here. Use the buttons above to easily add ## Subheadings, ### Sections, or * * * Scene Breaks!"
+                    <VisualBookEditor 
                       value={modalChapterContent}
-                      onChange={(e) => setModalChapterContent(e.target.value)}
-                      required
-                      className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-sm leading-relaxed"
+                      onChange={setModalChapterContent}
+                      placeholder="Write your next serialized chapter here. Use the visual buttons to format scenes and dialogue without needing any code!"
+                      storyTitle={targetStoryForChapter.title}
+                      chapterTitle={modalChapterTitle || `Chapter ${modalChapterNumber}`}
+                      authorName={user?.name || "Author"}
+                      minHeight="min-h-[300px]"
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Word count: ~{modalChapterContent.trim() ? modalChapterContent.trim().split(/\s+/).length : 0} words
-                    </p>
                   </div>
                 )}
 

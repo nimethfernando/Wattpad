@@ -733,6 +733,64 @@ export default function ReaderPage() {
                 );
               }
 
+              // 4B. Blockquote / Character Dialogue (> Quote)
+              if (rawText.startsWith('> ')) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => setActiveParagraph(p)}
+                    className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer my-4"
+                  >
+                    <blockquote className="border-l-4 border-brand-500 pl-4 py-2 italic font-serif text-slate-800 dark:text-slate-200 bg-brand-500/5 rounded-r-xl leading-relaxed">
+                      {formatInlineText(rawText.slice(2))}
+                    </blockquote>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveParagraph(p);
+                      }}
+                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      title="View & Post Comments"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{p.comments?.length || 0}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // 4C. Inline Illustration Image (![alt](url))
+              if (rawText.startsWith('![') && rawText.includes('](') && rawText.endsWith(')')) {
+                const match = rawText.match(/\!\[(.*?)\]\((.*?)\)/);
+                if (match) {
+                  const alt = match[1] || 'Illustration';
+                  const src = match[2];
+                  return (
+                    <div 
+                      key={p.id}
+                      onClick={() => setActiveParagraph(p)}
+                      className="relative group p-2 my-6 text-center cursor-pointer"
+                    >
+                      <img src={src} alt={alt} className="max-h-96 rounded-2xl mx-auto shadow-md border border-slate-200 dark:border-slate-800 object-cover" />
+                      {alt && alt.toLowerCase() !== 'illustration' && (
+                        <p className="text-xs text-slate-400 italic mt-2">{alt}</p>
+                      )}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveParagraph(p);
+                        }}
+                        className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                        title="View & Post Comments"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        <span>{p.comments?.length || 0}</span>
+                      </button>
+                    </div>
+                  );
+                }
+              }
+
               // 5. Standard Paragraph with inline formatting
               return (
                 <div 
