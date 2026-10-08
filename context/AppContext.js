@@ -1547,6 +1547,106 @@ export function AppProvider({ children }) {
     }
   };
 
+  const updateStory = async (updatedStory) => {
+    setStories(prev => {
+      const updated = prev.map(s => (s.id === updatedStory.id || s.slug === updatedStory.slug) ? { ...s, ...updatedStory } : s);
+      if (typeof window !== 'undefined') {
+        try {
+          const savedCustom = localStorage.getItem('avora_custom_stories');
+          const list = savedCustom ? JSON.parse(savedCustom) : [];
+          const idx = list.findIndex(cs => cs.id === updatedStory.id || cs.slug === updatedStory.slug);
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], ...updatedStory };
+          } else {
+            list.unshift(updatedStory);
+          }
+          localStorage.setItem('avora_custom_stories', JSON.stringify(list));
+        } catch (e) {}
+      }
+      return computeStoryRankings(updated);
+    });
+
+    try {
+      await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedStory)
+      });
+    } catch (err) {
+      console.warn("Failed to persist story update to /api/stories:", err);
+    }
+  };
+
+  const addChapterToStory = async (storyId, chapterData) => {
+    let updatedStoryToPersist = null;
+
+    setStories(prev => {
+      const updated = prev.map(s => {
+        if (s.id === storyId || s.slug === storyId) {
+          const existingChapters = s.chapters || [];
+          const chapterNumber = chapterData.number || (existingChapters.length + 1);
+          const newChap = {
+            id: chapterData.id || Date.now(),
+            number: chapterNumber,
+            title: chapterData.title || `Chapter ${chapterNumber}`,
+            publishedAt: new Date().toISOString().split('T')[0],
+            reads: 1,
+            votes: 0,
+            paragraphs: chapterData.paragraphs || [],
+            pages: chapterData.pages || []
+          };
+          const storyWithNewChapter = {
+            ...s,
+            lastUpdated: "Just now",
+            chapters: [...existingChapters, newChap]
+          };
+          updatedStoryToPersist = storyWithNewChapter;
+          return storyWithNewChapter;
+        }
+        return s;
+      });
+
+      if (typeof window !== 'undefined' && updatedStoryToPersist) {
+        try {
+          const savedCustom = localStorage.getItem('avora_custom_stories');
+          const list = savedCustom ? JSON.parse(savedCustom) : [];
+          const idx = list.findIndex(cs => cs.id === storyId || cs.slug === storyId);
+          if (idx >= 0) {
+            list[idx] = updatedStoryToPersist;
+          } else {
+            list.unshift(updatedStoryToPersist);
+          }
+          localStorage.setItem('avora_custom_stories', JSON.stringify(list));
+        } catch (e) {}
+      }
+
+      return computeStoryRankings(updated);
+    });
+
+    if (updatedStoryToPersist) {
+      addAuditLog("Chapter Published", `${updatedStoryToPersist.title} - Chapter ${chapterData.number || 'New'}`);
+
+      try {
+        const res = await fetch('/api/stories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedStoryToPersist)
+        });
+        const data = await res.json();
+        if (data?.success && data?.story) {
+          setStories(prev => {
+            const replaced = prev.map(s => (s.id === updatedStoryToPersist.id || s.slug === updatedStoryToPersist.slug) ? { ...s, ...data.story } : s);
+            return computeStoryRankings(replaced);
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to persist updated story chapter to /api/stories:", err);
+      }
+    }
+
+    return updatedStoryToPersist;
+  };
+
   const deleteStory = async (storyId) => {
     const target = stories.find(s => s.id === storyId || s.slug === storyId);
     setStories(prev => {
@@ -2690,6 +2790,8 @@ export function AppProvider({ children }) {
       addParagraphComment,
       incrementStoryReads,
       publishStory,
+      addChapterToStory,
+      updateStory,
       deleteStory,
       authModalOpen,
       setAuthModalOpen,

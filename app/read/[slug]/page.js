@@ -32,6 +32,20 @@ import {
 } from 'lucide-react';
 import { canUserAccessContent } from '@/lib/agePolicy';
 
+function formatInlineText(text) {
+  if (!text) return '';
+  const tokens = text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g);
+  return tokens.map((token, idx) => {
+    if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+      return <strong key={idx} className="font-extrabold text-slate-900 dark:text-white">{token.slice(2, -2)}</strong>;
+    }
+    if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
+      return <em key={idx} className="italic">{token.slice(1, -1)}</em>;
+    }
+    return token;
+  });
+}
+
 export default function ReaderPage() {
   const params = useParams() || {};
   const rawSlug = params?.slug;
@@ -104,6 +118,20 @@ export default function ReaderPage() {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [currentChapterIndex, activePageIndex]);
+
+  // Detect chapter query parameter (e.g. ?chapter=2)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && story?.chapters?.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const chapterQuery = params.get('chapter');
+      if (chapterQuery) {
+        const targetIdx = story.chapters.findIndex(c => String(c.number) === String(chapterQuery) || String(c.id) === String(chapterQuery));
+        if (targetIdx !== -1) {
+          setCurrentChapterIndex(targetIdx);
+        }
+      }
+    }
+  }, [story]);
 
   // Sync reading progress
   useEffect(() => {
@@ -596,28 +624,139 @@ export default function ReaderPage() {
             className={`space-y-6 animate-chapter-slide ${lineSpacing} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}
             style={{ fontSize: `${fontSize}px` }}
           >
-            {chapter.paragraphs?.map((p) => (
-              <div 
-                key={p.id}
-                onClick={() => setActiveParagraph(p)}
-                className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-              >
-                <p className="leading-relaxed">{p.text}</p>
+            {chapter.paragraphs?.map((p) => {
+              const rawText = p.text ? p.text.trim() : '';
 
-                {/* Inline Reaction Badge */}
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveParagraph(p);
-                  }}
-                  className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
-                  title="View & Post Paragraph Comments"
+              // 1. Scene Divider (* * * or --- or ***)
+              const isSceneBreak = rawText === '---' || rawText === '***' || rawText === '* * *' || rawText === '— — —' || rawText === '✦ ✦ ✦';
+              if (isSceneBreak) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => setActiveParagraph(p)}
+                    className="relative group py-6 my-4 flex items-center justify-center gap-4 text-brand-500/80 cursor-pointer select-none"
+                  >
+                    <span className="h-px w-16 sm:w-28 bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent"></span>
+                    <span className="font-serif text-sm tracking-widest text-slate-400 dark:text-slate-500">✦ ✦ ✦</span>
+                    <span className="h-px w-16 sm:w-28 bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent"></span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveParagraph(p);
+                      }}
+                      className="absolute right-[-15px] sm:right-[-32px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      title="Scene Break Comments"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{p.comments?.length || 0}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // 2. Major Heading (# Act / Part)
+              if (rawText.startsWith('# ')) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => setActiveParagraph(p)}
+                    className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-8 mb-3"
+                  >
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-sans border-b border-black/10 dark:border-white/10 pb-2">
+                      {formatInlineText(rawText.slice(2))}
+                    </h2>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveParagraph(p);
+                      }}
+                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      title="View & Post Comments"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{p.comments?.length || 0}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // 3. Subheading (## Scene / Sub-chapter Title)
+              if (rawText.startsWith('## ')) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => setActiveParagraph(p)}
+                    className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-7 mb-2"
+                  >
+                    <h3 className="text-xl sm:text-2xl font-bold text-brand-600 dark:text-brand-400 tracking-tight flex items-center gap-2.5 font-sans">
+                      <span className="w-1.5 h-5 bg-brand-500 rounded-full inline-block shrink-0"></span>
+                      <span>{formatInlineText(rawText.slice(3))}</span>
+                    </h3>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveParagraph(p);
+                      }}
+                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      title="View & Post Comments"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{p.comments?.length || 0}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // 4. Section / Timestamp (### Location / Section)
+              if (rawText.startsWith('### ')) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => setActiveParagraph(p)}
+                    className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-5 mb-1"
+                  >
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 font-sans">
+                      {formatInlineText(rawText.slice(4))}
+                    </h4>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveParagraph(p);
+                      }}
+                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      title="View & Post Comments"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>{p.comments?.length || 0}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              // 5. Standard Paragraph with inline formatting
+              return (
+                <div 
+                  key={p.id}
+                  onClick={() => setActiveParagraph(p)}
+                  className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                 >
-                  <MessageSquare className="w-3 h-3" />
-                  <span>{p.comments?.length || 0}</span>
-                </button>
-              </div>
-            ))}
+                  <p className="leading-relaxed whitespace-pre-line">{formatInlineText(p.text)}</p>
+
+                  {/* Inline Reaction Badge */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveParagraph(p);
+                    }}
+                    className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                    title="View & Post Paragraph Comments"
+                  >
+                    <MessageSquare className="w-3 h-3" />
+                    <span>{p.comments?.length || 0}</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 

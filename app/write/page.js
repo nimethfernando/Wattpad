@@ -26,16 +26,149 @@ import {
   Image as ImageIcon,
   Layers,
   FileText,
-  Building2
+  Building2,
+  X,
+  HelpCircle,
+  ChevronRight,
+  Hash
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
+function insertFormatIntoText(currentText, setText, prefix, defaultPlaceholder = '', isBreak = false, suffix = '') {
+  if (isBreak) {
+    const divider = currentText.endsWith('\n\n') ? '* * *\n\n' : (currentText ? '\n\n* * *\n\n' : '* * *\n\n');
+    setText(currentText + divider);
+    return;
+  }
+  if (suffix) {
+    const insertion = `${prefix}${defaultPlaceholder}${suffix}`;
+    setText(currentText ? `${currentText} ${insertion}` : insertion);
+    return;
+  }
+  const lead = currentText ? (currentText.endsWith('\n\n') ? '' : currentText.endsWith('\n') ? '\n' : '\n\n') : '';
+  const insertion = `${lead}${prefix}${defaultPlaceholder}\n\n`;
+  setText(currentText + insertion);
+}
+
+function BookFormattingToolbar({ onInsert, showGuide, setShowGuide }) {
+  return (
+    <div className="space-y-2 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+          <button
+            type="button"
+            onClick={() => onInsert('## ', 'Scene Title')}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Insert Subheading (Scene Title)"
+          >
+            <span className="font-mono text-[10px] opacity-70">##</span> Subheading
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onInsert('### ', 'Location, Time or POV')}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Insert Section Header (Location/Time/POV)"
+          >
+            <span className="font-mono text-[10px] opacity-70">###</span> Section
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onInsert('\n\n* * *\n\n', '', true)}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Insert Scene Break Divider (✦ ✦ ✦)"
+          >
+            ✦ Scene Break
+          </button>
+
+          <span className="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-1"></span>
+
+          <button
+            type="button"
+            onClick={() => onInsert('**', 'bold text', false, '**')}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-black text-xs border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
+            title="Bold Text"
+          >
+            <strong>B</strong>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onInsert('*', 'italic text', false, '*')}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 italic font-serif text-xs border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
+            title="Italic Text"
+          >
+            <em>I</em>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowGuide(!showGuide)}
+          className="text-[11px] font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>Formatting Tips</span>
+        </button>
+      </div>
+
+      {showGuide && (
+        <div className="p-3 bg-brand-500/10 dark:bg-brand-950/40 border border-brand-500/20 rounded-xl text-xs space-y-1.5 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between font-bold text-brand-700 dark:text-brand-300">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Book Formatting Guide
+            </span>
+            <button type="button" onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">📌 Subheadings & Sections:</p>
+              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 font-mono">## Scene Title</code> on a new line for scene subheadings.</p>
+              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 font-mono">### Time/Place</code> for section timestamps & POV.</p>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">✨ Scene Breaks & Text:</p>
+              <p>Type <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-amber-600 font-mono">* * *</code> or <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-amber-600 font-mono">---</code> for a book ornament (✦ ✦ ✦).</p>
+              <p>Use <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-200 font-mono">**bold**</code> and <code className="bg-white dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-200 font-mono">*italics*</code> in paragraphs.</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-400 italic">Separate paragraphs with double Enter — each paragraph gets its own reader comment bubble!</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AuthorStudio() {
   const router = useRouter();
-  const { genres, stories, setStories, deleteStory, user, publishStory, openBankDetailsModal, t } = useApp();
+  const { genres, stories, setStories, deleteStory, user, publishStory, addChapterToStory, updateStory, openBankDetailsModal, t } = useApp();
   const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'stories' | 'analytics'
 
-  // Story Form State
+  // Author stories
+  const myStories = stories.filter(s => s.authorUsername === user?.username || s.author === user?.name);
+
+  // Studio Mode: Create a brand new story OR serialize another chapter to existing story
+  const [editorMode, setEditorMode] = useState('new_story'); // 'new_story' | 'add_chapter'
+  const [selectedExistingStoryId, setSelectedExistingStoryId] = useState('');
+  const [existingChapterNumber, setExistingChapterNumber] = useState(2);
+  const [existingChapterTitle, setExistingChapterTitle] = useState('');
+  const [existingChapterContent, setExistingChapterContent] = useState('');
+  const [existingPages, setExistingPages] = useState([
+    {
+      pageNumber: 1,
+      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+      caption: 'Page 1',
+      text: ''
+    }
+  ]);
+  const [existingPublishSuccess, setExistingPublishSuccess] = useState(false);
+  const [existingPublishing, setExistingPublishing] = useState(false);
+  const [showExistingGuide, setShowExistingGuide] = useState(false);
+
+  // Story Form State (New Story)
   const [storyTitle, setStoryTitle] = useState('');
   const [storyDescription, setStoryDescription] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('fantasy');
@@ -46,6 +179,18 @@ export default function AuthorStudio() {
   const [copyright, setCopyright] = useState('All Rights Reserved');
   const [tagsInput, setTagsInput] = useState('magic, serialized, mystery');
   const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80');
+  const [showFormattingGuide, setShowFormattingGuide] = useState(false);
+
+  // Modal State: "+ Add Chapter" from My Serials tab
+  const [addChapterModalOpen, setAddChapterModalOpen] = useState(false);
+  const [targetStoryForChapter, setTargetStoryForChapter] = useState(null);
+  const [modalChapterNumber, setModalChapterNumber] = useState(2);
+  const [modalChapterTitle, setModalChapterTitle] = useState('');
+  const [modalChapterContent, setModalChapterContent] = useState('');
+  const [modalPages, setModalPages] = useState([]);
+  const [modalPublishSuccess, setModalPublishSuccess] = useState(false);
+  const [modalPublishing, setModalPublishing] = useState(false);
+  const [modalShowGuide, setModalShowGuide] = useState(false);
 
   // Picture Book Pages (One by one image uploading)
   const [pages, setPages] = useState([
@@ -87,9 +232,6 @@ export default function AuthorStudio() {
   const [publishStatus, setPublishStatus] = useState('published'); // 'draft' | 'published' | 'scheduled'
   const [autoSaved, setAutoSaved] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
-
-  // Author stories
-  const myStories = stories.filter(s => s.authorUsername === user?.username || s.author === user?.name);
 
   // Trigger simulated auto-save on typing
   const handleContentChange = (e) => {
@@ -177,16 +319,126 @@ export default function AuthorStudio() {
   };
 
   const handleReorderChapters = (storyId) => {
-    setStories(prev => prev.map(s => {
-      if (s.id === storyId) {
-        return {
-          ...s,
-          chapters: [...s.chapters].reverse()
-        };
+    const target = stories.find(s => s.id === storyId);
+    if (target) {
+      const updated = {
+        ...target,
+        chapters: [...target.chapters].reverse()
+      };
+      updateStory(updated);
+      alert('Chapter order updated!');
+    }
+  };
+
+  const handleOpenAddChapterModal = (story) => {
+    setTargetStoryForChapter(story);
+    const nextNum = (story.chapters?.length || 0) + 1;
+    setModalChapterNumber(nextNum);
+    setModalChapterTitle(`Chapter ${nextNum}: `);
+    setModalChapterContent('');
+    setModalPages([
+      {
+        pageNumber: 1,
+        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+        caption: `Chapter ${nextNum} - Page 1`,
+        text: ''
       }
-      return s;
+    ]);
+    setModalPublishSuccess(false);
+    setAddChapterModalOpen(true);
+  };
+
+  const handleModalPublishChapter = async (e) => {
+    e.preventDefault();
+    if (!targetStoryForChapter) return;
+
+    if (targetStoryForChapter.contentType === 'picture_book') {
+      if (modalPages.length === 0) {
+        alert('Please add at least one page for this picture book chapter.');
+        return;
+      }
+    } else {
+      if (!modalChapterContent.trim()) {
+        alert('Please provide chapter content.');
+        return;
+      }
+    }
+
+    setModalPublishing(true);
+    const paragraphs = modalChapterContent.split('\n\n').filter(p => p.trim() !== '').map((text, idx) => ({
+      id: idx + 1,
+      text: text.trim(),
+      comments: []
     }));
-    alert('Chapter order updated!');
+
+    const chapterNum = Number(modalChapterNumber) || ((targetStoryForChapter.chapters?.length || 0) + 1);
+    const newChapter = {
+      id: Date.now(),
+      number: chapterNum,
+      title: modalChapterTitle.trim() || `Chapter ${chapterNum}`,
+      publishedAt: new Date().toISOString().split('T')[0],
+      reads: 1,
+      votes: 0,
+      paragraphs: targetStoryForChapter.contentType === 'picture_book' ? [] : paragraphs,
+      pages: targetStoryForChapter.contentType === 'picture_book' ? modalPages : []
+    };
+
+    await addChapterToStory(targetStoryForChapter.id, newChapter);
+    setModalPublishing(false);
+    setModalPublishSuccess(true);
+    setTimeout(() => {
+      setModalPublishSuccess(false);
+      setAddChapterModalOpen(false);
+      router.push(`/read/${targetStoryForChapter.slug}?chapter=${chapterNum}`);
+    }, 1200);
+  };
+
+  const handleExistingStoryPublish = async (e) => {
+    e.preventDefault();
+    const currentStory = myStories.find(s => String(s.id) === String(selectedExistingStoryId)) || myStories[0];
+    if (!currentStory) {
+      alert('Please select a book to add a chapter to.');
+      return;
+    }
+
+    if (currentStory.contentType === 'picture_book') {
+      if (existingPages.length === 0) {
+        alert('Please provide at least one page.');
+        return;
+      }
+    } else {
+      if (!existingChapterContent.trim()) {
+        alert('Please provide chapter content.');
+        return;
+      }
+    }
+
+    setExistingPublishing(true);
+    const chapterNum = Number(existingChapterNumber) || ((currentStory.chapters?.length || 0) + 1);
+    const paragraphs = existingChapterContent.split('\n\n').filter(p => p.trim() !== '').map((text, idx) => ({
+      id: idx + 1,
+      text: text.trim(),
+      comments: []
+    }));
+
+    const newChapter = {
+      id: Date.now(),
+      number: chapterNum,
+      title: existingChapterTitle.trim() || `Chapter ${chapterNum}`,
+      publishedAt: new Date().toISOString().split('T')[0],
+      reads: 1,
+      votes: 0,
+      paragraphs: currentStory.contentType === 'picture_book' ? [] : paragraphs,
+      pages: currentStory.contentType === 'picture_book' ? existingPages : []
+    };
+
+    await addChapterToStory(currentStory.id, newChapter);
+    setExistingPublishing(false);
+    setExistingPublishSuccess(true);
+    setTimeout(() => {
+      setExistingPublishSuccess(false);
+      router.push(`/read/${currentStory.slug}?chapter=${chapterNum}`);
+    }, 1400);
   };
 
   return (
@@ -247,80 +499,321 @@ export default function AuthorStudio() {
 
         {/* TAB 1: STUDIO EDITOR */}
         {activeTab === 'editor' && (
-          <form onSubmit={handlePublish} className="grid lg:grid-cols-12 gap-8 mt-8">
-            {/* Writing Workspace */}
-            <div className="lg:col-span-8 space-y-5">
-              {publishSuccess && (
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-emerald-500" /> Story and Chapter published successfully! Redirecting...
-                </div>
-              )}
+          <div className="mt-8 space-y-6">
+            {/* Mode Switcher: Write New Book vs Add Chapter to Existing Serial */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditorMode('new_story')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  editorMode === 'new_story'
+                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <PenTool className="w-3.5 h-3.5" /> + Write New Book
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditorMode('add_chapter');
+                  if (!selectedExistingStoryId && myStories.length > 0) {
+                    const firstStory = myStories[0];
+                    setSelectedExistingStoryId(firstStory.id);
+                    const nextNum = (firstStory.chapters?.length || 0) + 1;
+                    setExistingChapterNumber(nextNum);
+                    setExistingChapterTitle(`Chapter ${nextNum}: `);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  editorMode === 'add_chapter'
+                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5" /> + Add Chapter to Existing Book ({myStories.length})
+              </button>
+            </div>
 
-              {/* Story Title & Chapter */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Story Title
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Crown of Thorns & Neon"
-                    value={storyTitle}
-                    onChange={(e) => setStoryTitle(e.target.value)}
-                    required
-                    className="w-full text-xl font-black px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
-                  />
+            {editorMode === 'add_chapter' ? (
+              myStories.length === 0 ? (
+                <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+                  <BookOpen className="w-12 h-12 text-slate-400 mx-auto mb-2" />
+                  <h4 className="font-bold text-base">No Published Books Found</h4>
+                  <p className="text-xs text-slate-500 mt-1 mb-5">You haven't written any books yet. First, create your book, then you can add Chapter 2 and subsequent chapters!</p>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('new_story')}
+                    className="px-6 py-2.5 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 cursor-pointer shadow-md shadow-brand-500/20"
+                  >
+                    Start New Book
+                  </button>
                 </div>
+              ) : (
+                (() => {
+                  const currentStory = myStories.find(s => String(s.id) === String(selectedExistingStoryId)) || myStories[0];
+                  return (
+                    <form onSubmit={handleExistingStoryPublish} className="grid lg:grid-cols-12 gap-8">
+                      <div className="lg:col-span-8 space-y-5">
+                        {existingPublishSuccess && (
+                          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-emerald-500" /> Chapter {existingChapterNumber} published successfully! Redirecting...
+                          </div>
+                        )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Chapter 1 Title
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Chapter 1: The Gathering Storm"
-                    value={chapterTitle}
-                    onChange={(e) => setChapterTitle(e.target.value)}
-                    className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
+                        {/* Story Selection & Chapter Info */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Select Book to Continue Serializing
+                            </label>
+                            <select
+                              value={currentStory.id}
+                              onChange={(e) => {
+                                const st = myStories.find(s => String(s.id) === String(e.target.value));
+                                setSelectedExistingStoryId(e.target.value);
+                                if (st) {
+                                  const nextNum = (st.chapters?.length || 0) + 1;
+                                  setExistingChapterNumber(nextNum);
+                                  setExistingChapterTitle(`Chapter ${nextNum}: `);
+                                }
+                              }}
+                              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-sm font-bold outline-none border border-slate-200 dark:border-slate-700"
+                            >
+                              {myStories.map(s => (
+                                <option key={s.id} value={s.id}>
+                                  {s.title} ({s.chapters?.length || 0} Chapters)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-              {/* Content Canvas: Picture Book vs Novel */}
-              {contentType === 'story' ? (
-                /* Text Novel Canvas with Auto-Save */
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      Chapter Body (Paragraphs)
-                    </span>
-                    <div className="flex items-center gap-2 text-xs">
-                      {autoSaved ? (
-                        <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" /> Auto-saved draft
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" /> Auto-save active
-                        </span>
-                      )}
+                          <div className="p-4 rounded-xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 flex items-center gap-4">
+                            <img src={currentStory.cover} alt={currentStory.title} className="w-12 aspect-[3/4] object-cover rounded-lg border shadow-xs shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] font-black uppercase text-brand-600">{currentStory.genre}</span>
+                              <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">{currentStory.title}</h4>
+                              <p className="text-xs text-slate-500">Currently: {currentStory.chapters?.length || 0} Chapters • Appending Chapter {existingChapterNumber}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid sm:grid-cols-12 gap-3">
+                            <div className="sm:col-span-3">
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Chapter No.
+                              </label>
+                              <input 
+                                type="number" 
+                                min="1"
+                                value={existingChapterNumber}
+                                onChange={(e) => setExistingChapterNumber(e.target.value)}
+                                required
+                                className="w-full text-base font-bold px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-9">
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                Chapter Title
+                              </label>
+                              <input 
+                                type="text" 
+                                placeholder={`e.g. Chapter ${existingChapterNumber}: Into the Shadows`}
+                                value={existingChapterTitle}
+                                onChange={(e) => setExistingChapterTitle(e.target.value)}
+                                required
+                                className="w-full text-sm font-bold px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Chapter Body or Picture Book Pages */}
+                        {currentStory.contentType === 'picture_book' ? (
+                          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                            <div className="flex items-center justify-between pb-2 border-b">
+                              <span className="text-xs font-bold text-slate-400 uppercase">Pages ({existingPages.length})</span>
+                              <button
+                                type="button"
+                                onClick={() => setExistingPages(prev => [...prev, { pageNumber: prev.length + 1, image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80', caption: `Page ${prev.length + 1}`, text: '' }])}
+                                className="px-3 py-1 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Add Page
+                              </button>
+                            </div>
+                            {existingPages.map((p, idx) => (
+                              <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-2 border">
+                                <div className="flex items-center justify-between text-xs font-bold">
+                                  <span>Page {idx + 1}</span>
+                                  {existingPages.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExistingPages(prev => prev.filter((_, i) => i !== idx))}
+                                      className="text-rose-500 hover:underline"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                                <input
+                                  type="url"
+                                  placeholder="Image URL"
+                                  value={p.image}
+                                  onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
+                                  className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                                />
+                                <textarea
+                                  rows={2}
+                                  placeholder="Narration / dialogue..."
+                                  value={p.text}
+                                  onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, text: e.target.value } : item))}
+                                  className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                              Chapter Body (Paragraphs & Scenes)
+                            </span>
+                            <BookFormattingToolbar 
+                              onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(existingChapterContent, setExistingChapterContent, prefix, placeholder, isBreak, suffix)}
+                              showGuide={showExistingGuide}
+                              setShowGuide={setShowExistingGuide}
+                            />
+                            <textarea 
+                              rows={16}
+                              placeholder="Write your serialized chapter here. Use the toolbar buttons above to insert ## Subheadings, ### Sections, and * * * Scene Breaks!"
+                              value={existingChapterContent}
+                              onChange={(e) => setExistingChapterContent(e.target.value)}
+                              required
+                              className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
+                            />
+                            <p className="text-[11px] text-slate-400">
+                              Word count: ~{existingChapterContent.trim() ? existingChapterContent.trim().split(/\s+/).length : 0} words
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Publish Chapter Button */}
+                        <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                          <p className="text-xs text-slate-400">
+                            Appends directly to <span className="font-bold text-slate-800 dark:text-slate-200">"{currentStory.title}"</span>
+                          </p>
+                          <button 
+                            type="submit"
+                            disabled={existingPublishing}
+                            className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] cursor-pointer disabled:opacity-50"
+                          >
+                            <Sparkles className="w-4 h-4" /> {existingPublishing ? 'Publishing...' : `Publish Chapter ${existingChapterNumber}`}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right Sidebar */}
+                      <div className="lg:col-span-4 space-y-6">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                          <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">Book Details</h3>
+                          <div className="w-32 aspect-[3/4] rounded-xl overflow-hidden border shadow-sm mx-auto">
+                            <img src={currentStory.cover} alt={currentStory.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="space-y-1 text-center">
+                            <h4 className="font-black text-sm">{currentStory.title}</h4>
+                            <p className="text-xs text-brand-600 font-bold">{currentStory.genre}</p>
+                            <p className="text-[11px] text-slate-400">{currentStory.chapters?.length || 0} Existing Chapters • {(currentStory.reads || 0).toLocaleString()} Reads</p>
+                          </div>
+                          <div className="pt-2 border-t text-xs text-slate-500 space-y-1">
+                            <p><span className="font-bold">Maturity:</span> {currentStory.maturity}</p>
+                            <p><span className="font-bold">Age Rating:</span> {currentStory.ageRating || '13+'}</p>
+                            <p><span className="font-bold">Status:</span> {currentStory.status}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  );
+                })()
+              )
+            ) : (
+              <form onSubmit={handlePublish} className="grid lg:grid-cols-12 gap-8">
+                {/* Writing Workspace */}
+                <div className="lg:col-span-8 space-y-5">
+                  {publishSuccess && (
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-emerald-500" /> Story and Chapter published successfully! Redirecting...
+                    </div>
+                  )}
+
+                  {/* Story Title & Chapter */}
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Story Title
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Crown of Thorns & Neon"
+                        value={storyTitle}
+                        onChange={(e) => setStoryTitle(e.target.value)}
+                        required
+                        className="w-full text-xl font-black px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Chapter 1 Title
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Chapter 1: The Gathering Storm"
+                        value={chapterTitle}
+                        onChange={(e) => setChapterTitle(e.target.value)}
+                        className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                      />
                     </div>
                   </div>
 
-                  <textarea 
-                    rows={16}
-                    placeholder="Begin drafting your serialized chapter here. Separate paragraphs with double newlines — each paragraph will automatically become an interactive discussion anchor for your readers!"
-                    value={chapterContent}
-                    onChange={handleContentChange}
-                    required={contentType === 'story'}
-                    className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
-                  />
+                  {/* Content Canvas: Picture Book vs Novel */}
+                  {contentType === 'story' ? (
+                    /* Text Novel Canvas with Auto-Save */
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          Chapter Body (Paragraphs & Scenes)
+                        </span>
+                        <div className="flex items-center gap-2 text-xs">
+                          {autoSaved ? (
+                            <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                              <CheckCircle className="w-3.5 h-3.5" /> Auto-saved draft
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" /> Auto-save active
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                  <p className="text-[11px] text-slate-400">
-                    Word count: ~{chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0} words
-                  </p>
-                </div>
-              ) : (
+                      <BookFormattingToolbar 
+                        onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(chapterContent, setChapterContent, prefix, placeholder, isBreak, suffix)}
+                        showGuide={showFormattingGuide}
+                        setShowGuide={setShowFormattingGuide}
+                      />
+
+                      <textarea 
+                        rows={16}
+                        placeholder="Begin drafting your serialized chapter here. Separate paragraphs with double newlines — each paragraph will automatically become an interactive discussion anchor for your readers!"
+                        value={chapterContent}
+                        onChange={handleContentChange}
+                        required={contentType === 'story'}
+                        className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-base leading-relaxed"
+                      />
+
+                      <p className="text-[11px] text-slate-400">
+                        Word count: ~{chapterContent.trim() ? chapterContent.trim().split(/\s+/).length : 0} words
+                      </p>
+                    </div>
+                  ) : (
                 /* Picture Book / Comic Page Builder */
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-5">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -592,7 +1085,9 @@ export default function AuthorStudio() {
               </div>
             </div>
           </form>
-        )}
+          )}
+        </div>
+      )}
 
         {/* TAB 2: MY SERIALS (Manage, Delete, Reorder Chapters) */}
         {activeTab === 'stories' && (
@@ -619,6 +1114,12 @@ export default function AuthorStudio() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleOpenAddChapterModal(s)}
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> + Add Chapter {s.chapters.length + 1}
+                      </button>
                       <button 
                         onClick={() => handleReorderChapters(s.id)}
                         className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
@@ -778,6 +1279,176 @@ export default function AuthorStudio() {
         )}
 
       </main>
+
+      {/* 4. MODAL: ADD CHAPTER TO SERIAL STORY */}
+      {addChapterModalOpen && targetStoryForChapter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={targetStoryForChapter.cover} 
+                  alt={targetStoryForChapter.title} 
+                  className="w-12 aspect-[3/4] object-cover rounded-lg border shadow-sm shrink-0"
+                />
+                <div>
+                  <span className="text-[10px] font-black uppercase text-brand-600 tracking-wider">
+                    Add Serial Chapter
+                  </span>
+                  <h3 className="text-lg font-black line-clamp-1">{targetStoryForChapter.title}</h3>
+                  <p className="text-xs text-slate-400">
+                    Currently: {targetStoryForChapter.chapters?.length || 0} Chapters • Appending Chapter {modalChapterNumber}
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setAddChapterModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {modalPublishSuccess ? (
+              <div className="p-6 text-center space-y-4">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-8 h-8" />
+                </div>
+                <h4 className="text-xl font-black">Chapter {modalChapterNumber} Published!</h4>
+                <p className="text-xs text-slate-500">Your new chapter is now live for all readers in the Avora Library.</p>
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <Link 
+                    href={`/read/${targetStoryForChapter.slug}?chapter=${modalChapterNumber}`}
+                    className="px-6 py-2.5 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600"
+                  >
+                    Read Chapter {modalChapterNumber} →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleModalPublishChapter} className="space-y-5">
+                <div className="grid sm:grid-cols-12 gap-4">
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Chapter Number
+                    </label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={modalChapterNumber}
+                      onChange={(e) => setModalChapterNumber(e.target.value)}
+                      required
+                      className="w-full text-base font-bold px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-9">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Chapter Title
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder={`e.g. Chapter ${modalChapterNumber}: Pact of Mercury`}
+                      value={modalChapterTitle}
+                      onChange={(e) => setModalChapterTitle(e.target.value)}
+                      required
+                      className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  </div>
+                </div>
+
+                {targetStoryForChapter.contentType === 'picture_book' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-xs font-bold text-slate-400 uppercase">Pages ({modalPages.length})</span>
+                      <button
+                        type="button"
+                        onClick={() => setModalPages(prev => [...prev, { pageNumber: prev.length + 1, image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80', caption: `Page ${prev.length + 1}`, text: '' }])}
+                        className="px-3 py-1 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Page
+                      </button>
+                    </div>
+                    {modalPages.map((p, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-2 border">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span>Page {idx + 1}</span>
+                          {modalPages.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setModalPages(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-rose-500 hover:underline"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="Image URL"
+                          value={p.image}
+                          onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
+                          className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                        />
+                        <textarea
+                          rows={2}
+                          placeholder="Narration / dialogue..."
+                          value={p.text}
+                          onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, text: e.target.value } : item))}
+                          className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Chapter Body (Paragraphs & Scenes)
+                    </label>
+                    <BookFormattingToolbar 
+                      onInsert={(prefix, placeholder, isBreak, suffix) => insertFormatIntoText(modalChapterContent, setModalChapterContent, prefix, placeholder, isBreak, suffix)}
+                      showGuide={modalShowGuide}
+                      setShowGuide={setModalShowGuide}
+                    />
+                    <textarea 
+                      rows={12}
+                      placeholder="Write your next chapter here. Use the buttons above to easily add ## Subheadings, ### Sections, or * * * Scene Breaks!"
+                      value={modalChapterContent}
+                      onChange={(e) => setModalChapterContent(e.target.value)}
+                      required
+                      className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500 font-serif text-sm leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Word count: ~{modalChapterContent.trim() ? modalChapterContent.trim().split(/\s+/).length : 0} words
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <button 
+                    type="button"
+                    onClick={() => setAddChapterModalOpen(false)}
+                    className="px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={modalPublishing}
+                    className="flex items-center gap-1.5 px-7 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> 
+                    <span>{modalPublishing ? 'Publishing...' : `Publish Chapter ${modalChapterNumber}`}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

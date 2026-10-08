@@ -493,7 +493,7 @@ export default function StoryDetailPage() {
             {story.chapters.map((chapter) => (
               <Link
                 key={chapter.id}
-                href={`/read/${story.slug}`}
+                href={`/read/${story.slug}?chapter=${chapter.number}`}
                 className="flex items-center justify-between py-4 group hover:bg-slate-50 dark:hover:bg-slate-800/40 px-3 rounded-xl transition-colors"
               >
                 <div className="flex items-center gap-4">
