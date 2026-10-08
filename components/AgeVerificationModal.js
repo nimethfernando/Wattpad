@@ -81,7 +81,9 @@ export default function AgeVerificationModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           birthdate: dob,
-          experienceMode: finalMode
+          experienceMode: finalMode,
+          userEmail: user?.email,
+          username: user?.username
         })
       });
 

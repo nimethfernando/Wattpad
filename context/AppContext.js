@@ -249,6 +249,143 @@ export function AppProvider({ children }) {
   // Age Verification & Content Access Control State
   const [ageVerificationModalOpen, setAgeVerificationModalOpen] = useState(false);
 
+  // Persistent User Age Record Lookup (never forgets user's answered DOB across logins)
+  const lookupUserAgeRecord = useCallback((userOrEmail) => {
+    if (!userOrEmail) return null;
+    const cleanEmail = typeof userOrEmail === 'string' 
+      ? userOrEmail.toLowerCase().trim() 
+      : (userOrEmail.email || userOrEmail.username || '').toLowerCase().trim();
+    if (!cleanEmail) return null;
+    const storageKey = getUserStorageKey(cleanEmail);
+
+    // 1. Check in-memory registeredUsers
+    const matched = (registeredUsers || []).find(u => 
+      (u.email && u.email.toLowerCase() === cleanEmail) || 
+      (u.username && u.username.toLowerCase() === cleanEmail)
+    );
+    if (matched?.birthdate) {
+      const age = matched.age ?? calculateAgeFromDob(matched.birthdate);
+      return {
+        birthdate: matched.birthdate,
+        age,
+        experienceMode: (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : (matched.experienceMode || EXPERIENCE_MODES.MATURE)
+      };
+    }
+
+    // 2. Check user-scoped age cache in localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const scoped = localStorage.getItem(`avora_user_age_${storageKey}`);
+        if (scoped) {
+          const parsed = JSON.parse(scoped);
+          if (parsed?.birthdate) {
+            const age = parsed.age ?? calculateAgeFromDob(parsed.birthdate);
+            return {
+              birthdate: parsed.birthdate,
+              age,
+              experienceMode: (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : (parsed.experienceMode || EXPERIENCE_MODES.MATURE)
+            };
+          }
+        }
+      } catch (e) {}
+
+      // 3. Check registered users cache
+      try {
+        const cache = localStorage.getItem('avora_registered_users_cache');
+        if (cache) {
+          const parsedCache = JSON.parse(cache);
+          const hit = (parsedCache || []).find(u => 
+            (u.email && u.email.toLowerCase() === cleanEmail) || 
+            (u.username && u.username.toLowerCase() === cleanEmail)
+          );
+          if (hit?.birthdate) {
+            const age = hit.age ?? calculateAgeFromDob(hit.birthdate);
+            return {
+              birthdate: hit.birthdate,
+              age,
+              experienceMode: (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : (hit.experienceMode || EXPERIENCE_MODES.MATURE)
+            };
+          }
+        }
+      } catch (e) {}
+
+      // 4. Check avora_user
+      try {
+        const rawUser = localStorage.getItem('avora_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if ((u.email?.toLowerCase() === cleanEmail || u.username?.toLowerCase() === cleanEmail) && u.birthdate) {
+            const age = u.age ?? calculateAgeFromDob(u.birthdate);
+            return {
+              birthdate: u.birthdate,
+              age,
+              experienceMode: (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : (u.experienceMode || EXPERIENCE_MODES.MATURE)
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
+    return null;
+  }, [registeredUsers]);
+
+  // Persist user age reply permanently across client & server storage
+  const saveUserAgeRecord = useCallback((targetUser, birthdate, experienceMode) => {
+    if (!targetUser || !birthdate) return;
+    const cleanEmail = (targetUser.email || targetUser.username || '').toLowerCase().trim();
+    if (!cleanEmail) return;
+    const storageKey = getUserStorageKey(cleanEmail);
+    const age = calculateAgeFromDob(birthdate);
+    const enforcedMode = (age !== null && age < 18) ? EXPERIENCE_MODES.KIDS : experienceMode;
+
+    const record = {
+      birthdate,
+      age,
+      experienceMode: enforcedMode
+    };
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`avora_user_age_${storageKey}`, JSON.stringify(record));
+        document.cookie = `avora_dob=${encodeURIComponent(birthdate)}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `avora_age=${encodeURIComponent(String(age))}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `avora_experience_mode=${encodeURIComponent(enforcedMode)}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch (e) {}
+    }
+
+    setRegisteredUsers(prev => {
+      const idx = prev.findIndex(u => 
+        (cleanEmail && u.email?.toLowerCase() === cleanEmail) ||
+        (cleanEmail && u.username?.toLowerCase() === cleanEmail)
+      );
+      let nextUsers;
+      if (idx >= 0) {
+        nextUsers = [...prev];
+        nextUsers[idx] = { ...nextUsers[idx], ...record, isAgeVerified: true };
+      } else {
+        nextUsers = [...prev, { ...targetUser, ...record, isAgeVerified: true }];
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
+
+    // Asynchronously persist to backend database
+    fetch('/api/user/age-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        birthdate,
+        experienceMode: enforcedMode,
+        userEmail: targetUser.email || '',
+        username: targetUser.username || ''
+      })
+    }).catch(() => {});
+  }, []);
+
   // NextAuth Session Sync (Automatically populates user from Google OAuth)
   const { data: session, status: sessionStatus } = useSession();
 
@@ -270,25 +407,21 @@ export function AppProvider({ children }) {
         let savedMode = EXPERIENCE_MODES.KIDS;
         let isAgeVerified = false;
 
-        if (typeof window !== 'undefined') {
-          try {
-            const rawUser = localStorage.getItem('avora_user');
-            if (rawUser) {
-              const u = JSON.parse(rawUser);
-              if (u.email === email && u.birthdate) {
-                savedDob = u.birthdate;
-                savedAge = calculateAgeFromDob(savedDob);
-                savedMode = (savedAge !== null && savedAge < 18) 
-                  ? EXPERIENCE_MODES.KIDS 
-                  : (u.experienceMode || EXPERIENCE_MODES.MATURE);
-                isAgeVerified = true;
-              }
-            }
-          } catch (e) {}
+        const ageRec = lookupUserAgeRecord(email);
+        if (ageRec?.birthdate) {
+          savedDob = ageRec.birthdate;
+          savedAge = ageRec.age;
+          savedMode = ageRec.experienceMode;
+          isAgeVerified = true;
         }
 
         const cleanEmail = (email || '').trim().toLowerCase();
         const isAdmin = isUserAdmin(cleanEmail);
+
+        if (isAdmin) {
+          isAgeVerified = true;
+          savedMode = EXPERIENCE_MODES.MATURE;
+        }
 
         const authenticatedUser = {
           id: session.user.id || Date.now(),
@@ -307,7 +440,7 @@ export function AppProvider({ children }) {
           hasCompletedOnboarding: true,
           userPreferences: {
             goals: isAdmin ? "Platform Administration & Moderation" : "I'm here to read stories",
-            favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+            favoriteGenres: (savedAge !== null && savedAge < 18) ? ["Kids Books", "Educational Stories", "Fantasy"] : ["Romance", "Fantasy", "Mystery"],
             language: "en"
           }
         };
@@ -322,9 +455,26 @@ export function AppProvider({ children }) {
           }
         }
 
-        // If user is not yet age-verified and not admin, prompt for DOB verification!
+        // Only prompt for age if NOT admin AND age has NEVER been confirmed
         if (!isAdmin && (!isAgeVerified || !savedDob)) {
-          setAgeVerificationModalOpen(true);
+          // Asynchronously query server database before prompting
+          fetch(`/api/user/age-verification?user=${encodeURIComponent(cleanEmail)}`)
+            .then(res => res.json())
+            .then(apiData => {
+              if (apiData?.success && apiData.verified && apiData.birthdate) {
+                const calculated = calculateAgeFromDob(apiData.birthdate);
+                const finalEnforced = (calculated !== null && calculated < 18) ? EXPERIENCE_MODES.KIDS : (apiData.experienceMode || EXPERIENCE_MODES.MATURE);
+                updateUserAgeAndDob(apiData.birthdate, calculated, finalEnforced);
+                setAgeVerificationModalOpen(false);
+              } else {
+                setAgeVerificationModalOpen(true);
+              }
+            })
+            .catch(() => {
+              setAgeVerificationModalOpen(true);
+            });
+        } else {
+          setAgeVerificationModalOpen(false);
         }
 
         if (typeof window !== 'undefined') {
@@ -409,6 +559,24 @@ export function AppProvider({ children }) {
         }
       } catch (e) {}
 
+      // Sync cached registered users from persistent cache
+      try {
+        const cachedUsers = localStorage.getItem('avora_registered_users_cache');
+        if (cachedUsers) {
+          const parsedCache = JSON.parse(cachedUsers);
+          if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+            setRegisteredUsers(prev => {
+              const map = new Map(prev.map(u => [(u.email || u.username || '').toLowerCase(), u]));
+              parsedCache.forEach(u => {
+                const k = (u.email || u.username || '').toLowerCase();
+                if (k) map.set(k, { ...map.get(k), ...u });
+              });
+              return Array.from(map.values());
+            });
+          }
+        }
+      } catch (e) {}
+
       let initialKey = 'guest';
       try {
         const savedUser = localStorage.getItem('avora_user');
@@ -419,13 +587,25 @@ export function AppProvider({ children }) {
             parsedUser.isAgeVerified = true;
             parsedUser.hideMature = false;
           }
-          if (parsedUser.birthdate) {
+          const ageRec = lookupUserAgeRecord(parsedUser);
+          if (ageRec?.birthdate) {
+            parsedUser.birthdate = ageRec.birthdate;
+            parsedUser.age = ageRec.age;
+            parsedUser.experienceMode = ageRec.experienceMode;
+            parsedUser.isAgeVerified = true;
+            if (parsedUser.age !== null && parsedUser.age < 18 && parsedUser.role !== 'admin') {
+              parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
+              parsedUser.hideMature = true;
+            }
+            setAgeVerificationModalOpen(false);
+          } else if (parsedUser.birthdate) {
             parsedUser.age = calculateAgeFromDob(parsedUser.birthdate);
             parsedUser.isAgeVerified = true;
             if (parsedUser.age !== null && parsedUser.age < 18 && parsedUser.role !== 'admin') {
               parsedUser.experienceMode = EXPERIENCE_MODES.KIDS;
               parsedUser.hideMature = true;
             }
+            setAgeVerificationModalOpen(false);
           } else if (parsedUser.role !== 'admin' && !isUserAdmin(parsedUser)) {
             parsedUser.isAgeVerified = false;
             setAgeVerificationModalOpen(true);
@@ -1888,25 +2068,12 @@ export function AppProvider({ children }) {
       let savedMode = EXPERIENCE_MODES.KIDS;
       let isAgeVerified = false;
 
-      const existing = (registeredUsers || []).find(u => u.email?.toLowerCase() === cleanEmail);
-      if (existing && existing.birthdate) {
-        savedDob = existing.birthdate;
-        savedAge = existing.age ?? calculateAgeFromDob(savedDob);
-        savedMode = existing.experienceMode || ((savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+      const ageRec = lookupUserAgeRecord(cleanEmail);
+      if (ageRec?.birthdate) {
+        savedDob = ageRec.birthdate;
+        savedAge = ageRec.age;
+        savedMode = ageRec.experienceMode;
         isAgeVerified = true;
-      } else if (typeof window !== 'undefined') {
-        try {
-          const rawUser = localStorage.getItem('avora_user');
-          if (rawUser) {
-            const u = JSON.parse(rawUser);
-            if (u.email?.toLowerCase() === cleanEmail && u.birthdate) {
-              savedDob = u.birthdate;
-              savedAge = u.age ?? calculateAgeFromDob(savedDob);
-              savedMode = (savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : (u.experienceMode || EXPERIENCE_MODES.MATURE);
-              isAgeVerified = true;
-            }
-          }
-        } catch (e) {}
       }
 
       if (isAdmin) {
@@ -1931,7 +2098,7 @@ export function AppProvider({ children }) {
         hasCompletedOnboarding: true,
         userPreferences: {
           goals: isAdmin ? "Platform Administration & Moderation" : "I'm here to read stories",
-          favoriteGenres: ["Romance", "Fantasy", "Mystery"],
+          favoriteGenres: (savedAge !== null && savedAge < 18) ? ["Kids Books", "Educational Stories", "Fantasy"] : ["Romance", "Fantasy", "Mystery"],
           language: "en"
         }
       };
@@ -1965,6 +2132,8 @@ export function AppProvider({ children }) {
 
       if (!isAdmin && !isAgeVerified) {
         setAgeVerificationModalOpen(true);
+      } else {
+        setAgeVerificationModalOpen(false);
       }
 
       return googleUser;
@@ -2054,26 +2223,12 @@ export function AppProvider({ children }) {
     let savedMode = EXPERIENCE_MODES.KIDS;
     let isAgeVerified = false;
 
-    // Check if user already exists with birthdate in registeredUsers or localStorage
-    const existing = (registeredUsers || []).find(u => u.email?.toLowerCase() === cleanEmail);
-    if (existing && existing.birthdate) {
-      savedDob = existing.birthdate;
-      savedAge = existing.age ?? calculateAgeFromDob(savedDob);
-      savedMode = existing.experienceMode || ((savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : EXPERIENCE_MODES.MATURE);
+    const ageRec = lookupUserAgeRecord(cleanEmail);
+    if (ageRec?.birthdate) {
+      savedDob = ageRec.birthdate;
+      savedAge = ageRec.age;
+      savedMode = ageRec.experienceMode;
       isAgeVerified = true;
-    } else if (typeof window !== 'undefined') {
-      try {
-        const rawUser = localStorage.getItem('avora_user');
-        if (rawUser) {
-          const u = JSON.parse(rawUser);
-          if (u.email?.toLowerCase() === cleanEmail && u.birthdate) {
-            savedDob = u.birthdate;
-            savedAge = u.age ?? calculateAgeFromDob(savedDob);
-            savedMode = (savedAge !== null && savedAge < 18) ? EXPERIENCE_MODES.KIDS : (u.experienceMode || EXPERIENCE_MODES.MATURE);
-            isAgeVerified = true;
-          }
-        }
-      } catch (e) {}
     }
 
     if (isAdmin) {
@@ -2134,6 +2289,8 @@ export function AppProvider({ children }) {
 
     if (!isAdmin && !isAgeVerified) {
       setAgeVerificationModalOpen(true);
+    } else {
+      setAgeVerificationModalOpen(false);
     }
 
     return emailUser;
@@ -2186,6 +2343,8 @@ export function AppProvider({ children }) {
     }
 
     setUser(newUser);
+    saveUserAgeRecord(newUser, birthdate, enforcedMode);
+    setAgeVerificationModalOpen(false);
     setHomeFeedViewMode('feed');
     setAuthModalOpen(false);
     executePending();
@@ -2357,6 +2516,7 @@ export function AppProvider({ children }) {
           console.error("Could not sync age to localStorage/cookies:", e);
         }
       }
+      saveUserAgeRecord(updated, birthdate, enforcedMode);
       return updated;
     });
 

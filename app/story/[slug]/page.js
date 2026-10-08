@@ -26,7 +26,7 @@ import {
   ChevronDown,
   Lock
 } from 'lucide-react';
-import { canUserAccessContent } from '@/lib/agePolicy';
+import { canUserAccessContent, filterStoriesForUser } from '@/lib/agePolicy';
 
 export default function StoryDetailPage() {
   const params = useParams() || {};
@@ -183,8 +183,9 @@ export default function StoryDetailPage() {
     ? story.chapters.find(c => c.id === savedProgress.chapterId) || story.chapters[0]
     : story.chapters[0];
 
-  // Related stories from same genre
-  const relatedStories = stories.filter(s => s.id !== story.id && s.genre === story.genre);
+  // Related stories from same genre filtered strictly by user's verified age
+  const accessibleStories = filterStoriesForUser(stories, user);
+  const relatedStories = accessibleStories.filter(s => s.id !== story.id && s.genre === story.genre);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {

@@ -1,10 +1,49 @@
 import { NextResponse } from 'next/server';
 import { calculateAgeFromDob, validateExperienceMode, EXPERIENCE_MODES } from '@/lib/agePolicy';
+import { saveUserProfileToDb, getUserProfileFromDb } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const user = searchParams.get('user');
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'User identifier is required' }, { status: 400 });
+    }
+
+    const profile = await getUserProfileFromDb(user);
+    if (profile && profile.birthdate) {
+      const calculatedAge = calculateAgeFromDob(profile.birthdate);
+      const isUnder18 = calculatedAge !== null && calculatedAge < 18;
+      const enforcedMode = (isUnder18 || profile.experienceMode === EXPERIENCE_MODES.KIDS) 
+        ? EXPERIENCE_MODES.KIDS 
+        : (profile.experienceMode || EXPERIENCE_MODES.MATURE);
+
+      return NextResponse.json({
+        success: true,
+        verified: true,
+        birthdate: profile.birthdate,
+        age: calculatedAge,
+        experienceMode: enforcedMode,
+        isUnder18
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      verified: false
+    });
+  } catch (error) {
+    console.error('Age verification GET error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { birthdate, experienceMode } = body;
+    const { birthdate, experienceMode, userEmail, email, username } = body;
 
     if (!birthdate) {
       return NextResponse.json(
@@ -26,6 +65,24 @@ export async function POST(request) {
 
     // Validate and enforce experience mode
     const { allowed, enforcedMode } = validateExperienceMode(calculatedAge, experienceMode);
+
+    const targetEmail = (userEmail || email || '').trim().toLowerCase();
+    const targetUsername = (username || (targetEmail ? targetEmail.split('@')[0] : '')).trim().toLowerCase();
+
+    // Persist to user profile database and persistent store
+    if (targetEmail || targetUsername) {
+      try {
+        await saveUserProfileToDb({
+          email: targetEmail,
+          username: targetUsername,
+          birthdate,
+          age: calculatedAge,
+          experienceMode: enforcedMode
+        });
+      } catch (dbErr) {
+        console.warn('Could not persist profile in age verification POST:', dbErr.message);
+      }
+    }
 
     const response = NextResponse.json({
       success: true,
