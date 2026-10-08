@@ -179,7 +179,16 @@ export function AppProvider({ children }) {
   };
 
   // Dual-State Home Feed View Mode: 'landing' (public default) or 'feed' (authenticated)
-  const [homeFeedViewMode, setHomeFeedViewMode] = useState('landing');
+  const [homeFeedViewMode, setHomeFeedViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (localStorage.getItem('avora_user') || document.cookie.includes('avora_session=')) {
+          return 'feed';
+        }
+      } catch (e) {}
+    }
+    return 'landing';
+  });
 
   // Soft Launch Feature Flags
   const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags || {
@@ -608,7 +617,26 @@ export function AppProvider({ children }) {
             setAgeVerificationModalOpen(false);
           } else if (parsedUser.role !== 'admin' && !isUserAdmin(parsedUser)) {
             parsedUser.isAgeVerified = false;
-            setAgeVerificationModalOpen(true);
+            const checkEmail = (parsedUser.email || parsedUser.username || '').toLowerCase().trim();
+            if (checkEmail) {
+              fetch(`/api/user/age-verification?user=${encodeURIComponent(checkEmail)}`)
+                .then(res => res.json())
+                .then(apiData => {
+                  if (apiData?.success && apiData.verified && apiData.birthdate) {
+                    const calculated = calculateAgeFromDob(apiData.birthdate);
+                    const finalEnforced = (calculated !== null && calculated < 18) ? EXPERIENCE_MODES.KIDS : (apiData.experienceMode || EXPERIENCE_MODES.MATURE);
+                    updateUserAgeAndDob(apiData.birthdate, calculated, finalEnforced);
+                    setAgeVerificationModalOpen(false);
+                  } else {
+                    setAgeVerificationModalOpen(true);
+                  }
+                })
+                .catch(() => {
+                  setAgeVerificationModalOpen(true);
+                });
+            } else {
+              setAgeVerificationModalOpen(true);
+            }
           }
           if (!parsedUser.bankDetails) {
             const matchedAuthor = initialRegisteredUsers.find(ru => 
@@ -2288,7 +2316,21 @@ export function AppProvider({ children }) {
     }
 
     if (!isAdmin && !isAgeVerified) {
-      setAgeVerificationModalOpen(true);
+      fetch(`/api/user/age-verification?user=${encodeURIComponent(cleanEmail)}`)
+        .then(res => res.json())
+        .then(apiData => {
+          if (apiData?.success && apiData.verified && apiData.birthdate) {
+            const calculated = calculateAgeFromDob(apiData.birthdate);
+            const finalEnforced = (calculated !== null && calculated < 18) ? EXPERIENCE_MODES.KIDS : (apiData.experienceMode || EXPERIENCE_MODES.MATURE);
+            updateUserAgeAndDob(apiData.birthdate, calculated, finalEnforced);
+            setAgeVerificationModalOpen(false);
+          } else {
+            setAgeVerificationModalOpen(true);
+          }
+        })
+        .catch(() => {
+          setAgeVerificationModalOpen(true);
+        });
     } else {
       setAgeVerificationModalOpen(false);
     }

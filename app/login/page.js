@@ -24,9 +24,9 @@ export default function LoginPage() {
     const cleanEmail = email.trim().toLowerCase();
     const loggedInUser = loginWithEmail(email, password);
     if (cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle' || cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya') {
-      router.push('/admin');
+      router.push('/admin', { scroll: false });
     } else {
-      router.push('/home');
+      router.push('/home', { scroll: false });
     }
   };
 
@@ -39,10 +39,10 @@ export default function LoginPage() {
       }
       const authed = await loginWithGoogle();
       if (authed?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') {
-        router.push('/admin');
+        router.push('/admin', { scroll: false });
         return;
       }
-      router.push('/home');
+      router.push('/home', { scroll: false });
     } catch (err) {
       console.error('Google login error:', err);
       setErrorMessage('Authentication error. Please try again.');

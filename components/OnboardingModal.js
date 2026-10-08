@@ -157,7 +157,7 @@ export default function OnboardingModal() {
         });
         if (changeLanguage) changeLanguage(selectedLang);
         else if (setLang) setLang(selectedLang);
-        router.push('/home');
+        router.push('/home', { scroll: false });
       }, 1600);
 
       return () => {
@@ -203,7 +203,7 @@ export default function OnboardingModal() {
       favoriteGenres: selectedGenres.length > 0 ? selectedGenres.slice(0, 3) : ["Romance", "Fantasy", "Mystery"],
       language: selectedLang
     });
-    router.push('/home');
+    router.push('/home', { scroll: false });
   };
 
   return (

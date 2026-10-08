@@ -151,10 +151,21 @@ export default function Mascot3D() {
     return messages;
   }, [stories, user, readingStreak, featureFlags, t, lang]);
 
-  // Initial greeting timer (opens speech bubble after 2.8s on initial load)
+  // Track scroll interaction so speech bubble doesn't interrupt active scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window !== 'undefined' && window.scrollY > 60) {
+        setHasInteracted(true);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Initial greeting timer (opens speech bubble after 2.8s on initial load only if user hasn't scrolled/interacted)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!hasInteracted && !isReaderPage) {
+      if (!hasInteracted && !isReaderPage && (typeof window === 'undefined' || window.scrollY <= 60)) {
         setSpeechOpen(true);
       }
     }, 2800);

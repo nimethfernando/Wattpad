@@ -68,9 +68,9 @@ export default function RegisterPage() {
 
       const cleanEmail = email.trim().toLowerCase();
       if (cleanEmail === 'gbncircle@gmail.com') {
-        router.push('/admin');
+        router.push('/admin', { scroll: false });
       } else {
-        router.push('/home');
+        router.push('/home', { scroll: false });
       }
     } catch (err) {
       setErrorMessage(err.message || 'Registration failed. Please try again.');
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                 setLoading(true);
                 try {
                   await loginWithGoogle();
-                  router.push('/home');
+                  router.push('/home', { scroll: false });
                 } finally {
                   setLoading(false);
                 }
