@@ -45,7 +45,10 @@ import {
   Sun,
   Moon,
   Coffee,
-  Code
+  Code,
+  Upload,
+  FileUp,
+  Camera
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
@@ -147,6 +150,48 @@ The mahogany jewelry box sat completely untouched on the dresser, yet the antiqu
 He crouched down, retrieving a small silver key with an eagle crest engraved into the head.`
   }
 ];
+
+// Helper: Process, resize, and compress image file directly from author's device
+export function processImageFile(file, maxWidth = 800, maxHeight = 1067, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('No file selected.'));
+    if (!file.type || !file.type.startsWith('image/')) {
+      return reject(new Error('Please select an image file (PNG, JPG, JPEG, WEBP).'));
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Error reading image file from your device.'));
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to parse image data.'));
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({
+          dataUrl,
+          name: file.name,
+          sizeKb: Math.round((dataUrl.length * 0.75) / 1024)
+        });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 // Helper: Convert serialized paragraphs into visual WYSIWYG HTML
 export function chapterContentToHtml(rawText) {
@@ -909,8 +954,39 @@ export function VisualBookEditor({
               </button>
             </div>
 
+            {/* 1. Device Upload Button */}
+            <div className="space-y-1.5">
+              <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                1. Upload from Your Device:
+              </span>
+              <label className="flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-brand-400/80 dark:border-brand-500/60 bg-brand-50/50 dark:bg-brand-950/20 hover:bg-brand-50 dark:hover:bg-brand-950/40 cursor-pointer transition-all group">
+                <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-bold text-brand-700 dark:text-brand-300">
+                  Select image from computer / phone
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const res = await processImageFile(file, 900, 700, 0.85);
+                        setImgUrl(res.dataUrl);
+                        if (!imgCaption) setImgCaption(file.name.replace(/\.[^/.]+$/, ''));
+                      } catch (err) {
+                        alert(err.message);
+                      }
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* 2. Preset Artwork */}
             <div>
-              <span className="block text-xs font-bold text-slate-400 mb-1.5 uppercase">Quick Preset Artwork:</span>
+              <span className="block text-xs font-bold text-slate-400 mb-1.5 uppercase">2. Or Pick Preset Artwork:</span>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { title: 'Ancient Citadel', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80' },
@@ -935,7 +1011,7 @@ export function VisualBookEditor({
 
             <form onSubmit={handleInsertImageSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Image URL</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">3. Or Paste Direct Image Link</label>
                 <input
                   type="url"
                   placeholder="https://images.unsplash.com/..."
@@ -1155,6 +1231,36 @@ export default function AuthorStudio() {
   const [copyright, setCopyright] = useState('All Rights Reserved');
   const [tagsInput, setTagsInput] = useState('magic, serialized, mystery');
   const [coverUrl, setCoverUrl] = useState('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80');
+  const [coverUploadTab, setCoverUploadTab] = useState('device'); // 'device' | 'presets' | 'url'
+  const [deviceCoverInfo, setDeviceCoverInfo] = useState(null); // { name, sizeKb }
+
+  const handleDeviceCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await processImageFile(file, 800, 1067, 0.85);
+      setCoverUrl(res.dataUrl);
+      setDeviceCoverInfo({ name: file.name, sizeKb: res.sizeKb });
+    } catch (err) {
+      alert(err.message || 'Failed to process image file from device.');
+    }
+  };
+
+  const updatePageImageFromDevice = async (index, file, isExisting = false, isModal = false) => {
+    if (!file) return;
+    try {
+      const res = await processImageFile(file, 1200, 900, 0.85);
+      if (isModal) {
+        setModalPages(prev => prev.map((item, i) => i === index ? { ...item, image: res.dataUrl } : item));
+      } else if (isExisting) {
+        setExistingPages(prev => prev.map((item, i) => i === index ? { ...item, image: res.dataUrl } : item));
+      } else {
+        setPages(prev => prev.map((item, i) => i === index ? { ...item, image: res.dataUrl } : item));
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to upload page image.');
+    }
+  };
 
   // Modal State: "+ Add Chapter" from My Serials tab
   const [addChapterModalOpen, setAddChapterModalOpen] = useState(false);
@@ -1628,13 +1734,25 @@ export default function AuthorStudio() {
                                     </button>
                                   )}
                                 </div>
-                                <input
-                                  type="url"
-                                  placeholder="Image URL"
-                                  value={p.image}
-                                  onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
-                                  className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
-                                />
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="url"
+                                    placeholder="Image URL or upload from device"
+                                    value={p.image}
+                                    onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
+                                    className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                                  />
+                                  <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-600" title="Upload Page Image from Device">
+                                    <Upload className="w-3 h-3" />
+                                    <span className="hidden sm:inline">Upload</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => updatePageImageFromDevice(idx, e.target.files?.[0], true, false)}
+                                    />
+                                  </label>
+                                </div>
                                 <textarea
                                   rows={2}
                                   placeholder="Narration / dialogue..."
@@ -1822,14 +1940,26 @@ export default function AuthorStudio() {
 
                           <div className="sm:col-span-8 space-y-2">
                             <div>
-                              <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Page Illustration URL</label>
-                              <input
-                                type="url"
-                                value={p.image}
-                                onChange={(e) => updatePage(idx, 'image', e.target.value)}
-                                placeholder="https://..."
-                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
-                              />
+                              <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Page Illustration (URL or Device)</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="url"
+                                  value={p.image}
+                                  onChange={(e) => updatePage(idx, 'image', e.target.value)}
+                                  placeholder="https://... or upload from device"
+                                  className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                                />
+                                <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-700" title="Upload from Device">
+                                  <Upload className="w-3 h-3" />
+                                  <span className="hidden sm:inline">Upload</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => updatePageImageFromDevice(idx, e.target.files?.[0], false, false)}
+                                  />
+                                </label>
+                              </div>
                             </div>
 
                             <div>
@@ -1959,75 +2089,164 @@ export default function AuthorStudio() {
                   </p>
                 </div>
 
-                {/* Cover Image with 1-Click Presets */}
-                <div className="space-y-2.5">
+                {/* Cover Image with Device Upload, Presets & URL */}
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-500">Book Cover Image</label>
                     <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full">
-                      Non-Coder Friendly
+                      Device Upload
                     </span>
                   </div>
 
-                  <div>
-                    <span className="block text-[11px] font-bold text-slate-400 mb-1.5">
-                      🎨 1-Click Preset Covers (Click to Pick):
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {PRESET_COVERS.map((preset, idx) => {
-                        const isSelected = coverUrl === preset.url;
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setCoverUrl(preset.url);
-                              if (preset.genre && genres.some(g => g.slug === preset.genre)) {
-                                setSelectedGenre(preset.genre);
-                              }
-                            }}
-                            className={`group relative aspect-[3/4] rounded-xl overflow-hidden border text-left transition-all cursor-pointer ${
-                              isSelected 
-                                ? 'ring-2 ring-brand-500 border-transparent shadow-md scale-[1.02]' 
-                                : 'border-slate-200 dark:border-slate-700 hover:border-brand-400 opacity-80 hover:opacity-100'
-                            }`}
-                          >
-                            <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5">
-                              <span className="text-[9px] font-black text-white leading-tight flex items-center gap-0.5 truncate">
-                                <span>{preset.emoji}</span> {preset.title}
-                              </span>
-                            </div>
-                            {isSelected && (
-                              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px] shadow-sm">
-                                ✓
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+                  {/* Mode Switcher Tabs */}
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setCoverUploadTab('device')}
+                      className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                        coverUploadTab === 'device'
+                          ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>My Device</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCoverUploadTab('presets')}
+                      className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                        coverUploadTab === 'presets'
+                          ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>🎨 Presets</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCoverUploadTab('url')}
+                      className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                        coverUploadTab === 'url'
+                          ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>🔗 Link URL</span>
+                    </button>
+                  </div>
+
+                  {/* TAB 1: UPLOAD FROM DEVICE */}
+                  {coverUploadTab === 'device' && (
+                    <div className="space-y-2">
+                      <label className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-brand-400/80 dark:border-brand-500/60 bg-brand-50/50 dark:bg-brand-950/20 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-all cursor-pointer group text-center">
+                        <Upload className="w-6 h-6 text-brand-600 dark:text-brand-400 mb-1.5 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-bold text-brand-700 dark:text-brand-300">
+                          Upload Cover from Your Device
+                        </span>
+                        <span className="text-[10px] text-slate-500 mt-0.5">
+                          Tap to choose photo from computer or phone (PNG, JPG, WEBP)
+                        </span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleDeviceCoverUpload} 
+                        />
+                      </label>
+                      {deviceCoverInfo && (
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                          <span className="flex items-center gap-1 truncate">
+                            <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{deviceCoverInfo.name}</span>
+                          </span>
+                          <span className="text-[10px] opacity-75 shrink-0">~{deviceCoverInfo.sizeKb} KB</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-400 mb-1">Or Paste Custom Image URL</label>
-                    <input 
-                      type="url" 
-                      value={coverUrl}
-                      onChange={(e) => setCoverUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none focus:ring-2 focus:ring-brand-500"
-                    />
-                  </div>
+                  {/* TAB 2: PRESETS */}
+                  {coverUploadTab === 'presets' && (
+                    <div>
+                      <span className="block text-[11px] font-bold text-slate-400 mb-1.5">
+                        🎨 Click a preset cover to apply:
+                      </span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {PRESET_COVERS.map((preset, idx) => {
+                          const isSelected = coverUrl === preset.url;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setCoverUrl(preset.url);
+                                setDeviceCoverInfo(null);
+                                if (preset.genre && genres.some(g => g.slug === preset.genre)) {
+                                  setSelectedGenre(preset.genre);
+                                }
+                              }}
+                              className={`group relative aspect-[3/4] rounded-xl overflow-hidden border text-left transition-all cursor-pointer ${
+                                isSelected 
+                                  ? 'ring-2 ring-brand-500 border-transparent shadow-md scale-[1.02]' 
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-brand-400 opacity-80 hover:opacity-100'
+                              }`}
+                            >
+                              <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5">
+                                <span className="text-[9px] font-black text-white leading-tight flex items-center gap-0.5 truncate">
+                                  <span>{preset.emoji}</span> {preset.title}
+                                </span>
+                              </div>
+                              {isSelected && (
+                                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px] shadow-sm">
+                                  ✓
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-                  <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
-                    <div className="w-12 aspect-[3/4] rounded-lg overflow-hidden border shrink-0 bg-slate-200 dark:bg-slate-700">
+                  {/* TAB 3: CUSTOM URL */}
+                  {coverUploadTab === 'url' && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">Paste Direct Image URL</label>
+                      <input 
+                        type="url" 
+                        value={coverUrl}
+                        onChange={(e) => {
+                          setCoverUrl(e.target.value);
+                          setDeviceCoverInfo(null);
+                        }}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Active Cover Preview Card */}
+                  <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+                    <div className="w-14 aspect-[3/4] rounded-xl overflow-hidden border shrink-0 bg-slate-200 dark:bg-slate-700 shadow-xs relative">
                       <img src={coverUrl} alt="Cover preview" className="w-full h-full object-cover" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Active Cover Preview</span>
-                      <p className="text-xs font-bold truncate text-slate-700 dark:text-slate-300">
-                        {PRESET_COVERS.find(p => p.url === coverUrl)?.title || "Custom Story Cover"}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Book Cover Preview</span>
+                      <p className="text-xs font-black truncate text-slate-800 dark:text-slate-200">
+                        {deviceCoverInfo?.name || PRESET_COVERS.find(p => p.url === coverUrl)?.title || "Custom Story Cover"}
                       </p>
+                      <label className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer">
+                        <Upload className="w-3 h-3" />
+                        <span>Change from Device</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleDeviceCoverUpload} 
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -2409,13 +2628,25 @@ export default function AuthorStudio() {
                             </button>
                           )}
                         </div>
-                        <input
-                          type="url"
-                          placeholder="Image URL"
-                          value={p.image}
-                          onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
-                          className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            placeholder="Image URL or upload from device"
+                            value={p.image}
+                            onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
+                            className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                          />
+                          <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-600" title="Upload Page Image from Device">
+                            <Upload className="w-3 h-3" />
+                            <span className="hidden sm:inline">Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => updatePageImageFromDevice(idx, e.target.files?.[0], false, true)}
+                            />
+                          </label>
+                        </div>
                         <textarea
                           rows={2}
                           placeholder="Narration / dialogue..."
