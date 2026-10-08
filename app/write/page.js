@@ -401,11 +401,30 @@ export function VisualBookEditor({
     }
     if (editorRef.current) {
       const currentContent = domToChapterContent(editorRef.current);
-      if (currentContent !== value) {
+      if (currentContent !== value || !editorRef.current.innerHTML.trim()) {
         editorRef.current.innerHTML = chapterContentToHtml(value);
       }
     }
-  }, [value]);
+  }, [value, activeTab]);
+
+  const handleTabChange = (tab) => {
+    if (tab === 'preview') {
+      if (editorRef.current && !isRawMode) {
+        const currentContent = domToChapterContent(editorRef.current);
+        if (currentContent !== value && onChange) {
+          onChange(currentContent);
+        }
+      }
+    } else if (tab === 'visual') {
+      if (editorRef.current && !isRawMode) {
+        const domContent = domToChapterContent(editorRef.current);
+        if (!editorRef.current.innerHTML.trim() || domContent !== value) {
+          editorRef.current.innerHTML = chapterContentToHtml(value);
+        }
+      }
+    }
+    setActiveTab(tab);
+  };
 
   const handleEditorInput = () => {
     if (!editorRef.current) return;
@@ -518,7 +537,7 @@ export function VisualBookEditor({
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
           <button
             type="button"
-            onClick={() => setActiveTab('visual')}
+            onClick={() => handleTabChange('visual')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'visual'
                 ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs'
@@ -531,7 +550,7 @@ export function VisualBookEditor({
 
           <button
             type="button"
-            onClick={() => setActiveTab('preview')}
+            onClick={() => handleTabChange('preview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'preview'
                 ? 'bg-brand-500 text-white shadow-xs'
@@ -590,9 +609,8 @@ export function VisualBookEditor({
         </div>
       )}
 
-      {/* VIEW A: VISUAL BOOK WRITER */}
-      {activeTab === 'visual' && (
-        <div className="space-y-3">
+      {/* VIEW A: VISUAL BOOK WRITER (Always mounted to preserve DOM state & cursor) */}
+      <div className={activeTab === 'visual' ? 'space-y-3' : 'hidden'}>
           {/* Visual Toolbar */}
           <div className="p-2.5 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
             {/* Story Elements (1-Click Insertion) */}
@@ -691,7 +709,15 @@ export function VisualBookEditor({
 
               <button
                 type="button"
-                onClick={() => setIsRawMode(!isRawMode)}
+                onClick={() => {
+                  if (!isRawMode && editorRef.current) {
+                    const serialized = domToChapterContent(editorRef.current);
+                    if (onChange) onChange(serialized);
+                  } else if (isRawMode && editorRef.current) {
+                    editorRef.current.innerHTML = chapterContentToHtml(value);
+                  }
+                  setIsRawMode(!isRawMode);
+                }}
                 className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-600 shadow-2xs flex items-center gap-1 transition-all cursor-pointer"
                 title="Toggle Plain Text / Markdown Mode"
               >
@@ -720,7 +746,7 @@ export function VisualBookEditor({
                 if (onChange) onChange(e.target.value);
               }}
               placeholder={placeholder}
-              className="w-full p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm leading-relaxed"
+              className="w-full p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           ) : (
             <div className="relative">
@@ -731,7 +757,7 @@ export function VisualBookEditor({
                 onInput={handleEditorInput}
                 onPaste={handlePaste}
                 data-placeholder={placeholder}
-                className={`w-full p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500/50 font-serif text-base sm:text-lg leading-relaxed shadow-xs ${minHeight} book-manuscript-canvas`}
+                className={`w-full p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-brand-500/50 font-serif text-base sm:text-lg leading-relaxed shadow-xs text-slate-900 dark:text-slate-100 ${minHeight} book-manuscript-canvas`}
               />
             </div>
           )}
@@ -741,11 +767,9 @@ export function VisualBookEditor({
             <span>All changes are automatically synced for readers!</span>
           </div>
         </div>
-      )}
 
       {/* VIEW B: LIVE READER PREVIEW */}
-      {activeTab === 'preview' && (
-        <div className="space-y-4">
+      <div className={activeTab === 'preview' ? 'space-y-4' : 'hidden'}>
           {/* Reader Preference Bar */}
           <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -938,7 +962,6 @@ export function VisualBookEditor({
             )}
           </div>
         </div>
-      )}
 
       {/* MODAL: ADD ILLUSTRATION */}
       {imageModalOpen && (
@@ -1018,7 +1041,7 @@ export function VisualBookEditor({
                   value={imgUrl}
                   onChange={(e) => setImgUrl(e.target.value)}
                   required
-                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -1029,7 +1052,7 @@ export function VisualBookEditor({
                   placeholder="e.g. The Moonlit Gateway"
                   value={imgCaption}
                   onChange={(e) => setImgCaption(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -1658,7 +1681,7 @@ export default function AuthorStudio() {
                                   setExistingChapterTitle(`Chapter ${nextNum}: `);
                                 }
                               }}
-                              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-sm font-bold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-sm font-bold outline-none border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                             >
                               {myStories.map(s => (
                                 <option key={s.id} value={s.id}>
@@ -1688,7 +1711,7 @@ export default function AuthorStudio() {
                                 value={existingChapterNumber}
                                 onChange={(e) => setExistingChapterNumber(e.target.value)}
                                 required
-                                className="w-full text-base font-bold px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none"
+                                className="w-full text-base font-bold px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                               />
                             </div>
                             <div className="sm:col-span-9">
@@ -1701,7 +1724,7 @@ export default function AuthorStudio() {
                                 value={existingChapterTitle}
                                 onChange={(e) => setExistingChapterTitle(e.target.value)}
                                 required
-                                className="w-full text-sm font-bold px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none"
+                                className="w-full text-sm font-bold px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                               />
                             </div>
                           </div>
@@ -1740,7 +1763,7 @@ export default function AuthorStudio() {
                                     placeholder="Image URL or upload from device"
                                     value={p.image}
                                     onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
-                                    className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                                    className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                   />
                                   <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-600" title="Upload Page Image from Device">
                                     <Upload className="w-3 h-3" />
@@ -1758,7 +1781,7 @@ export default function AuthorStudio() {
                                   placeholder="Narration / dialogue..."
                                   value={p.text}
                                   onChange={(e) => setExistingPages(prev => prev.map((item, i) => i === idx ? { ...item, text: e.target.value } : item))}
-                                  className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                                  className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 />
                               </div>
                             ))}
@@ -1844,7 +1867,7 @@ export default function AuthorStudio() {
                         value={storyTitle}
                         onChange={(e) => setStoryTitle(e.target.value)}
                         required
-                        className="w-full text-xl font-black px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full text-xl font-black px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
                     </div>
 
@@ -1857,7 +1880,7 @@ export default function AuthorStudio() {
                         placeholder="e.g. Chapter 1: The Gathering Storm"
                         value={chapterTitle}
                         onChange={(e) => setChapterTitle(e.target.value)}
-                        className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
                     </div>
                   </div>
@@ -1947,7 +1970,7 @@ export default function AuthorStudio() {
                                   value={p.image}
                                   onChange={(e) => updatePage(idx, 'image', e.target.value)}
                                   placeholder="https://... or upload from device"
-                                  className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                                  className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 />
                                 <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-700" title="Upload from Device">
                                   <Upload className="w-3 h-3" />
@@ -1969,7 +1992,7 @@ export default function AuthorStudio() {
                                 value={p.caption}
                                 onChange={(e) => updatePage(idx, 'caption', e.target.value)}
                                 placeholder="e.g. In the deep enchanted forest"
-                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                               />
                             </div>
 
@@ -1980,7 +2003,7 @@ export default function AuthorStudio() {
                                 value={p.text}
                                 onChange={(e) => updatePage(idx, 'text', e.target.value)}
                                 placeholder="Story dialogue or narrative text for this page..."
-                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none"
+                                className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                               />
                             </div>
                           </div>
@@ -2005,7 +2028,7 @@ export default function AuthorStudio() {
                   <select 
                     value={publishStatus}
                     onChange={(e) => setPublishStatus(e.target.value)}
-                    className="w-full sm:w-auto p-2.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none cursor-pointer"
+                    className="w-full sm:w-auto p-2.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold outline-none cursor-pointer text-slate-900 dark:text-white"
                   >
                     <option value="published">Publish Immediately</option>
                     <option value="draft">Save as Draft</option>
@@ -2074,7 +2097,7 @@ export default function AuthorStudio() {
                         setMaturity('everyone');
                       }
                     }}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-brand-600 dark:text-brand-400 outline-none"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-brand-600 dark:text-brand-400 outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     <option value="3+">👶 3+ (Kids & Toddlers)</option>
                     <option value="7+">🧒 7+ (Children & Family)</option>
@@ -2222,7 +2245,7 @@ export default function AuthorStudio() {
                           setDeviceCoverInfo(null);
                         }}
                         placeholder="https://images.unsplash.com/..."
-                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
                     </div>
                   )}
@@ -2259,7 +2282,7 @@ export default function AuthorStudio() {
                     placeholder="Hook readers in 2-3 sentences..."
                     value={storyDescription}
                     onChange={(e) => setStoryDescription(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
@@ -2269,7 +2292,7 @@ export default function AuthorStudio() {
                   <select 
                     value={selectedGenre}
                     onChange={(e) => setSelectedGenre(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                   >
                     {genres.map(g => (
                       <option key={g.id} value={g.slug}>{g.name}</option>
@@ -2283,7 +2306,7 @@ export default function AuthorStudio() {
                   <select 
                     value={maturity}
                     onChange={(e) => setMaturity(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                   >
                     <option value="everyone">Everyone (All Ages)</option>
                     <option value="mature">Mature 18+ (Age Gate Triggered)</option>
@@ -2297,7 +2320,8 @@ export default function AuthorStudio() {
                     type="text" 
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs outline-none"
+                    placeholder="e.g. fantasy, romance, enemies-to-lovers"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
@@ -2307,7 +2331,7 @@ export default function AuthorStudio() {
                   <select 
                     value={copyright}
                     onChange={(e) => setCopyright(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                    className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                   >
                     <option value="All Rights Reserved">All Rights Reserved</option>
                     <option value="Creative Commons (CC-BY)">Creative Commons</option>
@@ -2584,7 +2608,7 @@ export default function AuthorStudio() {
                       value={modalChapterNumber}
                       onChange={(e) => setModalChapterNumber(e.target.value)}
                       required
-                      className="w-full text-base font-bold px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full text-base font-bold px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                     />
                   </div>
                   <div className="sm:col-span-9">
@@ -2597,7 +2621,7 @@ export default function AuthorStudio() {
                       value={modalChapterTitle}
                       onChange={(e) => setModalChapterTitle(e.target.value)}
                       required
-                      className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -2634,7 +2658,7 @@ export default function AuthorStudio() {
                             placeholder="Image URL or upload from device"
                             value={p.image}
                             onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, image: e.target.value } : item))}
-                            className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                            className="flex-1 p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                           />
                           <label className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 text-brand-600 dark:text-brand-400 font-bold text-xs flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-600" title="Upload Page Image from Device">
                             <Upload className="w-3 h-3" />
@@ -2652,7 +2676,7 @@ export default function AuthorStudio() {
                           placeholder="Narration / dialogue..."
                           value={p.text}
                           onChange={(e) => setModalPages(prev => prev.map((item, i) => i === idx ? { ...item, text: e.target.value } : item))}
-                          className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border outline-none"
+                          className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         />
                       </div>
                     ))}
