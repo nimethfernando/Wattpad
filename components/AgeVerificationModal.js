@@ -48,7 +48,15 @@ export default function AgeVerificationModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [ageVerificationModalOpen, setAgeVerificationModalOpen, isMandatory]);
 
-  if (!ageVerificationModalOpen) return null;
+  // Automatically dismiss age modal if user logs out or is not logged in
+  useEffect(() => {
+    if (!user && ageVerificationModalOpen) {
+      setAgeVerificationModalOpen(false);
+    }
+  }, [user, ageVerificationModalOpen, setAgeVerificationModalOpen]);
+
+  // Never render age verification modal for anonymous / logged-out visitors
+  if (!ageVerificationModalOpen || !user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

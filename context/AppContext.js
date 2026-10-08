@@ -94,6 +94,7 @@ export function AppProvider({ children }) {
   // User-Scoped Data Isolation State & Refs
   const activeUserKeyRef = useRef(null);
   const isSwitchingUserRef = useRef(false);
+  const isLoggingOutRef = useRef(false);
 
   // Load isolated user data (Library, Reading Progress, Wishlist, Lists, Streaks)
   const loadUserDataForUser = (userKey) => {
@@ -253,6 +254,10 @@ export function AppProvider({ children }) {
 
   // Automatically sync NextAuth Google/Facebook session to AppContext user
   useEffect(() => {
+    // If user explicitly logged out, ignore lingering NextAuth session
+    if (isLoggingOutRef.current) return;
+    if (typeof window !== 'undefined' && sessionStorage.getItem('avora_logged_out') === 'true') return;
+
     if (sessionStatus === 'authenticated' && session?.user) {
       const email = session.user.email;
       if (email && (!user || user.email !== email)) {
@@ -346,6 +351,16 @@ export function AppProvider({ children }) {
       }
     }
   }, [session, sessionStatus, user]);
+
+  // Reset logout lock when NextAuth session completes unauthenticated state
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      isLoggingOutRef.current = false;
+      if (typeof window !== 'undefined') {
+        try { sessionStorage.removeItem('avora_logged_out'); } catch (e) {}
+      }
+    }
+  }, [sessionStatus]);
 
   // Moderation & Audit Log
   const [reports, setReports] = useState([]);
@@ -1832,6 +1847,10 @@ export function AppProvider({ children }) {
 
   // Auth Modal & OAuth methods
   const openAuthModal = (mode = 'login', message = '', action = null) => {
+    isLoggingOutRef.current = false;
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.removeItem('avora_logged_out'); } catch (e) {}
+    }
     setAuthModalMode(mode);
     setAuthModalMessage(message);
     setPendingAction(action ? () => action : null);
@@ -1851,6 +1870,10 @@ export function AppProvider({ children }) {
 
   // 1. Google Authentication (Automatically triggers Google Account Chooser popup via NextAuth with resilient demo fallback)
   const loginWithGoogle = async (customUser = null) => {
+    isLoggingOutRef.current = false;
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.removeItem('avora_logged_out'); } catch (e) {}
+    }
     if (customUser && customUser.email) {
       const email = customUser.email.trim();
       const name = customUser.name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ');
@@ -2015,6 +2038,10 @@ export function AppProvider({ children }) {
 
   // 3. Email Authentication
   const loginWithEmail = (email, password) => {
+    isLoggingOutRef.current = false;
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.removeItem('avora_logged_out'); } catch (e) {}
+    }
     const cleanEmail = (email || '').trim().toLowerCase();
     const username = cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail;
     const isSuperAdmin = cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle';
@@ -2113,6 +2140,10 @@ export function AppProvider({ children }) {
   };
 
   const registerWithEmail = ({ username, email, password, birthdate, age = null, experienceMode = 'mature', isAgeConfirmed }) => {
+    isLoggingOutRef.current = false;
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.removeItem('avora_logged_out'); } catch (e) {}
+    }
     const cleanEmail = (email || '').trim().toLowerCase();
     const isAdmin = isUserAdmin(cleanEmail);
     const calculatedAge = age !== null ? age : (birthdate ? calculateAgeFromDob(birthdate) : null);
@@ -2181,7 +2212,9 @@ export function AppProvider({ children }) {
 
   // Logout & Clear Session
   const logoutUser = () => {
+    isLoggingOutRef.current = true;
     isSwitchingUserRef.current = true;
+    setAgeVerificationModalOpen(false);
     setUser(null);
     setLibrary([]);
     setWishlist([]);
@@ -2198,17 +2231,22 @@ export function AppProvider({ children }) {
 
     if (typeof window !== 'undefined') {
       try {
+        sessionStorage.setItem('avora_logged_out', 'true');
         localStorage.removeItem('avora_user');
+        localStorage.removeItem('avora_user_preferences');
         document.cookie = 'avora_session=; path=/; max-age=0';
+        document.cookie = 'avora_dob=; path=/; max-age=0';
+        document.cookie = 'avora_age=; path=/; max-age=0';
+        document.cookie = 'avora_experience_mode=; path=/; max-age=0';
       } catch (e) {
         console.error("Could not clear user session", e);
       }
     }
-    signOut({ redirect: false });
+    signOut({ redirect: false }).catch(() => {});
     setHomeFeedViewMode('landing');
     setTimeout(() => {
       isSwitchingUserRef.current = false;
-    }, 80);
+    }, 200);
   };
 
   // Public Conversations Wall
