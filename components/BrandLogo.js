@@ -1,6 +1,14 @@
 'use client';
+import { useApp } from '@/context/AppContext';
 
 export default function BrandLogo({ size = 'default', showText = true, className = '' }) {
+  const app = useApp();
+  const branding = app?.cmsConfig?.branding;
+
+  const logoSrc = branding?.logoUrl || '/icon-192.png';
+  const brandName = branding?.brandName || 'Avora';
+  const brandSubtitle = branding?.brandSubtitle || 'Library';
+
   // Size mapping for icon and typography
   const sizeMap = {
     sm: {
@@ -25,17 +33,17 @@ export default function BrandLogo({ size = 'default', showText = true, className
   return (
     <div className={`flex items-center gap-2 sm:gap-2.5 ${className}`}>
       <img 
-        src="/icon-192.png" 
-        alt="Avora Library" 
+        src={logoSrc} 
+        alt={`${brandName} ${brandSubtitle}`} 
         className={`${currentSize.icon} object-contain transition-transform group-hover:scale-105 shrink-0`} 
       />
       {showText && (
         <div className="flex flex-col select-none leading-none justify-center">
           <span className={`font-brand font-black ${currentSize.title} tracking-tight text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors`}>
-            Avora
+            {brandName}
           </span>
           <span className={`font-brand font-extrabold uppercase ${currentSize.subtitle} text-brand-600 dark:text-brand-400`}>
-            Library
+            {brandSubtitle}
           </span>
         </div>
       )}

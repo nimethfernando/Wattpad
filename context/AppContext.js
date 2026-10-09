@@ -72,7 +72,15 @@ export function AppProvider({ children }) {
   const [genres, setGenres] = useState(initialGenres);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
   const [contests, setContests] = useState(initialContests);
-  const [blogPosts, setBlogPosts] = useState(initialBlogPosts);
+  const [blogPosts, setBlogPosts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_blog_posts');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return initialBlogPosts;
+  });
   const [communitySpaces, setCommunitySpaces] = useState(initialCommunitySpaces);
   const [readerReactions, setReaderReactions] = useState(initialReaderReactions);
 
@@ -614,8 +622,26 @@ export function AppProvider({ children }) {
   // Notifications
   const [notifications, setNotifications] = useState([]);
 
-  // CMS Content Management (PWA, QR Code, Footer Socials, Pages)
-  const [cmsConfig, setCmsConfig] = useState(initialCmsConfig);
+  // CMS Content Management (Branding, Logo, PWA, QR Code, Footer Socials, Pages)
+  const [cmsConfig, setCmsConfig] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_cms_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return {
+            ...initialCmsConfig,
+            ...parsed,
+            branding: {
+              ...initialCmsConfig.branding,
+              ...(parsed.branding || {})
+            }
+          };
+        }
+      } catch (e) {}
+    }
+    return initialCmsConfig;
+  });
 
   // Theme Syncing to HTML class
   useEffect(() => {
@@ -2983,6 +3009,7 @@ export function AppProvider({ children }) {
       const next = {
         ...prev,
         ...updates,
+        branding: updates.branding ? { ...prev.branding, ...updates.branding } : prev.branding,
         pwaSection: updates.pwaSection ? { ...prev.pwaSection, ...updates.pwaSection } : prev.pwaSection,
         socialLinks: updates.socialLinks ? { ...prev.socialLinks, ...updates.socialLinks } : prev.socialLinks,
         footerConfig: updates.footerConfig ? { ...prev.footerConfig, ...updates.footerConfig } : prev.footerConfig,
@@ -3000,7 +3027,63 @@ export function AppProvider({ children }) {
       }
       return next;
     });
-    addAuditLog("CMS Content Updated", "Website content, PWA banner, or social links modified");
+    addAuditLog("CMS Content Updated", "Website content, logo branding, PWA banner, or social links modified");
+  };
+
+  // Blog Articles CRUD Management
+  const createBlogPost = (newPost) => {
+    const post = {
+      id: Date.now(),
+      title: newPost.title || "Untitled Editorial",
+      slug: newPost.slug || (newPost.title || "untitled").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      excerpt: newPost.excerpt || "",
+      content: newPost.content || "",
+      author: newPost.author || (user?.name || "Avora Editorial"),
+      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      readTime: newPost.readTime || "5 min read",
+      cover: newPost.cover || "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80",
+      category: newPost.category || "Editorial"
+    };
+    setBlogPosts(prev => {
+      const updated = [post, ...prev];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_blog_posts', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+    addAuditLog("Blog Post Created", `Created editorial article "${post.title}"`);
+    return post;
+  };
+
+  const updateBlogPost = (id, updatedFields) => {
+    setBlogPosts(prev => {
+      const updated = prev.map(p => p.id === id ? { ...p, ...updatedFields } : p);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_blog_posts', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+    addAuditLog("Blog Post Updated", `Edited editorial article ID ${id}`);
+  };
+
+  const deleteBlogPost = (id) => {
+    setBlogPosts(prev => {
+      const target = prev.find(p => p.id === id);
+      const updated = prev.filter(p => p.id !== id);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_blog_posts', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      if (target) {
+        addAuditLog("Blog Post Deleted", `Deleted article "${target.title}"`);
+      }
+      return updated;
+    });
   };
 
   const resetCmsConfig = () => {
@@ -3394,6 +3477,11 @@ export function AppProvider({ children }) {
       setCmsConfig,
       updateCmsConfig,
       resetCmsConfig,
+      blogPosts,
+      setBlogPosts,
+      createBlogPost,
+      updateBlogPost,
+      deleteBlogPost,
       ageVerificationModalOpen,
       setAgeVerificationModalOpen,
       updateUserAgeAndDob,

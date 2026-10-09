@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -50,7 +50,14 @@ import {
   Building2,
   Upload,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  Newspaper,
+  Palette,
+  Eye,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { processImageFile } from '@/lib/imageUtils';
 
@@ -95,14 +102,159 @@ export default function AdminPanel() {
     approve18PlusRequest,
     reject18PlusRequest,
     parentalPin,
-    setParentalPin
+    setParentalPin,
+    blogPosts,
+    createBlogPost,
+    updateBlogPost,
+    deleteBlogPost
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications' | 'cms'
+  const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'publish' | 'blogs' | 'cms' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications'
   const [reportFilter, setReportFilter] = useState('all'); // 'all' | 'pending' | 'resolved'
 
+  // Admin Navigation Scroll Controls
+  const adminNavRef = useRef(null);
+  const [canScrollAdminLeft, setCanScrollAdminLeft] = useState(false);
+  const [canScrollAdminRight, setCanScrollAdminRight] = useState(true);
+
+  const checkAdminNavScroll = useCallback(() => {
+    const el = adminNavRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollAdminLeft(scrollLeft > 6);
+    setCanScrollAdminRight(scrollLeft < scrollWidth - clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = adminNavRef.current;
+    if (!el) return;
+    checkAdminNavScroll();
+
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => checkAdminNavScroll());
+      resizeObserver.observe(el);
+    }
+    window.addEventListener('resize', checkAdminNavScroll);
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', checkAdminNavScroll);
+    };
+  }, [checkAdminNavScroll]);
+
+  const handleScrollAdminTabs = (direction) => {
+    if (!adminNavRef.current) return;
+    const scrollAmount = Math.max(260, Math.floor(adminNavRef.current.clientWidth * 0.7));
+    adminNavRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+    setTimeout(checkAdminNavScroll, 350);
+  };
+
+  const handleAdminTabWheel = (e) => {
+    if (!adminNavRef.current) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaY !== 0) {
+      adminNavRef.current.scrollLeft += e.deltaY;
+      checkAdminNavScroll();
+    }
+  };
+
+  // Auto-scroll active tab into view
+  useEffect(() => {
+    if (!activeTab || !adminNavRef.current) return;
+    const target = adminNavRef.current.querySelector(`[data-admin-tab="${activeTab}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      setTimeout(checkAdminNavScroll, 350);
+    }
+  }, [activeTab, checkAdminNavScroll]);
+
+  // Blog Articles Management State
+  const [blogModalOpen, setBlogModalOpen] = useState(false);
+  const [editingBlogPost, setEditingBlogPost] = useState(null);
+  const [blogForm, setBlogForm] = useState({
+    title: '',
+    slug: '',
+    category: 'Writing Advice',
+    author: 'Editorial Team',
+    readTime: '5 min read',
+    cover: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80',
+    excerpt: '',
+    content: ''
+  });
+
+  const handleOpenNewBlog = () => {
+    setEditingBlogPost(null);
+    setBlogForm({
+      title: '',
+      slug: '',
+      category: 'Writing Advice',
+      author: user?.name || 'Avora Editorial',
+      readTime: '5 min read',
+      cover: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80',
+      excerpt: '',
+      content: ''
+    });
+    setBlogModalOpen(true);
+  };
+
+  const handleEditBlog = (post) => {
+    setEditingBlogPost(post);
+    setBlogForm({
+      title: post.title || '',
+      slug: post.slug || '',
+      category: post.category || 'Writing Advice',
+      author: post.author || 'Editorial Team',
+      readTime: post.readTime || '5 min read',
+      cover: post.cover || '',
+      excerpt: post.excerpt || '',
+      content: post.content || ''
+    });
+    setBlogModalOpen(true);
+  };
+
+  const handleSaveBlogPost = (e) => {
+    e.preventDefault();
+    if (!blogForm.title.trim()) {
+      alert("Please enter an article title.");
+      return;
+    }
+    const slug = (blogForm.slug || blogForm.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const payload = {
+      ...blogForm,
+      slug,
+      date: editingBlogPost ? editingBlogPost.date : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    };
+
+    if (editingBlogPost) {
+      updateBlogPost(editingBlogPost.id, payload);
+    } else {
+      createBlogPost(payload);
+    }
+    setBlogModalOpen(false);
+    setEditingBlogPost(null);
+  };
+
+  const handleDeleteBlog = (id, title) => {
+    if (confirm(`Are you sure you want to delete article "${title}"?`)) {
+      deleteBlogPost(id);
+    }
+  };
+
+  const handleBlogCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await processImageFile(file, 1200, 800, 0.85);
+      setBlogForm(prev => ({ ...prev, cover: dataUrl }));
+    } catch (err) {
+      alert("Failed to process cover image: " + err.message);
+    }
+  };
+
   // CMS Content Management State
-  const [cmsSubTab, setCmsSubTab] = useState('pwa'); // 'pwa' | 'social' | 'pages'
+  const [cmsSubTab, setCmsSubTab] = useState('branding'); // 'branding' | 'blog' | 'pwa' | 'social' | 'pages'
   const [cmsSelectedPage, setCmsSelectedPage] = useState('about'); // 'about' | 'terms' | 'privacy' | 'guidelines' | 'contact' | 'hero'
   const [cmsForm, setCmsForm] = useState(cmsConfig || initialCmsConfig);
   const [cmsSaveNotice, setCmsSaveNotice] = useState(false);
@@ -135,6 +287,27 @@ export default function AdminPanel() {
   const previewQrImageUrl = cmsForm?.pwaSection?.qrCodeType === 'custom_image' && cmsForm?.pwaSection?.qrCodeImageUrl
     ? cmsForm.pwaSection.qrCodeImageUrl
     : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(cmsForm?.pwaSection?.qrTargetUrl || 'https://avoralibrary.com')}&margin=10`;
+
+  const updateBrandingField = (field, value) => {
+    setCmsForm(prev => ({
+      ...prev,
+      branding: {
+        ...(prev?.branding || initialCmsConfig.branding || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await processImageFile(file, 400, 400, 0.9);
+      updateBrandingField('logoUrl', dataUrl);
+    } catch (err) {
+      alert("Failed to process logo image: " + err.message);
+    }
+  };
 
   const updatePwaField = (field, value) => {
     setCmsForm(prev => ({
@@ -1022,7 +1195,7 @@ export default function AdminPanel() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Avora Library Admin Console</h1>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{cmsConfig?.branding?.brandName || 'Avora'} {cmsConfig?.branding?.brandSubtitle || 'Library'} Admin Console</h1>
               <p className="text-xs text-slate-400">Content moderation, financial transactions, user roles, feature flags, and audit ledger</p>
             </div>
           </div>
@@ -1038,112 +1211,196 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Tab Navigation Controls */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mt-6 overflow-x-auto no-scrollbar scrollbar-none">
-          <button 
-            onClick={() => setActiveTab('stories')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'stories' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
+        {/* Quick Jump & Navigation Bar Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-6 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quick Jump Tab:</span>
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-purple-600 dark:text-purple-400 outline-none cursor-pointer shadow-xs"
+            >
+              <option value="stories">📚 Stories &amp; Originals ({stories.length})</option>
+              <option value="publish">✨ + Publish Story</option>
+              <option value="blogs">📝 Blog &amp; Editorial Articles ({blogPosts?.length || 0})</option>
+              <option value="cms">🎨 CMS, Logo &amp; Website Content</option>
+              <option value="users">👥 User Moderation ({registeredUsers?.length || 0})</option>
+              <option value="moderation">🚨 Reports Queue ({reports.filter(r => r.status === 'pending').length} pending)</option>
+              <option value="payments">💳 Payments &amp; VIP Ledger ({transactions?.length || 0})</option>
+              <option value="genres">🏷️ Genre Library ({genres.length})</option>
+              <option value="authors">✍️ Author Persona</option>
+              <option value="audit">📜 Audit Log ({auditLogs.length})</option>
+              <option value="settings">⚙️ Platform Settings &amp; Flags</option>
+              <option value="email_notifications">📧 DB &amp; Email Dispatcher</option>
+            </select>
+          </div>
+          <span className="text-[11px] text-slate-400 hidden sm:inline">Use arrows or mouse wheel to scroll tabs</span>
+        </div>
+
+        {/* Tab Navigation Controls with Horizontal Scroll Chevrons & Edge Fades */}
+        <div className="relative group/admintabs border-b border-slate-200 dark:border-slate-800 pb-2">
+          {/* Left Scroll Navigation Button */}
+          {canScrollAdminLeft && (
+            <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-8 bg-gradient-to-r from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
+              <button
+                type="button"
+                onClick={() => handleScrollAdminTabs('left')}
+                aria-label="Scroll admin tabs left"
+                title="Scroll left"
+                className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 dark:hover:bg-purple-600 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Right Scroll Navigation Button */}
+          {canScrollAdminRight && (
+            <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-8 bg-gradient-to-l from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
+              <button
+                type="button"
+                onClick={() => handleScrollAdminTabs('right')}
+                aria-label="Scroll admin tabs right"
+                title="Scroll right"
+                className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 dark:hover:bg-purple-600 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          <div
+            ref={adminNavRef}
+            onScroll={checkAdminNavScroll}
+            onWheel={handleAdminTabWheel}
+            className="flex items-center gap-2 overflow-x-auto scroll-smooth no-scrollbar scrollbar-none py-1"
           >
-            Stories & Originals ({stories.length})
-          </button>
-          <button 
-            onClick={() => {
-              setActiveTab('publish');
-              setPublishSuccessNotice(null);
-            }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              activeTab === 'publish' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 font-extrabold'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            + Publish Story
-          </button>
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            User Moderation ({registeredUsers?.length || 0})
-          </button>
-          <button 
-            onClick={() => setActiveTab('moderation')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span>Reports Queue</span>
-            {reports.filter(r => r.status === 'pending').length > 0 ? (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
-                {reports.filter(r => r.status === 'pending').length} pending
-              </span>
-            ) : (
-              <span className="text-[10px] opacity-75">({reports.length})</span>
-            )}
-          </button>
-          <button 
-            onClick={() => setActiveTab('payments')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'payments' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            Payments & VIP Ledger ({transactions?.length || 0})
-          </button>
-          <button 
-            onClick={() => setActiveTab('genres')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'genres' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            Genre Library ({genres.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('authors')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'authors' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            Author Persona
-          </button>
-          <button 
-            onClick={() => setActiveTab('audit')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'audit' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            Audit Log ({auditLogs.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            Platform Settings & Feature Flags
-          </button>
-          <button 
-            onClick={() => setActiveTab('cms')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              activeTab === 'cms' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            CMS & Website Content
-          </button>
-          <button 
-            onClick={() => {
-              setActiveTab('email_notifications');
-              fetchEmailLogsAndStatus();
-            }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              activeTab === 'email_notifications' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Mail className="w-3.5 h-3.5" />
-            DB & Email Dispatcher
-          </button>
+            <button 
+              data-admin-tab="stories"
+              onClick={() => setActiveTab('stories')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'stories' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Stories &amp; Originals ({stories.length})
+            </button>
+            <button 
+              data-admin-tab="publish"
+              onClick={() => {
+                setActiveTab('publish');
+                setPublishSuccessNotice(null);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'publish' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 font-extrabold'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              + Publish Story
+            </button>
+            <button 
+              data-admin-tab="blogs"
+              onClick={() => setActiveTab('blogs')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'blogs' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              Blog &amp; Articles ({blogPosts?.length || 0})
+            </button>
+            <button 
+              data-admin-tab="cms"
+              onClick={() => setActiveTab('cms')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'cms' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              CMS, Logo &amp; Branding
+            </button>
+            <button 
+              data-admin-tab="users"
+              onClick={() => setActiveTab('users')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              User Moderation ({registeredUsers?.length || 0})
+            </button>
+            <button 
+              data-admin-tab="moderation"
+              onClick={() => setActiveTab('moderation')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <span>Reports Queue</span>
+              {reports.filter(r => r.status === 'pending').length > 0 ? (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
+                  {reports.filter(r => r.status === 'pending').length} pending
+                </span>
+              ) : (
+                <span className="text-[10px] opacity-75">({reports.length})</span>
+              )}
+            </button>
+            <button 
+              data-admin-tab="payments"
+              onClick={() => setActiveTab('payments')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'payments' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Payments &amp; VIP Ledger ({transactions?.length || 0})
+            </button>
+            <button 
+              data-admin-tab="genres"
+              onClick={() => setActiveTab('genres')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'genres' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Genre Library ({genres.length})
+            </button>
+            <button 
+              data-admin-tab="authors"
+              onClick={() => setActiveTab('authors')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'authors' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Author Persona
+            </button>
+            <button 
+              data-admin-tab="audit"
+              onClick={() => setActiveTab('audit')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'audit' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Audit Log ({auditLogs.length})
+            </button>
+            <button 
+              data-admin-tab="settings"
+              onClick={() => setActiveTab('settings')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Platform Settings &amp; Flags
+            </button>
+            <button 
+              data-admin-tab="email_notifications"
+              onClick={() => {
+                setActiveTab('email_notifications');
+                fetchEmailLogsAndStatus();
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'email_notifications' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              DB &amp; Email Dispatcher
+            </button>
+          </div>
         </div>
 
         {/* TAB 1: STORIES & ORIGINALS MANAGEMENT */}
@@ -3043,6 +3300,126 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* TAB: BLOG & EDITORIAL ARTICLES */}
+        {activeTab === 'blogs' && (
+          <div className="mt-8 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                    <Newspaper className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xl font-black">Blog &amp; Editorial Management ({blogPosts?.length || 0})</h3>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Publish and manage platform editorials, author spotlights, serialization advice, and news updates.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/blog"
+                  target="_blank"
+                  className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  View Live Blog
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleOpenNewBlog}
+                  className="px-5 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  + Write New Article
+                </button>
+              </div>
+            </div>
+
+            {/* Blog Articles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(blogPosts || []).map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between group hover:border-purple-500/40 transition-all"
+                >
+                  <div className="relative h-44 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img
+                      src={post.cover}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80"; }}
+                    />
+                    <span className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white">
+                      {post.category}
+                    </span>
+                  </div>
+
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1.5 font-semibold">
+                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {post.date}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {post.readTime}</span>
+                      </div>
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white line-clamp-2">
+                        {post.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <Link
+                        href={`/blog/${post.slug}`}
+                        target="_blank"
+                        className="text-xs font-bold text-brand-500 hover:underline flex items-center gap-1"
+                      >
+                        Read Post <ExternalLink className="w-3 h-3" />
+                      </Link>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleEditBlog(post)}
+                          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 text-xs font-bold transition-all cursor-pointer"
+                          title="Edit article"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBlog(post.id, post.title)}
+                          className="p-2 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs font-bold transition-all cursor-pointer"
+                          title="Delete article"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {(!blogPosts || blogPosts.length === 0) && (
+              <div className="bg-white dark:bg-slate-900 p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800">
+                <Newspaper className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                <h4 className="font-black text-base">No Blog Articles Published Yet</h4>
+                <p className="text-xs text-slate-400 mt-1">Write your first platform editorial or announcement.</p>
+                <button
+                  type="button"
+                  onClick={handleOpenNewBlog}
+                  className="mt-4 px-5 py-2.5 rounded-full bg-brand-500 text-white font-bold text-xs"
+                >
+                  + Write Article
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* TAB: CMS & WEBSITE CONTENT MANAGEMENT */}
         {activeTab === 'cms' && (
           <div className="mt-8 space-y-6">
@@ -3093,32 +3470,56 @@ export default function AdminPanel() {
             <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
               <button
                 type="button"
+                onClick={() => setCmsSubTab('branding')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
+                  cmsSubTab === 'branding'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Palette className="w-3.5 h-3.5 text-amber-400" />
+                Logo &amp; Brand Identity
+              </button>
+              <button
+                type="button"
+                onClick={() => setCmsSubTab('blog')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
+                  cmsSubTab === 'blog'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Newspaper className="w-3.5 h-3.5 text-purple-400" />
+                Blog &amp; Editorial Articles ({blogPosts?.length || 0})
+              </button>
+              <button
+                type="button"
                 onClick={() => setCmsSubTab('pwa')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                   cmsSubTab === 'pwa'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
-                PWA Banner & QR Code
+                PWA Banner &amp; QR Code
               </button>
               <button
                 type="button"
                 onClick={() => setCmsSubTab('social')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                   cmsSubTab === 'social'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
                 }`}
               >
                 <Share2 className="w-3.5 h-3.5" />
-                Footer & Social Links
+                Footer &amp; Social Links
               </button>
               <button
                 type="button"
                 onClick={() => setCmsSubTab('pages')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                   cmsSubTab === 'pages'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -3128,6 +3529,253 @@ export default function AdminPanel() {
                 Website Pages Content
               </button>
             </div>
+
+            {/* SUB-TAB 0: LOGO & BRAND IDENTITY */}
+            {cmsSubTab === 'branding' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column: Form Controls */}
+                  <div className="lg:col-span-7 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                      <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h4 className="font-black text-sm">Brand Identity &amp; Logo Configuration</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Update the platform logo, brand name, and subtitle displayed across the navbar, footer, auth screens, and PWA icon.
+                        </p>
+                      </div>
+
+                      <div className="space-y-4 text-xs">
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Brand Name (Navbar Main Text)
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsForm?.branding?.brandName ?? 'Avora'}
+                            onChange={(e) => updateBrandingField('brandName', e.target.value)}
+                            placeholder="Avora"
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500 font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Brand Subtitle (Orange Accent Text)
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsForm?.branding?.brandSubtitle ?? 'Library'}
+                            onChange={(e) => updateBrandingField('brandSubtitle', e.target.value)}
+                            placeholder="Library"
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500 font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Site Tagline / Headline
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsForm?.branding?.siteTagline ?? 'Serialized Stories & Community Reading'}
+                            onChange={(e) => updateBrandingField('siteTagline', e.target.value)}
+                            placeholder="Serialized Stories & Community Reading"
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500"
+                          />
+                        </div>
+
+                        {/* Logo Upload & URL */}
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">
+                            Logo Icon / Emblem
+                          </label>
+                          
+                          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                            <label className="px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 font-bold text-xs border border-purple-200 dark:border-purple-800 flex items-center gap-2 cursor-pointer transition-all">
+                              <Upload className="w-4 h-4" />
+                              <span>Upload New Logo File</span>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleLogoUpload} 
+                                className="hidden" 
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => updateBrandingField('logoUrl', '/icon-192.png')}
+                              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-semibold cursor-pointer"
+                            >
+                              Reset to Default Owl Icon
+                            </button>
+                          </div>
+
+                          <div className="mt-3">
+                            <label className="block font-semibold text-slate-400 text-[11px] mb-1">
+                              Or Logo Image URL (PNG / SVG / HTTPS)
+                            </label>
+                            <input
+                              type="text"
+                              value={cmsForm?.branding?.logoUrl ?? '/icon-192.png'}
+                              onChange={(e) => updateBrandingField('logoUrl', e.target.value)}
+                              placeholder="/icon-192.png"
+                              className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-purple-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Live Header & Logo Preview Card */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <span className="text-xs font-black text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5" /> Live Navbar Preview
+                        </span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full">
+                          Real-Time
+                        </span>
+                      </div>
+
+                      {/* Dark Mode Live Simulation */}
+                      <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img 
+                            src={cmsForm?.branding?.logoUrl || '/icon-192.png'} 
+                            alt="Logo preview" 
+                            className="h-9 w-auto object-contain"
+                            onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
+                          />
+                          <div className="flex flex-col leading-none">
+                            <span className="font-brand font-black text-xl tracking-tight text-white">
+                              {cmsForm?.branding?.brandName || 'Avora'}
+                            </span>
+                            <span className="font-brand font-extrabold uppercase text-[10px] tracking-[0.24em] text-brand-400 mt-0.5">
+                              {cmsForm?.branding?.brandSubtitle || 'Library'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">Dark Preview</span>
+                      </div>
+
+                      {/* Light Mode Live Simulation */}
+                      <div className="bg-white text-slate-900 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img 
+                            src={cmsForm?.branding?.logoUrl || '/icon-192.png'} 
+                            alt="Logo preview light" 
+                            className="h-9 w-auto object-contain"
+                            onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
+                          />
+                          <div className="flex flex-col leading-none">
+                            <span className="font-brand font-black text-xl tracking-tight text-slate-900">
+                              {cmsForm?.branding?.brandName || 'Avora'}
+                            </span>
+                            <span className="font-brand font-extrabold uppercase text-[10px] tracking-[0.24em] text-brand-600 mt-0.5">
+                              {cmsForm?.branding?.brandSubtitle || 'Library'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">Light Preview</span>
+                      </div>
+
+                      <p className="text-[11px] text-slate-400 leading-relaxed italic">
+                        Click "Save CMS Changes" at top right to apply your updated brand logo and titles across the whole website live!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 0B: BLOG ARTICLES IN CMS */}
+            {cmsSubTab === 'blog' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h4 className="font-black text-sm">Blog &amp; Editorial Articles ({blogPosts?.length || 0})</h4>
+                    <p className="text-[11px] text-slate-400">Manage all articles published on the /blog section</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewBlog}
+                    className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    + Write Article
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(blogPosts || []).map((post) => (
+                    <div
+                      key={post.id}
+                      className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+                    >
+                      <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <img
+                          src={post.cover}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80"; }}
+                        />
+                        <span className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white">
+                          {post.category}
+                        </span>
+                      </div>
+
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1 font-semibold">
+                            <span>{post.date}</span>
+                            <span>•</span>
+                            <span>{post.readTime}</span>
+                          </div>
+                          <h4 className="font-black text-xs text-slate-900 dark:text-white line-clamp-2">
+                            {post.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                            {post.excerpt}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                          <Link
+                            href={`/blog/${post.slug}`}
+                            target="_blank"
+                            className="text-xs font-bold text-brand-500 hover:underline flex items-center gap-1"
+                          >
+                            View <ExternalLink className="w-3 h-3" />
+                          </Link>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleEditBlog(post)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer"
+                              title="Edit article"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBlog(post.id, post.title)}
+                              className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs font-bold transition-all cursor-pointer"
+                              title="Delete article"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* SUB-TAB 1: PWA BANNER & QR CODE */}
             {cmsSubTab === 'pwa' && (
@@ -4856,6 +5504,207 @@ export default function AdminPanel() {
                   className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 cursor-pointer"
                 >
                   Register User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Blog Article Create & Edit Modal */}
+      {blogModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                  <Newspaper className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-slate-900 dark:text-white">
+                    {editingBlogPost ? 'Edit Blog Article' : 'Write New Blog Article'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {editingBlogPost ? 'Update editorial details and cover artwork' : 'Publish an editorial, news release, or writing craft guide'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBlogModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBlogPost} className="space-y-4 text-xs">
+              {/* Title & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Article Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 5 Pacing Secrets for Serial Fiction"
+                    value={blogForm.title}
+                    onChange={(e) => {
+                      const title = e.target.value;
+                      setBlogForm(prev => ({
+                        ...prev,
+                        title,
+                        slug: prev.slug && prev.slug !== prev.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') 
+                          ? prev.slug 
+                          : title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+                      }));
+                    }}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none text-slate-900 dark:text-white focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Category</label>
+                  <select
+                    value={blogForm.category}
+                    onChange={(e) => setBlogForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none text-slate-900 dark:text-white cursor-pointer focus:border-purple-500"
+                  >
+                    <option value="Writing Advice">Writing Advice</option>
+                    <option value="Author Spotlight">Author Spotlight</option>
+                    <option value="Industry News">Industry News</option>
+                    <option value="Editorial">Editorial</option>
+                    <option value="Platform Update">Platform Update</option>
+                    <option value="Community">Community</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Author, Read Time, Slug */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Author Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Editorial Team"
+                    value={blogForm.author}
+                    onChange={(e) => setBlogForm(prev => ({ ...prev, author: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Read Time</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5 min read"
+                    value={blogForm.readTime}
+                    onChange={(e) => setBlogForm(prev => ({ ...prev, readTime: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">URL Slug</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5-pacing-secrets"
+                    value={blogForm.slug}
+                    onChange={(e) => setBlogForm(prev => ({ ...prev, slug: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold outline-none text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Cover Image Upload & URL */}
+              <div className="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <label className="block font-bold text-slate-700 dark:text-slate-300">Article Cover Artwork</label>
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="w-32 h-20 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border border-slate-300 dark:border-slate-600 relative">
+                    {blogForm.cover ? (
+                      <img
+                        src={blogForm.cover}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80"; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 w-full space-y-2">
+                    <div className="flex gap-2 items-center">
+                      <label className="flex-1 cursor-pointer">
+                        <span className="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center">
+                          <Upload className="w-3.5 h-3.5" /> Upload Cover Image
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBlogCoverUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setBlogForm(prev => ({ ...prev, cover: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80" }))}
+                        className="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        Default Artwork
+                      </button>
+                    </div>
+
+                    <input
+                      type="url"
+                      placeholder="Or enter image URL (https://...)"
+                      value={blogForm.cover}
+                      onChange={(e) => setBlogForm(prev => ({ ...prev, cover: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium outline-none text-slate-900 dark:text-white text-[11px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Excerpt */}
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-600 dark:text-slate-300">Short Excerpt / Summary</label>
+                <textarea
+                  rows={2}
+                  placeholder="A brief 1-2 sentence teaser for cards and search..."
+                  value={blogForm.excerpt}
+                  onChange={(e) => setBlogForm(prev => ({ ...prev, excerpt: e.target.value }))}
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium outline-none text-slate-900 dark:text-white"
+                />
+              </div>
+
+              {/* Content / Body */}
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-600 dark:text-slate-300">Article Content / Body</label>
+                <textarea
+                  rows={8}
+                  placeholder="Write your article text or markdown here..."
+                  value={blogForm.content}
+                  onChange={(e) => setBlogForm(prev => ({ ...prev, content: e.target.value }))}
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-xs outline-none text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setBlogModalOpen(false)}
+                  className="py-2.5 px-5 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2.5 px-6 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {editingBlogPost ? 'Update Article' : 'Publish Article'}
                 </button>
               </div>
             </form>
