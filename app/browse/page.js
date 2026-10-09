@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -46,6 +46,38 @@ export default function BrowsePage() {
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [browseLayout, setBrowseLayout] = useState('grid'); // 'grid' | 'netflix'
 
+  // Horizontal Genre Navigation Scroll Controls
+  const genreNavRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkGenreScroll = useCallback(() => {
+    const el = genreNavRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+  }, []);
+
+  const handleScrollGenres = (direction) => {
+    if (!genreNavRef.current) return;
+    const scrollAmount = Math.max(260, Math.floor(genreNavRef.current.clientWidth * 0.7));
+    genreNavRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+    setTimeout(checkGenreScroll, 350);
+  };
+
+  const handleGenreWheel = (e) => {
+    if (!genreNavRef.current) return;
+    // Translate vertical wheel scroll to smooth horizontal scroll
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaY !== 0) {
+      genreNavRef.current.scrollLeft += e.deltaY;
+      checkGenreScroll();
+    }
+  };
+
   const activeFiltersCount = useMemo(() => {
     return [
       selectedGenre !== 'all',
@@ -64,6 +96,35 @@ export default function BrowsePage() {
   // DOB & Age Policy Enforced Collections
   const accessibleStories = useMemo(() => filterStoriesForUser(stories, user), [stories, user]);
   const accessibleGenres = useMemo(() => filterGenresForUser(genres, user), [genres, user]);
+
+  // Listen for resize and update scroll state
+  useEffect(() => {
+    const el = genreNavRef.current;
+    if (!el) return;
+    checkGenreScroll();
+    
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => checkGenreScroll());
+      resizeObserver.observe(el);
+    }
+    
+    window.addEventListener('resize', checkGenreScroll);
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', checkGenreScroll);
+    };
+  }, [checkGenreScroll, accessibleGenres]);
+
+  // Automatically scroll selected genre chip into view if active
+  useEffect(() => {
+    if (!selectedGenre || selectedGenre === 'all' || !genreNavRef.current) return;
+    const activeChip = genreNavRef.current.querySelector(`[data-genre-slug="${selectedGenre}"]`);
+    if (activeChip) {
+      activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      setTimeout(checkGenreScroll, 350);
+    }
+  }, [selectedGenre, checkGenreScroll]);
 
   const isMinorOrKidsMode = (user?.age !== undefined && user.age < 18) || user?.experienceMode === 'kids';
 
@@ -217,32 +278,72 @@ export default function BrowsePage() {
           </div>
         ) : (
           <>
-            {/* Horizontal Quick-Genre Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none py-3 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <button
-            onClick={() => { setSelectedGenre('all'); setCurrentPage(1); }}
-            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              selectedGenre === 'all'
-                ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500'
-            }`}
-          >
-            {t.allGenres || 'All Genres'}
-          </button>
-          {accessibleGenres.map(g => (
-            <button
-              key={g.id}
-              onClick={() => { setSelectedGenre(g.slug); setCurrentPage(1); }}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                selectedGenre === g.slug
-                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25'
-                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500'
-              }`}
-            >
-              {g.name}
-            </button>
-          ))}
-        </div>
+            {/* Horizontal Quick-Genre Chips with Left/Right Scroll Controls & Gradient Indicators */}
+            <div className="relative group/genres my-2 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {/* Left Scroll Navigation Button & Gradient Mask */}
+              {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-8 bg-gradient-to-r from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={() => handleScrollGenres('left')}
+                    aria-label="Scroll genres left"
+                    title="Scroll left"
+                    className="pointer-events-auto ml-1 p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-brand-500 hover:text-white hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Right Scroll Navigation Button & Gradient Mask */}
+              {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-8 bg-gradient-to-l from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={() => handleScrollGenres('right')}
+                    aria-label="Scroll genres right"
+                    title="Scroll right"
+                    className="pointer-events-auto mr-1 p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-brand-500 hover:text-white hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Scrollable Genre Chips Row */}
+              <div
+                ref={genreNavRef}
+                onScroll={checkGenreScroll}
+                onWheel={handleGenreWheel}
+                className="flex items-center gap-2 overflow-x-auto scroll-smooth no-scrollbar scrollbar-none py-3"
+              >
+                <button
+                  data-genre-slug="all"
+                  onClick={() => { setSelectedGenre('all'); setCurrentPage(1); }}
+                  className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    selectedGenre === 'all'
+                      ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25 ring-2 ring-brand-500/20'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-white'
+                  }`}
+                >
+                  {t.allGenres || 'All Genres'}
+                </button>
+                {accessibleGenres.map(g => (
+                  <button
+                    key={g.id}
+                    data-genre-slug={g.slug}
+                    onClick={() => { setSelectedGenre(g.slug); setCurrentPage(1); }}
+                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      selectedGenre === g.slug
+                        ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25 ring-2 ring-brand-500/20'
+                        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-white'
+                    }`}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            </div>
 
         {/* Mobile Filter Toggle Button */}
         <div className="flex items-center justify-between lg:hidden pt-4 pb-2">

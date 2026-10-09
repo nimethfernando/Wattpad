@@ -19,9 +19,20 @@ export const viewport = {
 };
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.avoralibrary.com'),
   title: 'Avora Library - Serialized Stories & Community Reading',
   description: 'Read and publish serialized fiction, interact with paragraph-level comments, and join passionate fandoms on mobile or desktop.',
   manifest: '/manifest.json',
+  alternates: {
+    canonical: 'https://www.avoralibrary.com',
+  },
+  openGraph: {
+    title: 'Avora Library - Serialized Stories & Community Reading',
+    description: 'Read and publish serialized fiction, interact with paragraph-level comments, and join passionate fandoms on mobile or desktop.',
+    url: 'https://www.avoralibrary.com',
+    siteName: 'Avora Library',
+    type: 'website',
+  },
   icons: {
     icon: [
       { url: '/tab-icon.png', sizes: '32x32', type: 'image/png' },
