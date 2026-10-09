@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
-import NetflixView from '@/components/NetflixView';
+import BookShowcaseView from '@/components/BookShowcaseView';
 import { useApp } from '@/context/AppContext';
 import { 
   Filter, 
@@ -21,7 +21,7 @@ import {
   BookMarked,
   Plus,
   ShieldAlert,
-  Film,
+  Layers,
   LayoutGrid
 } from 'lucide-react';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
@@ -139,7 +139,7 @@ export default function BrowsePage() {
                 onClick={() => setBrowseLayout('grid')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   browseLayout === 'grid'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    ? 'bg-brand-500 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -148,16 +148,15 @@ export default function BrowsePage() {
               </button>
               <button
                 type="button"
-                onClick={() => setBrowseLayout('netflix')}
+                onClick={() => setBrowseLayout('showcase')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  browseLayout === 'netflix'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-rose-500'
+                  browseLayout === 'showcase' || browseLayout === 'netflix'
+                    ? 'bg-brand-500 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-brand-500'
                 }`}
               >
-                <Film className="w-3.5 h-3.5" />
-                <span>Netflix Rows</span>
-                <span className="px-1.5 py-0.2 bg-rose-500 text-[9px] text-white rounded-full font-black uppercase">HOT</span>
+                <Layers className="w-3.5 h-3.5" />
+                <span>Category Shelves</span>
               </button>
             </div>
 
@@ -196,9 +195,9 @@ export default function BrowsePage() {
           </div>
         </div>
 
-        {browseLayout === 'netflix' ? (
+        {(browseLayout === 'showcase' || browseLayout === 'netflix') ? (
           <div className="-mx-4 sm:-mx-6 lg:-mx-8 mt-6 rounded-3xl overflow-hidden shadow-2xl">
-            <NetflixView />
+            <BookShowcaseView />
           </div>
         ) : (
           <>

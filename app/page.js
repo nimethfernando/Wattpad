@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HomeFeedView from '@/components/HomeFeedView';
-import NetflixView from '@/components/NetflixView';
+import BookShowcaseView from '@/components/BookShowcaseView';
 import { useApp } from '@/context/AppContext';
 import { 
   Sparkles, 
@@ -60,23 +60,23 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-[#fafbfc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
-      {/* Tri-State Discovery View Switcher (Netflix Stream vs Community Feed vs Public Landing) */}
+      {/* Tri-State Discovery View Switcher (Book Showcase vs Community Feed vs Public Landing) */}
       <div className="bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 py-2 px-4 sticky top-16 z-40 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 font-bold text-slate-600 dark:text-slate-300">
             <span>{t.homeView || 'Home View'}:</span>
             <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/70 dark:border-slate-700">
               <button
-                onClick={() => setHomeFeedViewMode('netflix')}
+                onClick={() => setHomeFeedViewMode('showcase')}
                 className={`px-3 py-1 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
-                  homeFeedViewMode === 'netflix'
-                    ? 'bg-rose-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-400'
+                  homeFeedViewMode === 'showcase' || homeFeedViewMode === 'netflix'
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-brand-500 dark:hover:text-brand-400'
                 }`}
               >
-                <Film className="w-3.5 h-3.5" />
-                <span>Netflix Stream</span>
-                <span className="px-1.5 py-0.2 bg-rose-500 text-[9px] text-white rounded-full font-black uppercase tracking-wider">HOT</span>
+                <Flame className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span>Book Showcase</span>
+                <span className="px-1.5 py-0.2 bg-amber-400 text-slate-900 text-[9px] rounded-full font-black uppercase tracking-wider">FEATURED</span>
               </button>
               <button
                 onClick={() => setHomeFeedViewMode('feed')}
@@ -106,17 +106,17 @@ export default function HomePage() {
           <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <span>{user ? `${t.activeMember || 'Active Member'}: @${user.username}` : (t.guestVisitor || 'Guest Visitor')}</span>
             <span className="hidden md:inline">•</span>
-            <Link href="/netflix" className="text-rose-600 dark:text-rose-400 font-bold hover:underline hidden md:inline">
-              Direct Route: /netflix →
+            <Link href="/browse" className="text-brand-600 dark:text-brand-400 font-bold hover:underline hidden md:inline">
+              Explore All Books →
             </Link>
           </div>
         </div>
       </div>
 
-      {homeFeedViewMode === 'netflix' ? (
-        /* 1. NETFLIX STREAMING CATEGORIES VIEW */
+      {(homeFeedViewMode === 'showcase' || homeFeedViewMode === 'netflix') ? (
+        /* 1. CATEGORIZED BOOK SHOWCASE VIEW */
         <main className="flex-1">
-          <NetflixView />
+          <BookShowcaseView />
         </main>
       ) : homeFeedViewMode === 'feed' ? (
         /* 2. PERSONALIZED COMMUNITY FEED VIEW */

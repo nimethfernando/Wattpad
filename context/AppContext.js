@@ -178,16 +178,16 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Tri-State Home Discovery View Mode: 'netflix' (streaming categories) | 'feed' (community feed) | 'landing' (public marketing)
+  // Tri-State Home Discovery View Mode: 'showcase' (categorized book shelves) | 'feed' (community feed) | 'landing' (public marketing)
   const [homeFeedViewMode, setHomeFeedViewModeState] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('avora_home_feed_mode');
-        if (saved && ['netflix', 'feed', 'landing'].includes(saved)) {
-          return saved;
+        if (saved && ['showcase', 'netflix', 'feed', 'landing'].includes(saved)) {
+          return saved === 'netflix' ? 'showcase' : saved;
         }
         if (localStorage.getItem('avora_user') || document.cookie.includes('avora_session=')) {
-          return 'netflix';
+          return 'showcase';
         }
       } catch (e) {}
     }
