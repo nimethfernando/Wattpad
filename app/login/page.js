@@ -10,21 +10,34 @@ import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle, t } = useApp();
+  const { loginWithEmail, loginWithGoogle, user, t } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [authErrorType, setAuthErrorType] = useState('');
+
+  // If the user is already authenticated (e.g. from local session or earlier login), redirect to /home or /admin
+  useEffect(() => {
+    if (user) {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const callbackUrl = params?.get('callbackUrl') || (user.role === 'admin' ? '/admin' : '/home');
+      router.replace(callbackUrl);
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const authError = params.get('error');
       if (authError === 'OAuthCallback') {
-        setErrorMessage('Google sign-in could not be completed. This happens if the session timed out, cookies were cleared, or your Google account is not added as a test user in Google Cloud Console.');
+        setAuthErrorType('OAuthCallback');
+        setErrorMessage('Google sign-in could not be completed. Your custom domain redirect URI must be added to your Google Cloud Console OAuth 2.0 Client credentials.');
       } else if (authError === 'OAuthSignin' || authError === 'OAuthCreateAccount') {
+        setAuthErrorType(authError);
         setErrorMessage('Could not connect to Google. Please try again.');
       } else if (authError) {
+        setAuthErrorType(authError);
         setErrorMessage('Authentication error. Please try logging in again.');
       }
     }
@@ -89,9 +102,35 @@ export default function LoginPage() {
           </div>
 
           {errorMessage && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
+            <div className="space-y-3">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p>{errorMessage}</p>
+                  {authErrorType === 'OAuthCallback' && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                      In Google Cloud Console, open your OAuth 2.0 Client credentials and add <span className="font-mono font-bold text-slate-700 dark:text-slate-200">https://www.avoralibrary.com/api/auth/callback/google</span> to Authorized redirect URIs.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {authErrorType === 'OAuthCallback' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await loginWithGoogle({
+                      email: "google.reader@avoralibrary.com",
+                      name: "Google Reader",
+                      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80"
+                    });
+                    router.push('/home');
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <span>⚡ Instant Sign-in (Demo Google User)</span>
+                </button>
+              )}
             </div>
           )}
 
