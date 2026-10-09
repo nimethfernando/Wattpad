@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 import { useApp } from '@/context/AppContext';
 import { BookOpen, Globe, Heart, MessageCircle } from 'lucide-react';
 
@@ -68,16 +69,7 @@ export default function Footer() {
           {/* Brand & Language Column */}
           <div className="col-span-2 space-y-4">
             <Link href="/" className="flex items-center group py-1" title="Avora Library">
-              <img 
-                src="/logo.png" 
-                alt="Avora Library" 
-                className="h-8 w-auto object-contain dark:hidden group-hover:scale-105 transition-transform" 
-              />
-              <img 
-                src="/logo-dark.png" 
-                alt="Avora Library" 
-                className="h-8 w-auto object-contain hidden dark:block group-hover:scale-105 transition-transform" 
-              />
+              <BrandLogo />
             </Link>
             <p className="max-w-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {footerConfig.tagline}

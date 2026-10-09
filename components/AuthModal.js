@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 import { useApp } from '@/context/AppContext';
 import { X, BookOpen, Lock, Mail, User, Calendar, CheckCircle2, AlertCircle, Sparkles, Check, ShieldCheck } from 'lucide-react';
 import { signIn } from 'next-auth/react';
@@ -125,9 +126,8 @@ export default function AuthModal() {
 
           {/* Brand Logo & Header */}
           <div className="text-center space-y-2 mb-4">
-            <div className="flex justify-center pb-1">
-              <img src="/logo.png" alt="Avora Library" className="h-9 sm:h-10 w-auto object-contain dark:hidden" />
-              <img src="/logo-dark.png" alt="Avora Library" className="h-9 sm:h-10 w-auto object-contain hidden dark:block" />
+            <div className="flex justify-center pb-2">
+              <BrandLogo size="default" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               {authModalMode === 'login' ? 'Welcome Back' : 'Join Avora Library'}

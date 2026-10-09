@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import BrandLogo from '@/components/BrandLogo';
 import { 
   BookOpen, 
   Compass, 
@@ -108,16 +109,7 @@ export default function Header() {
         {/* Brand Logo & Nav */}
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <Link href="/" className="flex items-center group shrink-0 py-1" title="Avora Library">
-            <img 
-              src="/logo.png" 
-              alt="Avora Library" 
-              className="h-8 sm:h-9 md:h-10 w-auto object-contain dark:hidden group-hover:scale-105 transition-transform" 
-            />
-            <img 
-              src="/logo-dark.png" 
-              alt="Avora Library" 
-              className="h-8 sm:h-9 md:h-10 w-auto object-contain hidden dark:block group-hover:scale-105 transition-transform" 
-            />
+            <BrandLogo />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -534,10 +526,9 @@ export default function Header() {
             <div>
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="Avora Library" className="h-7 w-auto object-contain dark:hidden" />
-                  <img src="/logo-dark.png" alt="Avora Library" className="h-7 w-auto object-contain hidden dark:block" />
-                </div>
+                <Link href="/" className="flex items-center group" onClick={() => setMobileMenuOpen(false)} title="Avora Library">
+                  <BrandLogo size="sm" />
+                </Link>
                 <button 
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"

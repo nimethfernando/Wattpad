@@ -490,8 +490,8 @@ export default function HomeFeedView() {
         {libraryStories.length === 0 ? (
           <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-2">
             <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-            <p className="text-xs font-bold text-slate-500">{t.emptyShelf || 'Your personal library is empty.'}</p>
-            <p className="text-[11px] text-slate-400">{t.emptyShelfDesc || 'Save books to your shelf to read offline and receive chapter updates!'}</p>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.emptyShelf || 'Your personal library is empty.'}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t.emptyShelfDesc || 'Save books to your shelf to read offline and receive chapter updates!'}</p>
           </div>
         ) : (
           <div className="flex items-stretch gap-4 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x">

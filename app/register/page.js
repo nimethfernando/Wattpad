@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BrandLogo from '@/components/BrandLogo';
 import { useApp } from '@/context/AppContext';
 import { calculateAgeFromDob, EXPERIENCE_MODES } from '@/lib/agePolicy';
 import { BookOpen, Mail, Lock, User, Calendar, AlertCircle, Sparkles, Check, ShieldCheck } from 'lucide-react';
@@ -88,11 +89,11 @@ export default function RegisterPage() {
           
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/25">
-              <BookOpen className="w-6 h-6" />
+            <div className="flex justify-center pb-2">
+              <BrandLogo size="lg" />
             </div>
-            <h1 className="text-2xl font-black">Create Your Free Avora Account</h1>
-            <p className="text-xs text-slate-400">
+            <h1 className="text-2xl font-black">Create Your Account</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               One account with DOB-based age verification for age-appropriate reading access.
             </p>
           </div>
