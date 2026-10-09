@@ -667,6 +667,10 @@ export default function BookShowcaseView() {
       .filter(Boolean);
   }, [library, accessibleStories]);
 
+  const newReleases = useMemo(() => {
+    return [...accessibleStories].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+  }, [accessibleStories]);
+
   const handleToggleLibrary = (storyId) => {
     if (isInLibrary(storyId)) {
       removeFromLibrary(storyId);
@@ -817,6 +821,18 @@ export default function BookShowcaseView() {
             title="Continue Reading & My Reading List"
             badge="📚 In Your Queue"
             stories={continueReadingStories}
+            onSelectStory={setSelectedStory}
+            isInLibrary={isInLibrary}
+            onToggleLibrary={handleToggleLibrary}
+          />
+        )}
+
+        {/* Row: Fresh Off The Press • New Releases */}
+        {newReleases.length > 0 && (
+          <ShowcaseRow 
+            title="Fresh Off The Press • New Releases"
+            badge="✨ Just Added"
+            stories={newReleases}
             onSelectStory={setSelectedStory}
             isInLibrary={isInLibrary}
             onToggleLibrary={handleToggleLibrary}

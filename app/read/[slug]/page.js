@@ -53,6 +53,8 @@ export default function ReaderPage() {
   const router = useRouter();
   const { 
     stories, 
+    setStories,
+    isHydrated,
     user, 
     voteChapter, 
     reactChapterEmoji, 
@@ -69,7 +71,32 @@ export default function ReaderPage() {
     t 
   } = useApp();
 
-  const story = stories.find(s => s.slug === slug);
+  const [localCustomFallback, setLocalCustomFallback] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !stories.some(s => s.slug === slug || String(s.id) === String(slug))) {
+      try {
+        const stored = localStorage.getItem('avora_custom_stories');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const found = list.find(s => s.slug === slug || String(s.id) === String(slug));
+          if (found) {
+            setLocalCustomFallback(found);
+            if (setStories) {
+              setStories(prev => {
+                if (!prev.some(s => s.id === found.id || s.slug === found.slug)) {
+                  return [found, ...prev];
+                }
+                return prev;
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }, [slug, stories, setStories]);
+
+  const story = stories.find(s => s.slug === slug || String(s.id) === String(slug)) || localCustomFallback;
   const inLib = story ? isInLibrary(story.id) : false;
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
@@ -312,6 +339,18 @@ export default function ReaderPage() {
 
   // Story existence check
   if (!story) {
+    if (!isHydrated) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6 text-center">
+          <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-4 shadow-2xl animate-pulse">
+            <div className="w-12 h-12 bg-slate-800 rounded-full mx-auto" />
+            <div className="h-6 w-48 bg-slate-800 rounded mx-auto" />
+            <div className="h-4 w-64 bg-slate-800 rounded mx-auto" />
+            <p className="text-xs text-slate-400">Loading reader & chapter...</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6 text-center">
         <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-4 shadow-2xl">

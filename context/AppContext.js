@@ -806,16 +806,19 @@ export function AppProvider({ children }) {
         console.error("Could not load CMS config from localStorage", e);
       }
 
-      // Sync Custom Stories from localStorage
+      // 1. Sync Custom Stories from localStorage (Guarantee user-published books persist across refresh)
+      let localCustomStories = [];
       try {
         const savedCustomStories = localStorage.getItem('avora_custom_stories');
         if (savedCustomStories) {
           const custom = JSON.parse(savedCustomStories);
           if (Array.isArray(custom) && custom.length > 0) {
+            localCustomStories = custom;
             setStories(prev => {
-              const existingIds = new Set(prev.map(s => s.id));
-              const newItems = custom.filter(s => !existingIds.has(s.id));
-              return computeStoryRankings([...newItems, ...prev]);
+              const storyMap = new Map();
+              prev.forEach(s => storyMap.set(String(s.slug || s.id), s));
+              custom.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+              return computeStoryRankings(Array.from(storyMap.values()));
             });
           }
         }
@@ -860,8 +863,12 @@ export function AppProvider({ children }) {
           if (data?.success && Array.isArray(data.stories) && data.stories.length > 0) {
             setStories(prev => {
               const storyMap = new Map();
+              // Seed and existing state stories
               prev.forEach(s => storyMap.set(String(s.slug || s.id), s));
+              // Overlay API stories
               data.stories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+              // Re-affirm local custom stories so API results NEVER wipe locally authored books
+              localCustomStories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
               return computeStoryRankings(Array.from(storyMap.values()));
             });
           }
@@ -1740,21 +1747,24 @@ export function AppProvider({ children }) {
   };
 
   const publishStory = async (newStory) => {
-    // Optimistically update client state
+    // 1. Synchronously save to localStorage FIRST so immediate refresh never loses the book
+    if (typeof window !== 'undefined') {
+      try {
+        const savedCustom = localStorage.getItem('avora_custom_stories');
+        const list = savedCustom ? JSON.parse(savedCustom) : [];
+        const filtered = list.filter(s => s.id !== newStory.id && s.slug !== newStory.slug);
+        localStorage.setItem('avora_custom_stories', JSON.stringify([newStory, ...filtered]));
+      } catch (e) {}
+    }
+
+    // 2. Optimistically update client state
     setStories(prev => {
-      const updated = computeStoryRankings([newStory, ...prev]);
-      if (typeof window !== 'undefined') {
-        try {
-          const savedCustom = localStorage.getItem('avora_custom_stories');
-          const list = savedCustom ? JSON.parse(savedCustom) : [];
-          localStorage.setItem('avora_custom_stories', JSON.stringify([newStory, ...list]));
-        } catch (e) {}
-      }
-      return updated;
+      const filtered = prev.filter(s => s.id !== newStory.id && s.slug !== newStory.slug);
+      return computeStoryRankings([newStory, ...filtered]);
     });
     addAuditLog("Story Published", newStory.title);
 
-    // Persist to backend database via API route
+    // 3. Persist to backend database via API route
     try {
       const res = await fetch('/api/stories', {
         method: 'POST',
@@ -1767,6 +1777,19 @@ export function AppProvider({ children }) {
           const replaced = prev.map(s => (s.id === newStory.id || s.slug === newStory.slug) ? { ...s, ...data.story } : s);
           return computeStoryRankings(replaced);
         });
+        if (typeof window !== 'undefined') {
+          try {
+            const savedCustom = localStorage.getItem('avora_custom_stories');
+            const list = savedCustom ? JSON.parse(savedCustom) : [];
+            const idx = list.findIndex(s => s.id === newStory.id || s.slug === newStory.slug);
+            if (idx >= 0) {
+              list[idx] = { ...list[idx], ...data.story };
+            } else {
+              list.unshift(data.story);
+            }
+            localStorage.setItem('avora_custom_stories', JSON.stringify(list));
+          } catch (e) {}
+        }
       }
     } catch (err) {
       console.warn("Failed to persist story to /api/stories:", err);

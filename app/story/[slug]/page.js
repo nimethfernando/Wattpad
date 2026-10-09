@@ -34,6 +34,8 @@ export default function StoryDetailPage() {
   const slug = typeof rawSlug === 'string' ? rawSlug : (Array.isArray(rawSlug) ? rawSlug[0] : '');
   const { 
     stories, 
+    setStories,
+    isHydrated,
     followingAuthors, 
     followAuthor,
     library,
@@ -59,8 +61,32 @@ export default function StoryDetailPage() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [showListDropdown, setShowListDropdown] = useState(false);
   const [showReadingListModal, setShowReadingListModal] = useState(false);
+  const [localCustomFallback, setLocalCustomFallback] = useState(null);
 
-  const story = stories.find(s => s.slug === slug);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !stories.some(s => s.slug === slug || String(s.id) === String(slug))) {
+      try {
+        const stored = localStorage.getItem('avora_custom_stories');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const found = list.find(s => s.slug === slug || String(s.id) === String(slug));
+          if (found) {
+            setLocalCustomFallback(found);
+            if (setStories) {
+              setStories(prev => {
+                if (!prev.some(s => s.id === found.id || s.slug === found.slug)) {
+                  return [found, ...prev];
+                }
+                return prev;
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }, [slug, stories, setStories]);
+
+  const story = stories.find(s => s.slug === slug || String(s.id) === String(slug)) || localCustomFallback;
 
   useEffect(() => {
     if (story?.title) {
@@ -71,6 +97,20 @@ export default function StoryDetailPage() {
   }, [story?.title]);
 
   if (!story) {
+    if (!isHydrated) {
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+          <Header />
+          <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center animate-pulse">
+            <div className="w-20 h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl mb-6" />
+            <div className="h-7 w-64 bg-slate-200 dark:bg-slate-800 rounded-lg mb-3" />
+            <div className="h-4 w-48 bg-slate-200 dark:bg-slate-800 rounded mb-8" />
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Loading serialized story...</p>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <Header />

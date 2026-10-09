@@ -334,7 +334,7 @@ export default function AdminPanel() {
     }
   };
 
-  const handleAdminPublishStory = (e) => {
+  const handleAdminPublishStory = async (e) => {
     e.preventDefault();
     if (!pubTitle.trim() || !pubDescription.trim()) {
       alert("Please provide at least a Title and Synopsis for the story.");
@@ -418,7 +418,7 @@ export default function AdminPanel() {
     };
 
     if (typeof publishStory === 'function') {
-      publishStory(newStory);
+      await publishStory(newStory);
     } else {
       setStories(prev => [newStory, ...prev]);
       addAuditLog("Admin Published Story", newStory.title);

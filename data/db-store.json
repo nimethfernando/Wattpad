@@ -1,0 +1,20 @@
+{
+  "stories": [
+    {
+      "title": "Test Story",
+      "author": "Author",
+      "id": "1791534786480",
+      "slug": "test-story",
+      "reads": 1,
+      "votes": 1,
+      "commentsCount": 0,
+      "chapters": [],
+      "tags": []
+    }
+  ],
+  "bankDetails": [],
+  "userProfiles": [],
+  "notifications": [],
+  "contactSubmissions": [],
+  "emailLogs": []
+}

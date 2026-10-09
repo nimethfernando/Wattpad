@@ -93,6 +93,11 @@ export default function BrowsePage() {
       if (sortBy === 'most_read') return b.reads - a.reads;
       if (sortBy === 'most_voted') return b.votes - a.votes;
       if (sortBy === 'recently_updated') return b.id - a.id;
+      // Trending: Give newly published stories (timestamp id > 10000000) prominent visibility
+      const aIsFresh = typeof a.id === 'number' && a.id > 10000000;
+      const bIsFresh = typeof b.id === 'number' && b.id > 10000000;
+      if (aIsFresh && !bIsFresh) return -1;
+      if (!aIsFresh && bIsFresh) return 1;
       return (b.reads + b.votes * 5) - (a.reads + a.votes * 5); // trending
     });
   }, [accessibleStories, selectedGenre, selectedAgeRating, selectedStatus, selectedMaturity, selectedLanguage, selectedMood, selectedTrope, selectedLength, specialFilter, sortBy, searchFilter]);

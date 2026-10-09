@@ -124,6 +124,11 @@ export default function HomeFeedView() {
   const libraryStories = library.map(id => visibleStories.find(s => s.id === id)).filter(Boolean);
   const houseOriginals = visibleStories.filter(s => s.isOriginal);
 
+  // 8. Fresh Off The Press - Newest Releases
+  const newlyPublishedStories = [...visibleStories]
+    .sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))
+    .slice(0, 4);
+
   const localizedActiveStory = activeStory ? (translateStory ? translateStory(activeStory) : activeStory) : null;
   const streakDays = dayLabels || readingStreak?.dayLabels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const streakActive = readingStreak?.daysActive || [true, true, true, true, true, false, false];
@@ -318,6 +323,41 @@ export default function HomeFeedView() {
           ))}
         </div>
       </section>
+
+      {/* 2A. FRESH OFF THE PRESS: NEW RELEASES */}
+      {newlyPublishedStories.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg sm:text-xl font-black">{t.newReleases || 'Fresh Off The Press • New Releases'}</h2>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                ✨ Just Published
+              </span>
+            </div>
+            <Link 
+              href="/browse" 
+              className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-1"
+            >
+              <span>{t.seeAll || 'See All'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {newlyPublishedStories.map(story => (
+              <StoryFeedCard 
+                key={`fresh-${story.id}`} 
+                story={story} 
+                isInLib={isInLibrary(story.id)}
+                onToggleLib={() => isInLibrary(story.id) ? removeFromLibrary(story.id) : addToLibrary(story.id)}
+                onOpenReadingList={(s) => setSelectedStoryForList(s)}
+                onHideStory={(id) => hideStory(id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 2B. ADAPTIVE TASTE DISCOVERY: SEPARATELY POPPING OUT NEWLY LIKED GENRES */}
       {emergingGenres.map((genre) => {

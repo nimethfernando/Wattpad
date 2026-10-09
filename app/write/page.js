@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -1268,8 +1268,29 @@ export default function AuthorStudio() {
     );
   }
 
-  // Author stories
-  const myStories = stories.filter(s => s.authorUsername === user?.username || s.author === user?.name);
+  // Author stories: matches current user OR any story created locally in this browser
+  const myStories = useMemo(() => {
+    let localCustomIds = new Set();
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('avora_custom_stories');
+        if (stored) {
+          const list = JSON.parse(stored);
+          list.forEach(item => {
+            if (item.id) localCustomIds.add(String(item.id));
+            if (item.slug) localCustomIds.add(String(item.slug));
+          });
+        }
+      } catch (e) {}
+    }
+
+    return stories.filter(s => 
+      (user?.username && s.authorUsername === user.username) || 
+      (user?.name && s.author === user.name) ||
+      localCustomIds.has(String(s.id)) ||
+      localCustomIds.has(String(s.slug))
+    );
+  }, [stories, user]);
 
   // Studio Mode: Create a brand new story OR serialize another chapter to existing story
   const [editorMode, setEditorMode] = useState('new_story'); // 'new_story' | 'add_chapter'
@@ -1415,7 +1436,7 @@ export default function AuthorStudio() {
     }
   };
 
-  const handlePublish = (e) => {
+  const handlePublish = async (e) => {
     e.preventDefault();
     if (user?.status === 'banned' || user?.isBanned) {
       alert('Action Denied: Your author account has been banned for content policy violations.');
@@ -1511,11 +1532,11 @@ export default function AuthorStudio() {
       chapters: publishedChapters
     };
 
-    publishStory(newStory);
+    await publishStory(newStory);
     setPublishSuccess(true);
     setTimeout(() => {
       router.push(`/story/${slug}`);
-    }, 1500);
+    }, 1200);
   };
 
   const handleReorderChapters = (storyId) => {
