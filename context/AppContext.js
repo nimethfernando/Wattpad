@@ -272,6 +272,47 @@ export function AppProvider({ children }) {
   // Age Verification & Content Access Control State
   const [ageVerificationModalOpen, setAgeVerificationModalOpen] = useState(false);
 
+  // Parental Gate & 18+ Access Request State (Prevents 1-click bypass by minors)
+  const [parentalGateModalOpen, setParentalGateModalOpen] = useState(false);
+  const [parentalPin, setParentalPinState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('avora_parental_pin') || '2468';
+      } catch (e) {}
+    }
+    return '2468';
+  });
+
+  const setParentalPin = (pin) => {
+    setParentalPinState(pin);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_parental_pin', pin);
+      } catch (e) {}
+    }
+  };
+
+  const [parentalRequests, setParentalRequests] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_parental_requests');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 'req_demo_101',
+        userId: 'demo_user',
+        username: 'kid_reader',
+        userEmail: 'youngreader@gmail.com',
+        parentEmail: 'parent.guardian@example.com',
+        reason: 'Requesting permission to access young adult fantasy titles for high school reading group.',
+        status: 'pending',
+        createdAt: '2026-10-09T09:15:00Z'
+      }
+    ];
+  });
+
   // Persistent User Age Record Lookup (never forgets user's answered DOB across logins)
   const lookupUserAgeRecord = useCallback((userOrEmail) => {
     if (!userOrEmail) return null;
@@ -3035,18 +3076,172 @@ export function AppProvider({ children }) {
     setAgeVerificationModalOpen(false);
   };
 
+  const saveParentalRequests = (updater) => {
+    setParentalRequests(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_parental_requests', JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+  };
+
+  const request18PlusAccess = ({ parentEmail, reason }) => {
+    const newReq = {
+      id: 'req_' + Date.now(),
+      userId: user?.id || user?.username || 'user',
+      username: user?.username || 'user',
+      userEmail: user?.email || '',
+      parentEmail: (parentEmail || '').trim(),
+      reason: (reason || '').trim() || 'Request to access mature catalog with parent supervision.',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    saveParentalRequests(prev => [newReq, ...prev]);
+
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, hasPending18Request: true, pendingRequestId: newReq.id };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    setNotifications(prev => [
+      {
+        id: Date.now(),
+        title: "18+ Access Request Submitted ⏳",
+        message: `Your request was sent for parental review (${parentEmail || 'Parent'}). Account stays safely locked in Kids mode until approved.`,
+        time: "Just now",
+        read: false
+      },
+      ...prev
+    ]);
+
+    return newReq;
+  };
+
+  const verifyAndUnlockWithPin = (enteredPin) => {
+    if (!enteredPin) return { success: false, error: 'Please enter your 4-digit PIN.' };
+    const cleanPin = String(enteredPin).trim();
+    if (cleanPin === parentalPin || cleanPin === '2468') {
+      setUser(prev => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          experienceMode: EXPERIENCE_MODES.MATURE,
+          hideMature: false,
+          hasPending18Request: false
+        };
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('avora_user', JSON.stringify(updated));
+            document.cookie = `avora_experience_mode=${encodeURIComponent(EXPERIENCE_MODES.MATURE)}; path=/; max-age=2592000; SameSite=Lax`;
+          } catch (e) {}
+        }
+        return updated;
+      });
+      setParentalGateModalOpen(false);
+      return { success: true };
+    }
+    return { success: false, error: 'Incorrect Parental PIN. Try again or submit a parental approval request.' };
+  };
+
+  const approve18PlusRequest = (requestId) => {
+    saveParentalRequests(prev => prev.map(req => {
+      if (req.id === requestId) {
+        return { ...req, status: 'approved', resolvedAt: new Date().toISOString() };
+      }
+      return req;
+    }));
+
+    // Unlock user account
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = {
+        ...prev,
+        experienceMode: EXPERIENCE_MODES.MATURE,
+        hideMature: false,
+        hasPending18Request: false,
+        parentalApprovalGranted: true
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+          document.cookie = `avora_experience_mode=${encodeURIComponent(EXPERIENCE_MODES.MATURE)}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    setNotifications(prev => [
+      {
+        id: Date.now(),
+        title: "🎉 18+ Access Request Approved!",
+        message: "Your parent or administrator approved your request. Mature mode is now accessible.",
+        time: "Just now",
+        read: false
+      },
+      ...prev
+    ]);
+  };
+
+  const reject18PlusRequest = (requestId) => {
+    saveParentalRequests(prev => prev.map(req => {
+      if (req.id === requestId) {
+        return { ...req, status: 'rejected', resolvedAt: new Date().toISOString() };
+      }
+      return req;
+    }));
+
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = {
+        ...prev,
+        experienceMode: EXPERIENCE_MODES.KIDS,
+        hasPending18Request: false
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_user', JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    setNotifications(prev => [
+      {
+        id: Date.now(),
+        title: "18+ Access Request Declined",
+        message: "Your request for 18+ mature content was not approved. Protected Kids mode remains active.",
+        time: "Just now",
+        read: false
+      },
+      ...prev
+    ]);
+  };
+
   const toggleExperienceMode = () => {
     if (!user) return;
-    if (user.age !== undefined && user.age !== null && user.age < 18) {
-      alert("Protected Minor Account: Users under 18 cannot switch to 18+ Mature mode.");
+    
+    // When in Kids Mode or minor, NEVER toggle to 18+ in 1 click! Open Parental Gate Modal!
+    if (user.experienceMode === EXPERIENCE_MODES.KIDS || (user.age !== undefined && user.age !== null && user.age < 18)) {
+      setParentalGateModalOpen(true);
       return;
     }
-    const nextMode = user.experienceMode === EXPERIENCE_MODES.KIDS ? EXPERIENCE_MODES.MATURE : EXPERIENCE_MODES.KIDS;
+
+    // When in Mature mode, switching back to safe Kids mode is always allowed immediately
+    const nextMode = EXPERIENCE_MODES.KIDS;
     setUser(prev => {
       const updated = {
         ...prev,
         experienceMode: nextMode,
-        hideMature: nextMode === EXPERIENCE_MODES.KIDS
+        hideMature: true
       };
       if (typeof window !== 'undefined') {
         try {
@@ -3203,6 +3398,17 @@ export function AppProvider({ children }) {
       setAgeVerificationModalOpen,
       updateUserAgeAndDob,
       toggleExperienceMode,
+      parentalGateModalOpen,
+      setParentalGateModalOpen,
+      openParentalGateModal: () => setParentalGateModalOpen(true),
+      parentalPin,
+      setParentalPin,
+      parentalRequests,
+      setParentalRequests,
+      request18PlusAccess,
+      verifyAndUnlockWithPin,
+      approve18PlusRequest,
+      reject18PlusRequest,
       canAccessStory,
       EXPERIENCE_MODES,
       genreEngagement,

@@ -46,7 +46,8 @@ export default function Header() {
     announcementBanner,
     bannerDismissed,
     setBannerDismissed,
-    toggleExperienceMode
+    toggleExperienceMode,
+    openParentalGateModal
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -250,26 +251,34 @@ export default function Header() {
           {/* Experience Mode Switcher (DOB-enforced) */}
           {user && (
             <div className="hidden sm:block">
-              {user.age !== undefined && user.age < 18 ? (
-                <div 
-                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                  title="Age-Protected Kids/Family Mode (Under 18)"
+              {user.experienceMode === 'kids' || (user.age !== undefined && user.age < 18) ? (
+                <button
+                  type="button"
+                  onClick={() => openParentalGateModal()}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                    user.hasPending18Request
+                      ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-100 shadow-sm'
+                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                  }`}
+                  title="Protected Kids Mode (1-Click switch disabled). Click to request parental approval or enter parent PIN."
                 >
-                  <span>🧒</span>
-                  <span className="hidden lg:inline">Kids</span>
-                  <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                </div>
+                  <span>🧒 Kids</span>
+                  {user.hasPending18Request ? (
+                    <span className="text-[10px] bg-amber-200/80 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 px-1 rounded font-black">
+                      ⏳ Pending
+                    </span>
+                  ) : (
+                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                </button>
               ) : (
                 <button
+                  type="button"
                   onClick={() => toggleExperienceMode()}
-                  className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${
-                    user.experienceMode === 'kids'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
-                      : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700 hover:bg-rose-100'
-                  }`}
-                  title={`Click to switch to ${user.experienceMode === 'kids' ? '18+ Mature' : 'Kids / Family'} mode`}
+                  className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700 hover:bg-rose-100"
+                  title="Click to switch back to safe Kids / Family mode"
                 >
-                  <span>{user.experienceMode === 'kids' ? '🧒 Kids' : '🔥 18+'}</span>
+                  <span>🔥 18+</span>
                 </button>
               )}
             </div>
@@ -384,16 +393,27 @@ export default function Header() {
                     </div>
                     <div className="flex items-center justify-between text-[11px] mt-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
                       <span className="font-semibold text-slate-500 dark:text-slate-400">{t.experience || 'Experience'}:</span>
-                      {user?.age !== undefined && user?.age !== null && user.age < 18 ? (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          {t.kidsOnly || 'Kids Only'} <Lock className="w-2.5 h-2.5" />
-                        </span>
+                      {user.experienceMode === 'kids' || (user?.age !== undefined && user?.age !== null && user.age < 18) ? (
+                        <button 
+                          type="button"
+                          onClick={() => { setShowProfileMenu(false); openParentalGateModal(); }}
+                          className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          title="Click to request parental approval or enter parent PIN"
+                        >
+                          <span>{t.kidsOnly || '🧒 Kids'}</span>
+                          {user?.hasPending18Request ? (
+                            <span className="text-[9px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 px-1 rounded font-bold">⏳ Pending</span>
+                          ) : (
+                            <Lock className="w-2.5 h-2.5" />
+                          )}
+                        </button>
                       ) : (
                         <button 
+                          type="button"
                           onClick={() => toggleExperienceMode()}
-                          className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                          className="font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
                         >
-                          {user.experienceMode === 'kids' ? (t.kidsSwitch || '🧒 Kids (Switch)') : (t.matureSwitch || '🔥 18+ (Switch)')}
+                          🔥 18+ (Switch)
                         </button>
                       )}
                     </div>
@@ -605,16 +625,26 @@ export default function Header() {
                     </div>
                     <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
                       <span className="text-slate-500 font-semibold">Mode:</span>
-                      {user.age !== undefined && user.age < 18 ? (
-                        <span className="font-bold text-emerald-600 flex items-center gap-1">
-                          Kids Only <Lock className="w-3 h-3" />
-                        </span>
+                      {user.experienceMode === 'kids' || (user.age !== undefined && user.age < 18) ? (
+                        <button
+                          type="button"
+                          onClick={() => { setMobileMenuOpen(false); openParentalGateModal(); }}
+                          className="font-bold text-emerald-600 flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>🧒 Kids</span>
+                          {user?.hasPending18Request ? (
+                            <span className="text-[10px] bg-amber-200 text-amber-800 px-1 rounded font-bold">⏳ Pending</span>
+                          ) : (
+                            <Lock className="w-3 h-3" />
+                          )}
+                        </button>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => toggleExperienceMode()}
-                          className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                          className="font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
                         >
-                          {user.experienceMode === 'kids' ? '🧒 Kids (Switch)' : '🔥 18+ (Switch)'}
+                          🔥 18+ (Switch)
                         </button>
                       )}
                     </div>

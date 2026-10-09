@@ -47,8 +47,12 @@ import {
   FileText,
   CheckCircle2,
   Image as ImageIcon,
-  Building2
+  Building2,
+  Upload,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
+import { processImageFile } from '@/lib/imageUtils';
 
 export default function AdminPanel() {
   const { 
@@ -86,7 +90,12 @@ export default function AdminPanel() {
     warnUser,
     dismissReport,
     banUser,
-    unbanUser
+    unbanUser,
+    parentalRequests,
+    approve18PlusRequest,
+    reject18PlusRequest,
+    parentalPin,
+    setParentalPin
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications' | 'cms'
@@ -311,6 +320,267 @@ export default function AdminPanel() {
     const generated = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     setPubSlug(generated);
   };
+
+  const handleContentTypeSelect = (type) => {
+    setPubContentType(type);
+    if (type === 'picture_book') {
+      // Suggest kid-friendly rating and category when picture book format is picked
+      if (['13+', '16+', '18+'].includes(pubAgeRating)) {
+        setPubAgeRating('3+');
+      }
+      if (pubGenre === 'Fantasy' || !pubGenre) {
+        setPubGenre('Kids Books');
+      }
+      if (pubChapterTitle.includes('Chapter 1')) {
+        setPubChapterTitle('Illustrated Edition: Bedtime Adventure');
+      }
+    }
+  };
+
+  const handleCoverUpload = async (file) => {
+    if (!file) return;
+    try {
+      const res = await processImageFile(file, 800, 1067, 0.85);
+      setPubCover(res.dataUrl);
+    } catch (err) {
+      alert(err.message || 'Failed to process cover image.');
+    }
+  };
+
+  const handleBatchPagesUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    try {
+      const newPages = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const res = await processImageFile(file, 1200, 900, 0.85);
+        newPages.push({
+          id: Date.now() + i + Math.random(),
+          image: res.dataUrl,
+          caption: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+          text: ''
+        });
+      }
+      setPubPages(prev => {
+        // If only 1 initial placeholder exists, replace it
+        if (prev.length === 1 && (!prev[0].text || prev[0].text.includes('chronicle begins in an era'))) {
+          return newPages;
+        }
+        return [...prev, ...newPages];
+      });
+    } catch (err) {
+      alert(err.message || 'Failed to upload picture book images.');
+    }
+  };
+
+  const handleSinglePageUpload = async (index, file) => {
+    if (!file) return;
+    try {
+      const res = await processImageFile(file, 1200, 900, 0.85);
+      setPubPages(prev => prev.map((p, i) => i === index ? { ...p, image: res.dataUrl } : p));
+    } catch (err) {
+      alert(err.message || 'Failed to upload page illustration.');
+    }
+  };
+
+  const movePage = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= pubPages.length) return;
+    setPubPages(prev => {
+      const copy = [...prev];
+      const item = copy.splice(fromIdx, 1)[0];
+      copy.splice(toIdx, 0, item);
+      return copy;
+    });
+  };
+
+  const renderPictureBookPagesManager = () => (
+    <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border-2 border-dashed border-amber-300 dark:border-amber-800/60 space-y-4 animate-in fade-in duration-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/60 dark:border-amber-800/40">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🎨</span>
+            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+              Picture Book Pages &amp; Illustrations ({pubPages.length} Pages)
+            </h4>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+              🧒 Kids Section Ready
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Upload sequential picture pages from your device or provide image URLs.
+          </p>
+        </div>
+
+        {/* Upload Multiple Pages Button */}
+        <label className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-brand-500/20 cursor-pointer transition-all shrink-0">
+          <Upload className="w-4 h-4" />
+          <span>Upload Pictures from Device</span>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleBatchPagesUpload(e.target.files)}
+          />
+        </label>
+      </div>
+
+      {/* Pages List */}
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+        {pubPages.map((page, pIdx) => (
+          <div key={page.id || pIdx} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 text-xs font-black">
+                  Page {pIdx + 1}
+                </span>
+                {page.caption && (
+                  <span className="text-xs text-slate-400 font-medium truncate max-w-[200px]">
+                    • {page.caption}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={pIdx === 0}
+                  onClick={() => movePage(pIdx, pIdx - 1)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500 cursor-pointer"
+                  title="Move Up"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={pIdx === pubPages.length - 1}
+                  onClick={() => movePage(pIdx, pIdx + 1)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500 cursor-pointer"
+                  title="Move Down"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+                {pubPages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPubPages(prev => prev.filter((_, i) => i !== pIdx))}
+                    className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 cursor-pointer ml-1"
+                    title="Remove Page"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+              {/* Thumbnail Preview */}
+              <div className="sm:col-span-4 aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative group">
+                <img
+                  src={page.image}
+                  alt={`Page ${pIdx + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80';
+                  }}
+                />
+                <label className="absolute inset-0 bg-black/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-bold gap-1">
+                  <Upload className="w-4 h-4" />
+                  <span>Change Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleSinglePageUpload(pIdx, e.target.files?.[0])}
+                  />
+                </label>
+              </div>
+
+              {/* Page text & caption */}
+              <div className="sm:col-span-8 space-y-2">
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-[11px] font-bold text-slate-500">Page Image (URL or Device Upload)</label>
+                    <label className="text-[11px] font-bold text-brand-500 hover:underline cursor-pointer flex items-center gap-1">
+                      <Upload className="w-3 h-3" /> Upload File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleSinglePageUpload(pIdx, e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
+                  <input
+                    type="url"
+                    value={page.image}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, image: val } : p));
+                    }}
+                    placeholder="https://... or upload from device"
+                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-mono outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Caption / Scene Title (Optional)</label>
+                  <input
+                    type="text"
+                    value={page.caption || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, caption: val } : p));
+                    }}
+                    placeholder="e.g. Page 1: In the Enchanted Forest"
+                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-0.5">Page Story Narrative / Dialogue</label>
+                  <textarea
+                    rows={2}
+                    value={page.text || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
+                    }}
+                    placeholder="Story text for this illustrated page..."
+                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Add Page Buttons */}
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={() => setPubPages(prev => [
+            ...prev,
+            { id: Date.now() + Math.random(), image: pubCover, text: '', caption: `Page ${prev.length + 1}` }
+          ])}
+          className="px-4 py-2 rounded-xl border border-dashed border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <Plus className="w-3.5 h-3.5" /> + Add Another Blank Page
+        </button>
+
+        <label className="px-4 py-2 rounded-xl border border-brand-200 dark:border-brand-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+          <Upload className="w-3.5 h-3.5 text-brand-500" /> + Add More Pictures from Device
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleBatchPagesUpload(e.target.files)}
+          />
+        </label>
+      </div>
+    </div>
+  );
 
   const getMinAgeFromRating = (rating) => {
     switch (rating) {
@@ -1174,7 +1444,7 @@ export default function AdminPanel() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setPubContentType('story')}
+                    onClick={() => handleContentTypeSelect('story')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'story'
                         ? 'bg-brand-500 text-white shadow-md'
@@ -1185,10 +1455,10 @@ export default function AdminPanel() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPubContentType('picture_book')}
+                    onClick={() => handleContentTypeSelect('picture_book')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'picture_book'
-                        ? 'bg-brand-500 text-white shadow-md'
+                        ? 'bg-amber-500 text-white shadow-md'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                     }`}
                   >
@@ -1227,18 +1497,39 @@ export default function AdminPanel() {
             {/* Description & Tags */}
             <div className="space-y-4 pt-2">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-                  Synopsis / Story Description <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
+                    {pubContentType === 'picture_book' ? (
+                      <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-extrabold">
+                        <span>🎨 Picture Book Synopsis &amp; Blurb</span>
+                        <span className="text-[10px] bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded-full font-black text-amber-700 dark:text-amber-300">Catalog Preview</span>
+                      </span>
+                    ) : (
+                      'Synopsis / Story Description'
+                    )} <span className="text-rose-500">*</span>
+                  </label>
+                  {pubContentType === 'picture_book' && (
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      🧒 Auto-categorized for Kids &amp; Family Section
+                    </span>
+                  )}
+                </div>
                 <textarea
                   rows={3}
                   required
-                  placeholder="Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  placeholder={
+                    pubContentType === 'picture_book'
+                      ? "Describe the characters, bedtime adventure, and moral theme for young readers and parents..."
+                      : "Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  }
                   value={pubDescription}
                   onChange={(e) => setPubDescription(e.target.value)}
                   className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
+
+              {/* DEDICATED PICTURE BOOK UPLOAD CENTER IN SECTION 1 */}
+              {pubContentType === 'picture_book' && renderPictureBookPagesManager()}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -1336,12 +1627,23 @@ export default function AdminPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-                    Custom Cover Image URL
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Cover Image (URL or Device Upload)
+                    </label>
+                    <label className="text-xs font-bold text-brand-500 hover:underline cursor-pointer flex items-center gap-1">
+                      <Upload className="w-3.5 h-3.5" /> Upload Cover from Device
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleCoverUpload(e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://images.unsplash.com/... or upload from device"
                     value={pubCover}
                     onChange={(e) => setPubCover(e.target.value)}
                     className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono font-semibold outline-none focus:ring-2 focus:ring-brand-500"
@@ -1529,7 +1831,98 @@ export default function AdminPanel() {
 
                 {/* TAB 2: USER & AUTHOR MODERATION */}
         {activeTab === 'users' && (
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-6">
+
+            {/* PARENTAL 18+ ACCESS REQUESTS MANAGEMENT CARD */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                      Parental 18+ Access Requests &amp; Minor Safety
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Review requests from minors/kids asking for 18+ catalog access with parent or guardian permission.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-semibold">Master Parent PIN:</span>
+                  <span className="font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                    {parentalPin || '2468'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Requests List */}
+              {(!parentalRequests || parentalRequests.length === 0) ? (
+                <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-2xl">
+                  No 18+ approval requests submitted yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
+                  {parentalRequests.map((req) => (
+                    <div key={req.id} className="p-4 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            @{req.username}
+                          </span>
+                          <span className="text-slate-400">({req.userEmail || 'No email'})</span>
+                          <span className={`px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider ${
+                            req.status === 'pending'
+                              ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                              : req.status === 'approved'
+                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
+                          }`}>
+                            {req.status}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-300">
+                          <strong>Parent Email:</strong> <span className="font-mono">{req.parentEmail}</span>
+                        </p>
+                        <p className="text-slate-500 italic text-[11px]">
+                          "{req.reason || 'No specific reason given'}"
+                        </p>
+                        <span className="text-[10px] text-slate-400 block">
+                          Submitted: {new Date(req.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {req.status === 'pending' ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => approve18PlusRequest(req.id)}
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+                            >
+                              ✅ Approve 18+ Access
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => reject18PlusRequest(req.id)}
+                              className="px-3.5 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+                            >
+                              ❌ Decline
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-slate-400 font-semibold">
+                            {req.status === 'approved' ? 'Access Granted' : 'Request Declined'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="relative w-full sm:w-72">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
@@ -4023,7 +4416,7 @@ export default function AdminPanel() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setPubContentType('story')}
+                    onClick={() => handleContentTypeSelect('story')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'story'
                         ? 'bg-brand-500 text-white shadow-md'
@@ -4034,10 +4427,10 @@ export default function AdminPanel() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPubContentType('picture_book')}
+                    onClick={() => handleContentTypeSelect('picture_book')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'picture_book'
-                        ? 'bg-brand-500 text-white shadow-md'
+                        ? 'bg-amber-500 text-white shadow-md'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                     }`}
                   >
@@ -4076,18 +4469,39 @@ export default function AdminPanel() {
             {/* Description & Tags */}
             <div className="space-y-4 pt-2">
               <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-                  Synopsis / Story Description <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
+                    {pubContentType === 'picture_book' ? (
+                      <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-extrabold">
+                        <span>🎨 Picture Book Synopsis &amp; Blurb</span>
+                        <span className="text-[10px] bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded-full font-black text-amber-700 dark:text-amber-300">Catalog Preview</span>
+                      </span>
+                    ) : (
+                      'Synopsis / Story Description'
+                    )} <span className="text-rose-500">*</span>
+                  </label>
+                  {pubContentType === 'picture_book' && (
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      🧒 Auto-categorized for Kids &amp; Family Section
+                    </span>
+                  )}
+                </div>
                 <textarea
                   rows={3}
                   required
-                  placeholder="Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  placeholder={
+                    pubContentType === 'picture_book'
+                      ? "Describe the characters, bedtime adventure, and moral theme for young readers and parents..."
+                      : "Hook readers with a gripping summary of the conflict, characters, and stakes..."
+                  }
                   value={pubDescription}
                   onChange={(e) => setPubDescription(e.target.value)}
                   className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
+
+              {/* DEDICATED PICTURE BOOK UPLOAD CENTER IN MODAL */}
+              {pubContentType === 'picture_book' && renderPictureBookPagesManager()}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -4185,12 +4599,23 @@ export default function AdminPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-                    Custom Cover Image URL
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Cover Image (URL or Device Upload)
+                    </label>
+                    <label className="text-xs font-bold text-brand-500 hover:underline cursor-pointer flex items-center gap-1">
+                      <Upload className="w-3.5 h-3.5" /> Upload Cover from Device
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleCoverUpload(e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://images.unsplash.com/... or upload from device"
                     value={pubCover}
                     onChange={(e) => setPubCover(e.target.value)}
                     className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono font-semibold outline-none focus:ring-2 focus:ring-brand-500"

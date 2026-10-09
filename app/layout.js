@@ -9,6 +9,7 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import PaymentModal from '@/components/PaymentModal';
 import BankDetailsModal from '@/components/BankDetailsModal';
 import Mascot3D from '@/components/Mascot3D';
+import ParentalGateModal from '@/components/ParentalGateModal';
 
 export const viewport = {
   themeColor: '#ea580c',
@@ -56,6 +57,7 @@ export default function RootLayout({ children }) {
             <PaymentModal />
             <BankDetailsModal />
             <Mascot3D />
+            <ParentalGateModal />
           </AppProvider>
         </AuthProvider>
       </body>

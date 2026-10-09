@@ -18,6 +18,10 @@ export default function SettingsPage() {
     featureFlags, 
     setAgeVerificationModalOpen,
     toggleExperienceMode,
+    openParentalGateModal,
+    parentalPin,
+    setParentalPin,
+    parentalRequests,
     t 
   } = useApp();
   const [currentPassword, setCurrentPassword] = useState('');
@@ -160,14 +164,18 @@ export default function SettingsPage() {
                   }`}>
                     {user?.experienceMode === 'kids' || (user?.age !== undefined && user.age < 18) ? '🧒 Kids / Family' : '🔥 18+ Mature'}
                   </span>
-                  {user?.age !== undefined && user.age >= 18 && (
-                    <button
-                      onClick={() => toggleExperienceMode()}
-                      className="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
-                    >
-                      (Switch)
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      if (user?.experienceMode === 'kids' || (user?.age !== undefined && user.age < 18)) {
+                        openParentalGateModal();
+                      } else {
+                        toggleExperienceMode();
+                      }
+                    }}
+                    className="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
+                  >
+                    (Switch)
+                  </button>
                 </div>
               </div>
             </div>
@@ -222,6 +230,73 @@ export default function SettingsPage() {
             >
               Save Preferences
             </button>
+          </div>
+        </div>
+
+        {/* Parental Controls & Minor Protection Card */}
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-500" />
+              <h3 className="font-bold text-base">Parental Gate &amp; 18+ Access Control</h3>
+            </div>
+            <button
+              onClick={openParentalGateModal}
+              className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              Open Parental Gate
+            </button>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-700 dark:text-slate-200">1-Click Bypass Protection:</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black text-[10px]">
+                  ACTIVE 🔒
+                </span>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                Children cannot switch from Kids to 18+ mode in one click. A parental approval request or 4-digit Parent PIN is required.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Parental Master PIN</span>
+                <p className="font-mono font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                  •••• ({parentalPin ? 'Set' : '2468 default'})
+                </p>
+                <button
+                  type="button"
+                  onClick={openParentalGateModal}
+                  className="text-brand-500 hover:underline font-bold text-[11px] mt-1 inline-block"
+                >
+                  Manage / Change PIN →
+                </button>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">18+ Approval Request Status</span>
+                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                  {user?.hasPending18Request ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-extrabold">⏳ Awaiting Parent Review</span>
+                  ) : user?.experienceMode === 'kids' ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">🧒 Safe Kids Mode</span>
+                  ) : (
+                    <span className="text-rose-600 dark:text-rose-400 font-extrabold">🔥 18+ Unlocked</span>
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={openParentalGateModal}
+                  className="text-brand-500 hover:underline font-bold text-[11px] mt-1 inline-block"
+                >
+                  Submit / Review Request →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

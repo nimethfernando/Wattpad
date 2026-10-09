@@ -24,7 +24,7 @@ import {
   Layers,
   LayoutGrid
 } from 'lucide-react';
-import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
+import { filterStoriesForUser, filterGenresForUser, isStoryForKids } from '@/lib/agePolicy';
 
 export default function BrowsePage() {
   const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t, translateGenre } = useApp();
@@ -80,6 +80,7 @@ export default function BrowsePage() {
       if (selectedLength !== 'all' && story.length !== selectedLength) return false;
       if (specialFilter === 'originals' && !story.isOriginal) return false;
       if (specialFilter === 'picks' && !story.isEditorsPick) return false;
+      if (specialFilter === 'kids' && !isStoryForKids(story)) return false;
       if (searchFilter.trim() !== '') {
         const q = searchFilter.toLowerCase();
         const matchTitle = story.title.toLowerCase().includes(q);
@@ -196,6 +197,16 @@ export default function BrowsePage() {
               }`}
             >
               ✨ {t.mustRead || 'Editor’s Picks'}
+            </button>
+            <button
+              onClick={() => { setSpecialFilter('kids'); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                specialFilter === 'kids' 
+                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30 font-black' 
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500'
+              }`}
+            >
+              🧒 Kids &amp; Family Section (3+ / 7+)
             </button>
           </div>
         </div>
