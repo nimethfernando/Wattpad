@@ -116,9 +116,9 @@ export default function AuthModal() {
       className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={() => setAuthModalOpen(false)}
     >
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-6 text-center">
         <div 
-          className="relative w-full max-w-md transform rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 text-left shadow-2xl border border-slate-200 dark:border-slate-800 transition-all sm:my-8 animate-in zoom-in-95 duration-200"
+          className="relative w-full max-w-md transform rounded-3xl bg-white dark:bg-slate-900 p-5 sm:p-8 text-left shadow-2xl border border-slate-200 dark:border-slate-800 transition-all sm:my-8 animate-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}

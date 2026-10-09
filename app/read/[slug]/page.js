@@ -675,7 +675,7 @@ export default function ReaderPage() {
       </nav>
 
       {/* 2. MAIN CHAPTER READING CANVAS */}
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="mb-10 text-center space-y-3">
           <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
             <span className={`text-xs sm:text-sm uppercase font-black tracking-wider px-3.5 py-1 rounded-full ${tStyles.chapterPill}`}>
@@ -1054,7 +1054,7 @@ export default function ReaderPage() {
           </div>
 
           {/* Chapter Next / Previous Navigation */}
-          <div className="flex items-center justify-between w-full pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full pt-4">
             <button 
               onClick={() => handleChapterChange(Math.max(0, currentChapterIndex - 1))}
               disabled={currentChapterIndex === 0}
@@ -1063,10 +1063,10 @@ export default function ReaderPage() {
               <ChevronLeft className="w-4 h-4" /> Previous Chapter
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
               <button
                 onClick={triggerChapterCompletion}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 transition-all hover:scale-105 cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 transition-all hover:scale-105 cursor-pointer shadow-xs"
                 title="Celebrate finishing this chapter with confetti"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -1076,7 +1076,7 @@ export default function ReaderPage() {
               {currentChapterIndex < story.chapters.length - 1 ? (
                 <button 
                   onClick={() => handleChapterChange(currentChapterIndex + 1)}
-                  className="flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
                 >
                   <span>Next Chapter</span>
                   <ChevronRight className="w-4 h-4" />
@@ -1084,7 +1084,7 @@ export default function ReaderPage() {
               ) : (
                 <button 
                   onClick={triggerChapterCompletion}
-                  className="flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
+                  className="flex items-center gap-1.5 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
                 >
                   <Sparkles className="w-4 h-4 text-emerald-200" /> Complete Story! 🎉
                 </button>
@@ -1131,7 +1131,7 @@ export default function ReaderPage() {
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className={`chapter-drawer w-84 max-w-[calc(100vw-3rem)] h-full p-6 shadow-2xl overflow-y-auto space-y-4 border-r flex flex-col ${
+            className={`chapter-drawer w-84 max-w-[calc(100vw-3rem)] h-full h-[100dvh] p-6 shadow-2xl overflow-y-auto space-y-4 border-r flex flex-col ${
               readerTheme === 'dark' 
                 ? 'bg-slate-900 text-slate-100 border-slate-800' 
                 : readerTheme === 'sepia' 

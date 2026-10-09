@@ -1721,7 +1721,7 @@ export default function AuthorStudio() {
               title="Add or update your bank payout account for 90% royalties"
             >
               <Building2 className="w-3.5 h-3.5" /> 
-              <span>{user?.bankDetails ? `Bank (${user.bankDetails.bankName})` : '+ Add Bank Details'}</span>
+              <span>{user?.bankDetails ? `Bank (${user.bankDetails.bankName})` : 'Add Bank Details'}</span>
             </button>
           </div>
         </div>
@@ -1740,7 +1740,7 @@ export default function AuthorStudio() {
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <PenTool className="w-3.5 h-3.5" /> + Write New Book
+                <PenTool className="w-3.5 h-3.5" /> Write New Book
               </button>
               <button
                 type="button"
@@ -1760,7 +1760,7 @@ export default function AuthorStudio() {
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <Plus className="w-3.5 h-3.5" /> + Add Chapter to Existing Book ({myStories.length > 0 ? myStories.length : '0 published'})
+                <Plus className="w-3.5 h-3.5" /> Add Chapter to Existing Book ({myStories.length > 0 ? myStories.length : '0 published'})
               </button>
             </div>
 
@@ -1992,7 +1992,7 @@ export default function AuthorStudio() {
                       <div className="flex items-start sm:items-center gap-2.5 text-slate-700 dark:text-slate-300">
                         <BookOpen className="w-4 h-4 text-brand-500 shrink-0 mt-0.5 sm:mt-0" />
                         <div>
-                          <strong className="text-brand-600 dark:text-brand-400">Where to add Chapter 2:</strong> You can add and draft Chapter 2 right here using the <strong>"+ Add Chapter 2"</strong> button below, or publish Chapter 1 first to launch your serial and add subsequent chapters anytime!
+                          <strong className="text-brand-600 dark:text-brand-400">Where to add Chapter 2:</strong> You can add and draft Chapter 2 right here using the <strong>"Add Chapter 2"</strong> button below, or publish Chapter 1 first to launch your serial and add subsequent chapters anytime!
                         </div>
                       </div>
                       <button
@@ -2000,7 +2000,7 @@ export default function AuthorStudio() {
                         onClick={handleAddNewChapter}
                         className="shrink-0 px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" /> + Add Chapter {draftChapters.length + 1}
+                        <Plus className="w-3.5 h-3.5" /> Add Chapter {draftChapters.length + 1}
                       </button>
                     </div>
 
@@ -2069,7 +2069,7 @@ export default function AuthorStudio() {
                             onClick={handleAddNewChapter}
                             className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
                           >
-                            <Plus className="w-3.5 h-3.5" /> + Add Chapter {draftChapters.length + 1}
+                            <Plus className="w-3.5 h-3.5" /> Add Chapter {draftChapters.length + 1}
                           </button>
                         </div>
 

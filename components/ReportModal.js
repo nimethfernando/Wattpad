@@ -39,9 +39,9 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
       className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div className="flex min-h-full items-center justify-center p-4 text-center">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
         <div 
-          className="w-full max-w-md text-left bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
+          className="w-full max-w-md text-left bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
           onClick={(e) => e.stopPropagation()}
         >
         <button 

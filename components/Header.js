@@ -1,5 +1,6 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import BrandLogo from '@/components/BrandLogo';
@@ -54,6 +55,37 @@ export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent background scrolling while the mobile slide-out drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  // Close modals and drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+        setMobileSearchOpen(false);
+        setShowProfileMenu(false);
+        setShowNotifications(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const searchRef = useRef(null);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -113,7 +145,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-2 lg:gap-3.5 xl:gap-5 text-xs lg:text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <nav className="hidden lg:flex items-center gap-3 lg:gap-3.5 xl:gap-5 text-xs lg:text-sm font-semibold text-slate-600 dark:text-slate-300">
             <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
               <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
             </Link>
@@ -153,7 +185,7 @@ export default function Header() {
         </div>
 
         {/* Global Autocomplete Search Bar */}
-        <div className="hidden xl:block relative flex-1 max-w-xs xl:max-w-sm mx-3 lg:mx-4" ref={searchRef}>
+        <div className="hidden md:block relative flex-1 max-w-xs xl:max-w-sm mx-2.5 lg:mx-4" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -447,10 +479,21 @@ export default function Header() {
             </div>
           )}
 
-          {/* Menu Button for Mobile & Tablets */}
+          {/* Mobile Search Toggle (Visible on phones where top search bar is hidden) */}
           <button 
+            type="button"
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="md:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer shrink-0"
+            aria-label="Toggle Search"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+
+          {/* Menu Button for Mobile & Tablets (Hidden on desktop lg) */}
+          <button 
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer shrink-0"
+            className="lg:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer shrink-0"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -459,9 +502,9 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Expandable Search Bar for screens where full search is hidden */}
+      {/* Expandable Search Bar for phones where full search is hidden */}
       {mobileSearchOpen && (
-        <div className="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-lg">
+        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-lg">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -512,17 +555,20 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile Slide-Over Drawer with Backdrop Blur */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] xl:hidden">
-          {/* Backdrop Overlay */}
+      {/* Mobile Slide-Over Drawer with Portal to document.body (prevents backdrop-filter entrapment) */}
+      {mounted && mobileMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] lg:hidden">
+          {/* Full-Screen Backdrop Overlay */}
           <div 
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
           />
 
-          {/* Drawer Container */}
-          <div className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-80 bg-white dark:bg-slate-900 shadow-2xl p-5 overflow-y-auto flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-200">
+          {/* Full-Height Drawer Container */}
+          <aside 
+            className="fixed top-0 right-0 bottom-0 w-[290px] sm:w-[330px] max-w-[85vw] h-full h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl p-5 overflow-y-auto flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 z-[10000] animate-in slide-in-from-right duration-200"
+            aria-label="Mobile Navigation"
+          >
             <div>
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -746,8 +792,9 @@ export default function Header() {
                 </button>
               )}
             </div>
-          </div>
-        </div>
+          </aside>
+        </div>,
+        document.body
       )}
     </header>
   );

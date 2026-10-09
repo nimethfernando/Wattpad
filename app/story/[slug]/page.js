@@ -303,7 +303,7 @@ export default function StoryDetailPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
         {/* Story Hero Header Card with Ambient Blurred Backdrop (Wattpad Style) */}
-        <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col md:flex-row gap-8 lg:gap-12">
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 lg:p-10 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-12">
           
           {/* Ambient Glow Backdrop */}
           <div className="absolute inset-0 overflow-hidden rounded-3xl -z-10 opacity-20 dark:opacity-30 blur-3xl pointer-events-none">
@@ -311,7 +311,7 @@ export default function StoryDetailPage() {
           </div>
 
           {/* Story Cover */}
-          <div className="w-56 sm:w-64 aspect-[3/4] shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100 dark:border-slate-800 relative group">
+          <div className="w-48 sm:w-64 max-w-full aspect-[3/4] shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100 dark:border-slate-800 relative group">
             <img src={story.cover} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             {story.isOriginal && (
               <span className="absolute top-3 left-3 bg-brand-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-md">
@@ -355,7 +355,7 @@ export default function StoryDetailPage() {
               </div>
 
               {/* Title */}
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 {story.title}
               </h1>
 
@@ -374,7 +374,7 @@ export default function StoryDetailPage() {
               )}
 
               {/* Author Row */}
-              <div className="flex items-center gap-4 mt-4 pt-2">
+              <div className="flex items-center gap-2.5 sm:gap-4 mt-4 pt-2 flex-wrap">
                 <Link href={`/profile/${story.authorUsername}`} className="flex items-center gap-2.5 group">
                   <img src={story.authorAvatar} alt={story.author} className="w-9 h-9 rounded-full object-cover ring-2 ring-brand-500/20" />
                   <div>
@@ -418,7 +418,7 @@ export default function StoryDetailPage() {
                 {/* Report button */}
                 <button
                   onClick={() => setReportModalOpen(true)}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 ml-auto cursor-pointer"
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 sm:ml-auto cursor-pointer"
                   title="Report Content"
                 >
                   <Flag className="w-3.5 h-3.5" /> {t?.report || 'Report'}
@@ -580,19 +580,19 @@ export default function StoryDetailPage() {
                 href={`/read/${story.slug}?chapter=${chapter.number}`}
                 className="flex items-center justify-between py-4 group hover:bg-slate-50 dark:hover:bg-slate-800/40 px-3 rounded-xl transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-500 group-hover:bg-brand-500 group-hover:text-white transition-colors">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-2">
+                  <span className="w-8 h-8 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-500 group-hover:bg-brand-500 group-hover:text-white transition-colors">
                     {chapter.number}
                   </span>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors truncate">
                       {chapter.title}
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">Published on {chapter.publishedAt}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-slate-400">
+                <div className="flex items-center gap-3 sm:gap-4 text-xs text-slate-400 shrink-0">
                   <span className="hidden sm:inline">{chapter.reads.toLocaleString()} reads</span>
                   <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
                 </div>

@@ -769,7 +769,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Tab Navigation Controls */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mt-6 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mt-6 overflow-x-auto no-scrollbar scrollbar-none">
           <button 
             onClick={() => setActiveTab('stories')}
             className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${

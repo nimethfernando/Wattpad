@@ -167,11 +167,11 @@ export default function BankDetailsModal() {
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center animate-fadeIn"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center animate-fadeIn"
       onClick={closeBankDetailsModal}
     >
       <div 
-        className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8 text-left"
+        className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8 text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
