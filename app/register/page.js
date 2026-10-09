@@ -243,7 +243,7 @@ export default function RegisterPage() {
 
             {/* 4. Choose Your Experience */}
             <div className="space-y-2 pt-1">
-              <label className="block font-bold text-slate-700 dark:text-slate-300">
+              <label className="block font-bold text-slate-800 dark:text-slate-200 text-xs">
                 Choose Your Experience
               </label>
 
@@ -251,23 +251,23 @@ export default function RegisterPage() {
                 {/* Kids / Family */}
                 <div 
                   onClick={() => setExperienceMode(EXPERIENCE_MODES.KIDS)}
-                  className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-1.5 ${
+                  className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
                     experienceMode === EXPERIENCE_MODES.KIDS || isUnder18
-                      ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
+                      ? 'border-brand-500 bg-brand-500/10 dark:bg-brand-500/20 shadow-sm ring-1 ring-brand-500/40'
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Kids / Family
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-500" /> Kids / Family
                     </span>
                     {(experienceMode === EXPERIENCE_MODES.KIDS || isUnder18) && (
-                      <div className="w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5" />
+                      <div className="w-4.5 h-4.5 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-xs">
+                        <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                  <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
                     Kids Books, Educational Stories, and age-appropriate Fantasy. Mature content is hidden.
                   </p>
                 </div>
@@ -277,37 +277,37 @@ export default function RegisterPage() {
                   onClick={() => {
                     if (!isUnder18) setExperienceMode(EXPERIENCE_MODES.MATURE);
                   }}
-                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-1.5 relative ${
+                  className={`p-3.5 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-2 relative ${
                     isUnder18
                       ? 'opacity-60 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed'
                       : experienceMode === EXPERIENCE_MODES.MATURE
-                        ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm cursor-pointer'
+                        ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 shadow-sm ring-1 ring-amber-500/40 cursor-pointer'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                      {isUnder18 ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />} 18+ / Mature
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {isUnder18 ? <Lock className="w-4 h-4 text-slate-400" /> : <ShieldCheck className="w-4 h-4 text-amber-500" />} 18+ / Mature
                     </span>
                     {!isUnder18 && experienceMode === EXPERIENCE_MODES.MATURE && (
-                      <div className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5" />
+                      <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                        <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
                     {isUnder18 && (
-                      <span className="text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">
                         Locked
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                  <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
                     Full general catalog: Fantasy, Romance, Thriller, and 18+ classified works.
                   </p>
                 </div>
               </div>
 
-              <p className="text-[10px] text-slate-400 leading-relaxed italic">
-                * Note: Content access is primarily controlled by the DOB stored in your account. Users under 18 cannot unlock 18+ mature content.
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-0.5 font-normal">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">* Note:</span> Content access is primarily controlled by the DOB stored in your account. Users under 18 cannot unlock 18+ mature content.
               </p>
             </div>
 

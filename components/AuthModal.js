@@ -282,44 +282,44 @@ export default function AuthModal() {
                 </div>
 
                 {/* Experience Mode Selector */}
-                <div className="space-y-1">
-                  <span className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                     Choose Experience:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <div 
                       onClick={() => setExperienceMode(EXPERIENCE_MODES.KIDS)}
-                      className={`p-2 rounded-xl border-2 transition-all cursor-pointer text-left ${
+                      className={`p-2.5 rounded-xl border-2 transition-all cursor-pointer text-left ${
                         experienceMode === EXPERIENCE_MODES.KIDS || isUnder18
-                          ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20'
+                          ? 'border-brand-500 bg-brand-500/10 dark:bg-brand-500/20 shadow-sm'
                           : 'border-slate-200 dark:border-slate-700'
                       }`}
                     >
-                      <div className="font-bold text-[11px] flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-emerald-500" /> Kids / Family
+                      <div className="font-bold text-xs flex items-center gap-1.5 text-slate-900 dark:text-white">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Kids / Family
                       </div>
-                      <p className="text-[9px] text-slate-400 leading-tight mt-0.5">Kids & Teen stories</p>
+                      <p className="text-[11px] text-slate-700 dark:text-slate-200 font-medium leading-tight mt-1">Kids & Teen stories</p>
                     </div>
 
                     <div 
                       onClick={() => {
                         if (!isUnder18) setExperienceMode(EXPERIENCE_MODES.MATURE);
                       }}
-                      className={`p-2 rounded-xl border-2 transition-all text-left ${
+                      className={`p-2.5 rounded-xl border-2 transition-all text-left ${
                         isUnder18
                           ? 'opacity-60 bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 cursor-not-allowed'
                           : experienceMode === EXPERIENCE_MODES.MATURE
-                            ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer'
+                            ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 shadow-sm cursor-pointer'
                             : 'border-slate-200 dark:border-slate-700 cursor-pointer'
                       }`}
                     >
-                      <div className="font-bold text-[11px] flex items-center justify-between">
-                        <span className="flex items-center gap-1">
-                          {isUnder18 ? <Lock className="w-3 h-3 text-slate-400" /> : <ShieldCheck className="w-3 h-3 text-amber-500" />} 18+ / Mature
+                      <div className="font-bold text-xs flex items-center justify-between text-slate-900 dark:text-white">
+                        <span className="flex items-center gap-1.5">
+                          {isUnder18 ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />} 18+ / Mature
                         </span>
-                        {isUnder18 && <span className="text-[8px] text-rose-500 font-bold">Locked</span>}
+                        {isUnder18 && <span className="text-[9px] text-rose-500 font-bold">Locked</span>}
                       </div>
-                      <p className="text-[9px] text-slate-400 leading-tight mt-0.5">Full adult library</p>
+                      <p className="text-[11px] text-slate-700 dark:text-slate-200 font-medium leading-tight mt-1">Full adult library</p>
                     </div>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function AuthModal() {
                     required
                     className="w-4 h-4 mt-0.5 accent-brand-500 rounded"
                   />
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                  <span className="text-xs text-slate-700 dark:text-slate-300 leading-tight">
                     I confirm that my Date of Birth is accurate and agree to Terms of Service.
                   </span>
                 </label>
