@@ -241,7 +241,7 @@ export default function HomePage() {
                     />
                     {/* Real-time Leaderboard Position Ribbon */}
                     <div className="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black backdrop-blur-md shadow-md flex items-center gap-1 ${
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black backdrop-blur-md shadow-md flex items-center gap-1 ${
                         index === 0
                           ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 ring-1 ring-amber-300'
                         : index === 1
@@ -253,7 +253,7 @@ export default function HomePage() {
                         <span>{index === 0 ? '🥇 #1' : index === 1 ? '🥈 #2' : index === 2 ? '🥉 #3' : `#${index + 1}`}</span>
                       </span>
                       {story.isOriginal && (
-                        <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold text-brand-400">
+                        <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-brand-400">
                           ORIGINAL
                         </span>
                       )}
@@ -262,9 +262,9 @@ export default function HomePage() {
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
+                        <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
                         {story.ranking && (
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                          <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded ${
                             story.ranking.rank === 1
                               ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300/40'
                               : story.ranking.rank === 2
@@ -315,18 +315,18 @@ export default function HomePage() {
                     <div className="flex-1 flex flex-col justify-between py-1">
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase bg-amber-100 dark:bg-amber-950/80 px-2 py-0.5 rounded">
                             ★ Editor's Choice
                           </span>
-                          <span className="text-[10px] text-slate-400">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}</span>
                         </div>
                         <h3 className="font-bold text-sm sm:text-base mt-1.5 text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors line-clamp-1">{locStory.title}</h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {locStory.author}</p>
                         <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">{locStory.description}</p>
                       </div>
                       <div className="pt-2 flex items-center justify-between">
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()} votes
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                          <Heart className="w-3.5 h-3.5 text-rose-500" /> {story.votes.toLocaleString()} votes
                         </span>
                         <Link href={`/story/${story.slug}`} className="text-xs font-bold text-amber-600 hover:underline">
                           Read Story →
@@ -363,10 +363,10 @@ export default function HomePage() {
                     <div className="flex-1 flex flex-col justify-between py-1">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-purple-600 uppercase bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase bg-purple-100 dark:bg-purple-950/80 px-2 py-0.5 rounded">
                             {translateGenre ? translateGenre(locStory.genre || story.genre) : (locStory.genre || story.genre)}
                           </span>
-                          <span className="text-[10px] text-slate-400">• {story.chapters.length} {t?.chapters || 'Chapters'}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">• {story.chapters.length} {t?.chapters || 'Chapters'}</span>
                         </div>
                         <h3 className="font-bold text-base sm:text-lg mt-1.5 text-slate-900 dark:text-white">{locStory.title}</h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{t?.by || 'By'} {locStory.author}</p>

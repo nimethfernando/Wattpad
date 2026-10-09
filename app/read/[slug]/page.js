@@ -532,23 +532,25 @@ export default function ReaderPage() {
 
       {/* 2. MAIN CHAPTER READING CANVAS */}
       <main className="max-w-3xl mx-auto px-6 py-12">
-        <header className="mb-10 text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <span className="text-xs uppercase font-extrabold tracking-widest text-brand-600 dark:text-brand-400">
+        <header className="mb-10 text-center space-y-3">
+          <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
+            <span className="text-xs sm:text-sm uppercase font-black tracking-wider px-3.5 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30">
               Chapter {chapter.number}
             </span>
             {story.ranking && (
-              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 flex items-center gap-1">
+              <span className="text-xs sm:text-sm font-black px-3.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shadow-xs flex items-center gap-1.5">
                 <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
               </span>
             )}
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Eye className="w-3 h-3 text-brand-500" /> {(story.reads || 0).toLocaleString()} reads
+            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300/80 dark:border-slate-700 shadow-xs">
+              <Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()} reads
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black">{chapter.title}</h1>
-          <p className="text-xs opacity-70">
-            By {story.author} • Published {chapter.publishedAt}
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white pt-1">
+            {chapter.title}
+          </h1>
+          <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
+            By <strong className="font-bold text-slate-900 dark:text-white">{story.author}</strong> • Published {chapter.publishedAt}
           </p>
         </header>
 
@@ -644,10 +646,10 @@ export default function ReaderPage() {
                         e.stopPropagation();
                         setActiveParagraph(p);
                       }}
-                      className="absolute right-[-15px] sm:right-[-32px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      className="absolute right-[-15px] sm:right-[-32px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                       title="Scene Break Comments"
                     >
-                      <MessageSquare className="w-3 h-3" />
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{p.comments?.length || 0}</span>
                     </button>
                   </div>
@@ -670,10 +672,10 @@ export default function ReaderPage() {
                         e.stopPropagation();
                         setActiveParagraph(p);
                       }}
-                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                       title="View & Post Comments"
                     >
-                      <MessageSquare className="w-3 h-3" />
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{p.comments?.length || 0}</span>
                     </button>
                   </div>
@@ -697,10 +699,10 @@ export default function ReaderPage() {
                         e.stopPropagation();
                         setActiveParagraph(p);
                       }}
-                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      className="absolute right-[-15px] sm:right-[-32px] top-3 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                       title="View & Post Comments"
                     >
-                      <MessageSquare className="w-3 h-3" />
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{p.comments?.length || 0}</span>
                     </button>
                   </div>
@@ -715,7 +717,7 @@ export default function ReaderPage() {
                     onClick={() => setActiveParagraph(p)}
                     className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-5 mb-1"
                   >
-                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 font-sans">
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 font-sans">
                       {formatInlineText(rawText.slice(4))}
                     </h4>
                     <button 
@@ -723,10 +725,10 @@ export default function ReaderPage() {
                         e.stopPropagation();
                         setActiveParagraph(p);
                       }}
-                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                       title="View & Post Comments"
                     >
-                      <MessageSquare className="w-3 h-3" />
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{p.comments?.length || 0}</span>
                     </button>
                   </div>
@@ -749,10 +751,10 @@ export default function ReaderPage() {
                         e.stopPropagation();
                         setActiveParagraph(p);
                       }}
-                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                      className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                       title="View & Post Comments"
                     >
-                      <MessageSquare className="w-3 h-3" />
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{p.comments?.length || 0}</span>
                     </button>
                   </div>
@@ -773,17 +775,17 @@ export default function ReaderPage() {
                     >
                       <img src={src} alt={alt} className="max-h-96 rounded-2xl mx-auto shadow-md border border-slate-200 dark:border-slate-800 object-cover" />
                       {alt && alt.toLowerCase() !== 'illustration' && (
-                        <p className="text-xs text-slate-400 italic mt-2">{alt}</p>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic mt-2">{alt}</p>
                       )}
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveParagraph(p);
                         }}
-                        className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                        className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                         title="View & Post Comments"
                       >
-                        <MessageSquare className="w-3 h-3" />
+                        <MessageSquare className="w-3.5 h-3.5" />
                         <span>{p.comments?.length || 0}</span>
                       </button>
                     </div>
@@ -806,10 +808,10 @@ export default function ReaderPage() {
                       e.stopPropagation();
                       setActiveParagraph(p);
                     }}
-                    className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-60 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-extrabold bg-brand-500 text-white px-2 py-0.5 rounded-full shadow-md transition-all hover:scale-105"
+                    className="absolute right-[-15px] sm:right-[-32px] top-2 opacity-85 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-black bg-brand-500 text-white px-2.5 py-1 rounded-full shadow-md transition-all hover:scale-105"
                     title="View & Post Paragraph Comments"
                   >
-                    <MessageSquare className="w-3 h-3" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     <span>{p.comments?.length || 0}</span>
                   </button>
                 </div>
@@ -820,7 +822,9 @@ export default function ReaderPage() {
 
         {/* CHAPTER EMOJI REACTIONS */}
         <div className="mt-14 pt-8 border-t border-black/10 dark:border-white/10 flex flex-col items-center gap-4 relative">
-          <span className="text-xs font-bold uppercase tracking-wider opacity-60">Chapter Emoji Reactions</span>
+          <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Chapter Emoji Reactions
+          </span>
           
           {/* Floating Emoji Bursts */}
           {emojiBursts.map(b => (
@@ -833,15 +837,15 @@ export default function ReaderPage() {
             </div>
           ))}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap justify-center">
             {['🔥', '❤️', '😭', '👏', '😱'].map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleEmojiReact(emoji)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 hover:scale-110 active:scale-95 transition-all text-sm font-bold cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 hover:scale-110 active:scale-95 transition-all text-sm font-bold text-slate-800 dark:text-slate-200 shadow-xs cursor-pointer"
               >
-                <span>{emoji}</span>
-                <span className="text-xs">{chapter.emojis?.[emoji] || 0}</span>
+                <span className="text-base">{emoji}</span>
+                <span className="text-xs sm:text-sm font-black">{chapter.emojis?.[emoji] || 0}</span>
               </button>
             ))}
           </div>
@@ -877,7 +881,7 @@ export default function ReaderPage() {
 
             <button 
               onClick={handleVote}
-              className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all shadow-xl cursor-pointer ${
+              className={`flex items-center gap-2 px-8 py-3.5 rounded-full font-extrabold text-sm sm:text-base transition-all shadow-xl cursor-pointer ${
                 hasVoted 
                   ? 'bg-rose-500 text-white shadow-rose-500/30' 
                   : 'bg-brand-500 hover:bg-brand-600 active:scale-95 text-white shadow-brand-500/30 hover:scale-[1.02]'
@@ -896,7 +900,7 @@ export default function ReaderPage() {
                     story: story
                   });
                 }}
-                className="flex items-center gap-2 px-6 py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
+                className="flex items-center gap-2 px-7 py-3.5 rounded-full font-extrabold text-sm sm:text-base bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
                 title="Send a tip to the author"
               >
                 <Sparkles className="w-4 h-4 text-amber-200" />
@@ -910,7 +914,7 @@ export default function ReaderPage() {
             <button 
               onClick={() => handleChapterChange(Math.max(0, currentChapterIndex - 1))}
               disabled={currentChapterIndex === 0}
-              className="flex items-center gap-1 text-xs sm:text-sm font-bold opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer transition-opacity"
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-brand-500 disabled:opacity-30 cursor-pointer transition-colors"
             >
               <ChevronLeft className="w-4 h-4" /> Previous Chapter
             </button>
@@ -918,7 +922,7 @@ export default function ReaderPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={triggerChapterCompletion}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all hover:scale-105 cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 transition-all hover:scale-105 cursor-pointer shadow-xs"
                 title="Celebrate finishing this chapter with confetti"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -928,7 +932,7 @@ export default function ReaderPage() {
               {currentChapterIndex < story.chapters.length - 1 ? (
                 <button 
                   onClick={() => handleChapterChange(currentChapterIndex + 1)}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:scale-105 transition-all cursor-pointer"
                 >
                   <span>Next Chapter</span>
                   <ChevronRight className="w-4 h-4" />
@@ -936,7 +940,7 @@ export default function ReaderPage() {
               ) : (
                 <button 
                   onClick={triggerChapterCompletion}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
+                  className="flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer animate-pulse"
                 >
                   <Sparkles className="w-4 h-4 text-emerald-200" /> Complete Story! 🎉
                 </button>

@@ -429,11 +429,11 @@ export default function BrowsePage() {
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md">
                           {translateGenre ? translateGenre(story.genre) : story.genre}
                         </span>
                         {/* Age Rating Badge */}
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
+                        <span className={`text-[11px] font-black px-2 py-0.5 rounded border ${
                           story.ageRating === '18+'
                             ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
                             : story.ageRating === '16+'
@@ -443,12 +443,12 @@ export default function BrowsePage() {
                           {story.ageRating || 'Everyone'}
                         </span>
                         {story.contentType === 'picture_book' && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
                             🎨 Picture Book
                           </span>
                         )}
                         {story.ranking && (
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                          <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded ${
                             story.ranking.rank === 1
                               ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 ring-1 ring-amber-400/40'
                               : story.ranking.rank === 2
@@ -459,11 +459,11 @@ export default function BrowsePage() {
                           </span>
                         )}
                         {story.isOriginal && (
-                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-600">
+                          <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-600">
                             Original
                           </span>
                         )}
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                           🌐 {story.language?.toUpperCase() || 'EN'}
                         </span>
                       </div>
@@ -478,10 +478,10 @@ export default function BrowsePage() {
                       <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{story.description}</p>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 dark:border-slate-800 mt-2">
-                      <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {story.reads.toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {story.votes.toLocaleString()}</span>
-                      <span className="font-semibold text-brand-600 dark:text-brand-400">{story.chapters.length} {t?.chapterShort || 'Ch.'}</span>
+                    <div className="pt-2 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold border-t border-slate-100 dark:border-slate-800 mt-2">
+                      <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-500" /> {story.reads.toLocaleString()}</span>
+                      <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {story.votes.toLocaleString()}</span>
+                      <span className="font-bold text-brand-600 dark:text-brand-400">{story.chapters.length} {t?.chapterShort || 'Ch.'}</span>
                     </div>
                   </div>
                 </div>
@@ -490,7 +490,7 @@ export default function BrowsePage() {
                 <div className="px-4 pb-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
                   <div className="flex items-center gap-1.5 overflow-hidden">
                     {story.tags.slice(0, 3).map((tag, i) => (
-                      <span key={i} className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                      <span key={i} className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
                         #{tag}
                       </span>
                     ))}

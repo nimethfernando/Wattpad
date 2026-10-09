@@ -656,7 +656,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
 
           {/* Dynamic Ranking Badge if present */}
           {story.ranking && (
-            <div className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black backdrop-blur-md border flex items-center gap-1 z-10 shadow-sm ${
+            <div className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs font-black backdrop-blur-md border flex items-center gap-1 z-10 shadow-sm ${
               story.ranking.rank === 1
                 ? 'bg-amber-950/90 text-amber-300 border-amber-400/50 ring-1 ring-amber-400/30'
                 : story.ranking.rank === 2
@@ -670,9 +670,9 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
           )}
 
           {/* Age Rating & Content Format Badges */}
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 z-10 flex-wrap">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 z-10 flex-wrap">
             {story.ageRating && (
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full backdrop-blur-md border ${
+              <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full backdrop-blur-md border ${
                 story.ageRating === '18+'
                   ? 'bg-rose-950/80 text-rose-300 border-rose-500/40'
                   : story.ageRating === '16+'
@@ -683,7 +683,7 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
               </span>
             )}
             {story.contentType === 'picture_book' && (
-              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md">
                 🎨 {t?.illustrated || 'Illustrated'}
               </span>
             )}
@@ -786,20 +786,20 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
         </div>
 
         <Link href={`/story/${story.slug}`}>
-          <h3 className="font-extrabold text-sm text-slate-900 dark:text-white line-clamp-1 hover:text-brand-500 transition-colors">
+          <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white line-clamp-1 hover:text-brand-500 transition-colors">
             {localizedStory.title || story.title}
           </h3>
         </Link>
-        <p className="text-xs text-slate-400 mt-0.5">{t?.by || 'By'} {localizedStory.author || story.author}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{t?.by || 'By'} {localizedStory.author || story.author}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">
           {localizedStory.description || story.description}
         </p>
       </div>
 
-      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {(story.reads || 0).toLocaleString()}</span>
-          <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
+      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold">
+        <div className="flex items-center gap-2.5">
+          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
+          <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
         </div>
         <span className="font-bold text-brand-600 dark:text-brand-400">
           {story.chapters?.length || 1} {t?.chapterShort || 'Ch.'}

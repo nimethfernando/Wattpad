@@ -166,16 +166,15 @@ html[lang="hi"] div {
 /* Sepia theme dedicated to warm classic serialized reading */
 .sepia-reader {
   background-color: #faf5eb !important;
-  color: #3b2f1e !important;
+  color: #2b1d0c !important;
 }
 
-.sepia-reader header,
 .sepia-reader nav,
 .sepia-reader footer,
 .sepia-reader .reader-toolbar {
   background-color: #f2ebd9 !important;
   border-color: #e5dac2 !important;
-  color: #3b2f1e !important;
+  color: #2b1d0c !important;
 }
 
 .sepia-reader .reader-card {

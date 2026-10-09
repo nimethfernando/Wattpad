@@ -92,7 +92,7 @@ export default function InlineCommentDrawer({
           <select 
             value={commentSort}
             onChange={(e) => setCommentSort(e.target.value)}
-            className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 p-1.5 rounded-lg outline-none cursor-pointer"
+            className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-1.5 rounded-lg outline-none cursor-pointer border border-slate-200 dark:border-slate-700"
           >
             <option value="newest">Newest</option>
             <option value="likes">Most Liked</option>
@@ -107,7 +107,7 @@ export default function InlineCommentDrawer({
       </div>
 
       {/* Highlighted Paragraph Quotation */}
-      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 text-xs italic text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 line-clamp-3">
+      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 text-xs sm:text-sm italic text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800 line-clamp-3">
         "{paragraph.text}"
       </div>
 
@@ -116,25 +116,25 @@ export default function InlineCommentDrawer({
         {sortedComments.length === 0 ? (
           <div className="text-center py-12 text-slate-400 space-y-2">
             <Sparkles className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-            <p className="font-semibold">No comments on this paragraph yet.</p>
-            <p className="text-[11px] text-slate-500">Be the first reader to react to this line!</p>
+            <p className="font-semibold text-slate-600 dark:text-slate-300">No comments on this paragraph yet.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Be the first reader to react to this line!</p>
           </div>
         ) : (
           sortedComments.map(c => (
-            <div key={c.id} className="space-y-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div key={c.id} className="space-y-2 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img src={c.avatar} alt={c.author} className="w-5 h-5 rounded-full object-cover" />
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{c.author}</span>
+                  <img src={c.avatar} alt={c.author} className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700" />
+                  <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">{c.author}</span>
                 </div>
-                <span className="text-[10px] text-slate-400">{c.time}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{c.time}</span>
               </div>
-              <p className="text-slate-700 dark:text-slate-300 text-xs pl-7 leading-relaxed">
+              <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm pl-8 leading-relaxed">
                 {c.text}
               </p>
 
               {/* Reaction bar */}
-              <div className="pl-7 flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <div className="pl-8 flex items-center justify-between pt-1 text-xs text-slate-500 dark:text-slate-400 font-semibold">
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => {
@@ -142,7 +142,7 @@ export default function InlineCommentDrawer({
                     }}
                     className="flex items-center gap-1 hover:text-rose-500 transition-colors cursor-pointer"
                   >
-                    <Heart className="w-3 h-3" /> {c.likes || 0}
+                    <Heart className="w-3.5 h-3.5" /> {c.likes || 0}
                   </button>
                   <button 
                     onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
@@ -155,15 +155,15 @@ export default function InlineCommentDrawer({
 
               {/* Nested Replies Stream */}
               {c.replies && c.replies.length > 0 && (
-                <div className="pl-7 pt-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-700 ml-3">
+                <div className="pl-8 pt-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-700 ml-3">
                   {c.replies.map(r => (
                     <div key={r.id} className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <img src={r.avatar} alt={r.author} className="w-4 h-4 rounded-full" />
-                        <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300">{r.author}</span>
-                        <span className="text-[9px] text-slate-400">{r.time}</span>
+                        <img src={r.avatar} alt={r.author} className="w-5 h-5 rounded-full" />
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{r.author}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{r.time}</span>
                       </div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-6">{r.text}</p>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 pl-7 leading-relaxed">{r.text}</p>
                     </div>
                   ))}
                 </div>
