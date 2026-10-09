@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
+import NetflixView from '@/components/NetflixView';
 import { useApp } from '@/context/AppContext';
 import { 
   Filter, 
@@ -19,7 +20,9 @@ import {
   Check,
   BookMarked,
   Plus,
-  ShieldAlert
+  ShieldAlert,
+  Film,
+  LayoutGrid
 } from 'lucide-react';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 
@@ -41,6 +44,7 @@ export default function BrowsePage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [browseLayout, setBrowseLayout] = useState('grid'); // 'grid' | 'netflix'
 
   const activeFiltersCount = useMemo(() => {
     return [
@@ -126,8 +130,39 @@ export default function BrowsePage() {
             </p>
           </div>
 
-          {/* Quick special toggles */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick special toggles & View Mode */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* View Mode Switcher */}
+            <div className="inline-flex p-1 bg-slate-200/80 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setBrowseLayout('grid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  browseLayout === 'grid'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrowseLayout('netflix')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  browseLayout === 'netflix'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-rose-500'
+                }`}
+              >
+                <Film className="w-3.5 h-3.5" />
+                <span>Netflix Rows</span>
+                <span className="px-1.5 py-0.2 bg-rose-500 text-[9px] text-white rounded-full font-black uppercase">HOT</span>
+              </button>
+            </div>
+
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+
             <button
               onClick={() => { setSpecialFilter('all'); setCurrentPage(1); }}
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
@@ -161,7 +196,13 @@ export default function BrowsePage() {
           </div>
         </div>
 
-        {/* Horizontal Quick-Genre Chips */}
+        {browseLayout === 'netflix' ? (
+          <div className="-mx-4 sm:-mx-6 lg:-mx-8 mt-6 rounded-3xl overflow-hidden shadow-2xl">
+            <NetflixView />
+          </div>
+        ) : (
+          <>
+            {/* Horizontal Quick-Genre Chips */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none py-3 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => { setSelectedGenre('all'); setCurrentPage(1); }}
@@ -540,6 +581,8 @@ export default function BrowsePage() {
             syncToUrl={true}
           />
         </div>
+        </>
+      )}
 
       </main>
 

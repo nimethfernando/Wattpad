@@ -301,4 +301,21 @@ html[lang="hi"] div {
   animation: heartBurstPop 0.95s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
+/* Netflix UI Custom Utilities */
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.netflix-stroke-text {
+  -webkit-text-stroke: 4px #595959;
+  color: #141414;
+}
+
+
 

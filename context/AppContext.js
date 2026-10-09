@@ -178,17 +178,30 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Dual-State Home Feed View Mode: 'landing' (public default) or 'feed' (authenticated)
-  const [homeFeedViewMode, setHomeFeedViewMode] = useState(() => {
+  // Tri-State Home Discovery View Mode: 'netflix' (streaming categories) | 'feed' (community feed) | 'landing' (public marketing)
+  const [homeFeedViewMode, setHomeFeedViewModeState] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
+        const saved = localStorage.getItem('avora_home_feed_mode');
+        if (saved && ['netflix', 'feed', 'landing'].includes(saved)) {
+          return saved;
+        }
         if (localStorage.getItem('avora_user') || document.cookie.includes('avora_session=')) {
-          return 'feed';
+          return 'netflix';
         }
       } catch (e) {}
     }
     return 'landing';
   });
+
+  const setHomeFeedViewMode = (mode) => {
+    setHomeFeedViewModeState(mode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('avora_home_feed_mode', mode);
+      } catch (e) {}
+    }
+  };
 
   // Soft Launch Feature Flags
   const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags || {
