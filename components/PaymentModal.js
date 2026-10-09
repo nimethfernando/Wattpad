@@ -298,7 +298,7 @@ export default function PaymentModal() {
                     placeholder="Custom amount (e.g. 15)"
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
-                    className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl pl-8 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl pl-8 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
@@ -309,7 +309,7 @@ export default function PaymentModal() {
                     placeholder="e.g. Loved chapter 4! Keep writing!"
                     value={donorMessage}
                     onChange={(e) => setDonorMessage(e.target.value)}
-                    className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
@@ -438,7 +438,7 @@ export default function PaymentModal() {
                   value={cardNumber}
                   onChange={handleCardNumberChange}
                   required
-                  className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -451,7 +451,7 @@ export default function PaymentModal() {
                   value={cardHolder}
                   onChange={(e) => setCardHolder(e.target.value)}
                   required
-                  className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
@@ -463,7 +463,7 @@ export default function PaymentModal() {
                   value={expiry}
                   onChange={handleExpiryChange}
                   required
-                  className="bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <input
                   type="password"
@@ -472,7 +472,7 @@ export default function PaymentModal() {
                   value={cvv}
                   onChange={handleCvvChange}
                   required
-                  className="bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
