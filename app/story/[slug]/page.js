@@ -94,6 +94,50 @@ export default function StoryDetailPage() {
     );
   }
 
+  // Moderation Enforcement: Check if Story or Author is Banned/Removed
+  if (story.status === 'removed' || story.isBanned || story.isRemoved) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-lg w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mb-6 shadow-xl shadow-rose-500/15">
+            <ShieldAlert className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-rose-600 bg-rose-500/10 px-3.5 py-1 rounded-full mb-3 border border-rose-500/20">
+            Content Removed by Moderation
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black mb-3 text-slate-900 dark:text-white">
+            Story Unavailable
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 text-xs sm:text-sm max-w-md leading-relaxed">
+            This story was removed by platform administrators following community reports for violating our content and safety guidelines ({story.moderationReason || 'Inappropriate content policy violation'}).
+          </p>
+          <div className="w-full bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2 mb-6 shadow-sm">
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Title:</span>
+              <strong className="text-slate-900 dark:text-white">{story.title}</strong>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Author:</span>
+              <span className="font-semibold">{story.author}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Status:</span>
+              <span className="font-extrabold text-rose-600">Taken Down / Author Banned</span>
+            </div>
+          </div>
+          <Link 
+            href="/browse" 
+            className="px-6 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-md shadow-brand-500/25 transition-all"
+          >
+            Browse Verified Community Stories →
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Core Platform-Level Rule: Check DOB Age & Access Permissions
   const accessCheck = canUserAccessContent(user, story);
   if (!accessCheck.canAccess) {

@@ -81,10 +81,16 @@ export default function AdminPanel() {
     t,
     cmsConfig,
     updateCmsConfig,
-    resetCmsConfig
+    resetCmsConfig,
+    banUserAndTakeDownContent,
+    warnUser,
+    dismissReport,
+    banUser,
+    unbanUser
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications' | 'cms'
+  const [reportFilter, setReportFilter] = useState('all'); // 'all' | 'pending' | 'resolved'
 
   // CMS Content Management State
   const [cmsSubTab, setCmsSubTab] = useState('pwa'); // 'pwa' | 'social' | 'pages'
@@ -548,10 +554,41 @@ export default function AdminPanel() {
     setNewAuthorName('');
   };
 
-  const handleResolveReport = (reportId, actionTaken) => {
-    const r = reports.find(item => item.id === reportId);
-    if (r) addAuditLog(`Moderation Action: ${actionTaken}`, `Target: ${r.reportedUser} (${r.reason})`);
-    setReports(prev => prev.filter(item => item.id !== reportId));
+  const handleResolveReport = async (reportId, actionType) => {
+    const report = reports.find(item => item.id === reportId);
+    if (!report) return;
+
+    if (actionType === 'dismiss' || actionType === 'Dismissed') {
+      dismissReport(reportId);
+    } else if (actionType === 'warn' || actionType === 'Warned User') {
+      const customMsg = prompt(
+        `Enter warning message to issue to writer @${report.reportedUser}:`,
+        `Your content "${report.story}" has received reader complaints regarding: "${report.reason}". Continued policy violations will result in account termination.`
+      );
+      if (customMsg !== null && customMsg.trim()) {
+        warnUser(report.reportedUser, reportId, customMsg.trim());
+      }
+    } else if (actionType === 'ban' || actionType === 'Banned User & Removed Content') {
+      const confirmed = confirm(
+        `⚠️ CONFIRM WRITER BAN & CONTENT TAKEDOWN:\n\n` +
+        `• Target Writer: @${report.reportedUser}\n` +
+        `• Target Content: "${report.story}"\n` +
+        `• Violation: ${report.reason}\n\n` +
+        `This will:\n` +
+        `1. Ban @${report.reportedUser} permanently.\n` +
+        `2. Prevent the writer from logging in or creating stories.\n` +
+        `3. Remove "${report.story}" and all their stories from public browsing & reading.\n\n` +
+        `Proceed with Ban & Takedown?`
+      );
+      if (confirmed) {
+        await banUserAndTakeDownContent(
+          report.reportedUser,
+          report.story,
+          reportId,
+          report.reason || "Severe violation of platform content & safety policy"
+        );
+      }
+    }
   };
 
   const handleAddGenre = (e) => {
@@ -613,7 +650,12 @@ export default function AdminPanel() {
   );
   const paginatedTransactions = filteredTransactions.slice((txPage - 1) * txPageSize, txPage * txPageSize);
 
-  const paginatedReports = reports.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize);
+  const filteredReports = (reports || []).filter(r => {
+    if (reportFilter === 'pending') return r.status === 'pending';
+    if (reportFilter === 'resolved') return r.status === 'resolved' || r.status === 'dismissed';
+    return true;
+  });
+  const paginatedReports = filteredReports.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize);
   const paginatedGenres = genres.slice((genrePage - 1) * genrePageSize, genrePage * genrePageSize);
   const cleanUserEmail = (user?.email || '').toLowerCase().trim();
   const hasAdminAccess = cleanUserEmail === 'gbncircle@gmail.com';
@@ -758,11 +800,18 @@ export default function AdminPanel() {
           </button>
           <button 
             onClick={() => setActiveTab('moderation')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
               activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            Reports Queue ({reports.length})
+            <span>Reports Queue</span>
+            {reports.filter(r => r.status === 'pending').length > 0 ? (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
+                {reports.filter(r => r.status === 'pending').length} pending
+              </span>
+            ) : (
+              <span className="text-[10px] opacity-75">({reports.length})</span>
+            )}
           </button>
           <button 
             onClick={() => setActiveTab('payments')}
@@ -895,6 +944,11 @@ export default function AdminPanel() {
                         </td>
                         <td className="p-4">
                           <div className="flex flex-wrap gap-1.5">
+                            {(story.status === 'removed' || story.isBanned || story.isRemoved) && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-300 dark:border-rose-800" title={story.moderationReason || 'Content Removed by Moderation'}>
+                                Taken Down
+                              </span>
+                            )}
                             {story.isOriginal && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
                                 Original
@@ -1535,12 +1589,24 @@ export default function AdminPanel() {
                         </td>
                         <td className="p-4">
                           <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
-                            u.status === 'active' 
+                            u.status === 'banned' || u.isBanned
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-300 dark:border-rose-800'
+                              : u.status === 'active' 
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' 
-                              : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
                           }`}>
-                            {u.status}
+                            {u.status === 'banned' || u.isBanned ? 'BANNED' : u.status}
                           </span>
+                          {(u.status === 'banned' || u.isBanned) && u.banReason && (
+                            <span className="block text-[10px] text-rose-500 dark:text-rose-400 mt-0.5 max-w-[140px] truncate font-medium" title={u.banReason}>
+                              {u.banReason}
+                            </span>
+                          )}
+                          {u.warningsCount > 0 && !(u.status === 'banned' || u.isBanned) && (
+                            <span className="block text-[10px] text-amber-500 mt-0.5 font-medium">
+                              ⚠️ {u.warningsCount} {u.warningsCount === 1 ? 'warning' : 'warnings'}
+                            </span>
+                          )}
                         </td>
                         <td className="p-4">
                           {u.bankDetails ? (
@@ -1581,16 +1647,43 @@ export default function AdminPanel() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <button 
-                              onClick={() => toggleUserStatus(u.id)}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
-                                u.status === 'active' 
-                                  ? 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40' 
-                                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                              }`}
-                            >
-                              {u.status === 'active' ? 'Suspend' : 'Reactivate'}
-                            </button>
+                            {u.status === 'banned' || u.isBanned ? (
+                              <button 
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to unban writer @${u.username}? This will restore active account status.`)) {
+                                    unbanUser(u.id);
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-300 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                              >
+                                Unban Writer
+                              </button>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => toggleUserStatus(u.id)}
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                                    u.status === 'active' 
+                                      ? 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40' 
+                                      : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                                  }`}
+                                >
+                                  {u.status === 'active' ? 'Suspend' : 'Reactivate'}
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    const reason = prompt(`Enter reason for permanently banning writer @${u.username} and taking down their works:`, "Posting inappropriate content violating community standards");
+                                    if (reason !== null && reason.trim()) {
+                                      banUser(u.id, reason.trim());
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-rose-300 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                  title="Ban Writer & Remove Works"
+                                >
+                                  Ban
+                                </button>
+                              </>
+                            )}
                             <button 
                               onClick={() => {
                                 if (confirm(`Are you sure you want to permanently delete user ${u.name}?`)) {
@@ -1630,8 +1723,36 @@ export default function AdminPanel() {
         {/* TAB 3: MODERATION REPORTS */}
         {activeTab === 'moderation' && (
           <div className="mt-8 space-y-4">
-            <h3 className="font-bold text-base">Flagged Content & User Reports Queue</h3>
-            {reports.length === 0 ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">Flagged Content & Moderation Queue</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Review reported content, issue warnings, or permanently ban offending writers and take down their works.</p>
+              </div>
+
+              {/* Status Filter Buttons */}
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+                <button
+                  onClick={() => { setReportFilter('all'); setReportPage(1); }}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${reportFilter === 'all' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  All ({reports.length})
+                </button>
+                <button
+                  onClick={() => { setReportFilter('pending'); setReportPage(1); }}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${reportFilter === 'pending' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  Pending ({reports.filter(r => r.status === 'pending').length})
+                </button>
+                <button
+                  onClick={() => { setReportFilter('resolved'); setReportPage(1); }}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${reportFilter === 'resolved' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  Resolved ({reports.filter(r => r.status !== 'pending').length})
+                </button>
+              </div>
+            </div>
+
+            {filteredReports.length === 0 ? (
               <div className="text-center py-14 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
                 <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
                 <p className="font-bold text-sm">Reports queue is clear</p>
@@ -1639,45 +1760,107 @@ export default function AdminPanel() {
               </div>
             ) : (
               <div className="space-y-4">
-                {paginatedReports.map(report => (
-                  <div key={report.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">
-                          {report.targetType}
-                        </span>
-                        <span className="text-xs text-slate-400">Target: {report.story}</span>
-                      </div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">Reason: {report.reason}</h4>
-                      <p className="text-xs text-slate-500">Reported User: @{report.reportedUser}</p>
-                    </div>
+                {paginatedReports.map(report => {
+                  const isPending = report.status === 'pending';
+                  const isResolvedBan = report.resolution === 'Banned User & Removed Content';
+                  const isDismissed = report.status === 'dismissed';
 
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      <button 
-                        onClick={() => handleResolveReport(report.id, "Dismissed")}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200 cursor-pointer"
-                      >
-                        Dismiss
-                      </button>
-                      <button 
-                        onClick={() => handleResolveReport(report.id, "Warned User")}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 cursor-pointer"
-                      >
-                        Warn User
-                      </button>
-                      <button 
-                        onClick={() => handleResolveReport(report.id, "Banned User & Removed Content")}
-                        className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold cursor-pointer"
-                      >
-                        Ban User & Take Down
-                      </button>
+                  return (
+                    <div key={report.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 shadow-sm">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                            isPending 
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                              : isResolvedBan
+                              ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400 border border-red-300'
+                              : isDismissed
+                              ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                          }`}>
+                            {isPending ? 'Pending Review' : (report.resolution || report.status.toUpperCase())}
+                          </span>
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            Target: <strong className="text-slate-900 dark:text-white">{report.story}</strong>
+                          </span>
+                          <span className="text-[11px] text-slate-400">•</span>
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            Writer: <strong className="text-purple-600 dark:text-purple-400">@{report.reportedUser}</strong>
+                          </span>
+                          {report.createdAt && (
+                            <>
+                              <span className="text-[11px] text-slate-400">•</span>
+                              <span className="text-[11px] text-slate-400">{new Date(report.createdAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                            <span>Reason: {report.reason}</span>
+                          </h4>
+                          {report.details && (
+                            <div className="mt-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                              "{report.details}"
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                          <span>Reported by: <strong className="text-slate-600 dark:text-slate-300">@{report.reporter || 'community_reader'}</strong></span>
+                          {report.resolvedAt && (
+                            <span>• Resolved: {new Date(report.resolvedAt).toLocaleDateString()} by {report.resolvedBy || 'Admin'}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap w-full lg:w-auto justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+                        {isPending ? (
+                          <>
+                            <button 
+                              onClick={() => handleResolveReport(report.id, "dismiss")}
+                              className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer text-slate-700 dark:text-slate-300"
+                            >
+                              Dismiss Report
+                            </button>
+                            <button 
+                              onClick={() => handleResolveReport(report.id, "warn")}
+                              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
+                            >
+                              Warn Writer
+                            </button>
+                            <button 
+                              onClick={() => handleResolveReport(report.id, "ban")}
+                              className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black transition-colors cursor-pointer shadow-md shadow-rose-600/20 flex items-center gap-1.5"
+                            >
+                              <ShieldAlert className="w-3.5 h-3.5" />
+                              Ban Writer & Take Down
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-400">
+                              Resolved: <strong className="text-slate-700 dark:text-slate-200">{report.resolution || report.status}</strong>
+                            </span>
+                            {report.resolution !== 'Banned User & Removed Content' && (
+                              <button 
+                                onClick={() => handleResolveReport(report.id, "ban")}
+                                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold border border-rose-500/20 transition-colors cursor-pointer"
+                              >
+                                Escalate to Ban
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <Pagination
                   currentPage={reportPage}
-                  totalItems={reports.length}
+                  totalItems={filteredReports.length}
                   pageSize={reportPageSize}
                   onPageChange={setReportPage}
                   onPageSizeChange={(newSize) => {

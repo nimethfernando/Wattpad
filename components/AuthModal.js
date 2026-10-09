@@ -57,7 +57,13 @@ export default function AuthModal() {
         setLoading(false);
         return;
       }
-      loginWithEmail(email, password);
+      try {
+        loginWithEmail(email, password);
+      } catch (err) {
+        setErrorMessage(err.message || 'Login failed. Please check credentials.');
+        setLoading(false);
+        return;
+      }
       setLoading(false);
     } else {
       if (!email.trim() || !username.trim() || !password.trim() || !birthdate) {

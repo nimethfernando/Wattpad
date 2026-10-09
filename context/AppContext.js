@@ -10,6 +10,7 @@ import {
   initialCommunitySpaces,
   initialReaderReactions,
   initialRegisteredUsers,
+  initialReports,
   initialTransactions,
   initialReadingStreak,
   initialReadingProgress,
@@ -440,6 +441,17 @@ export function AppProvider({ children }) {
         const cleanEmail = (email || '').trim().toLowerCase();
         const isAdmin = isUserAdmin(cleanEmail);
 
+        // Banned Account Guard: Prevent banned users from logging in via OAuth
+        const existingRecord = registeredUsers.find(u => 
+          (u.email && u.email.toLowerCase() === cleanEmail) ||
+          (u.username && u.username.toLowerCase() === username)
+        );
+        if (!isAdmin && (existingRecord?.status === 'banned' || existingRecord?.isBanned)) {
+          signOut({ redirect: false });
+          alert(`Access Denied: This account has been banned due to community guidelines violations (${existingRecord.banReason || 'Inappropriate content policy violation'}).`);
+          return;
+        }
+
         if (isAdmin) {
           isAgeVerified = true;
           savedMode = EXPERIENCE_MODES.MATURE;
@@ -535,7 +547,27 @@ export function AppProvider({ children }) {
   }, [sessionStatus]);
 
   // Moderation & Audit Log
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_moderation_reports');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return initialReports || [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && reports) {
+      try {
+        localStorage.setItem('avora_moderation_reports', JSON.stringify(reports));
+      } catch (e) {}
+    }
+  }, [reports]);
+
   const [auditLogs, setAuditLogs] = useState([]);
 
   // Notifications
@@ -604,6 +636,24 @@ export function AppProvider({ children }) {
         const savedUser = localStorage.getItem('avora_user');
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
+
+          // Sync banned status from registered users cache
+          try {
+            const cachedReg = localStorage.getItem('avora_registered_users_cache');
+            if (cachedReg) {
+              const regList = JSON.parse(cachedReg);
+              const matched = regList.find(u => 
+                (u.email && u.email.toLowerCase() === (parsedUser.email || '').toLowerCase()) ||
+                (u.username && u.username.toLowerCase() === (parsedUser.username || '').toLowerCase())
+              );
+              if (matched && (matched.status === 'banned' || matched.isBanned)) {
+                parsedUser.status = 'banned';
+                parsedUser.isBanned = true;
+                parsedUser.banReason = matched.banReason;
+              }
+            }
+          } catch (e) {}
+
           if (parsedUser?.email && isUserAdmin(parsedUser)) {
             parsedUser.role = 'admin';
             parsedUser.isAgeVerified = true;
@@ -1377,16 +1427,179 @@ export function AppProvider({ children }) {
   const submitReport = ({ targetType, reportedUser, reason, details, storyTitle }) => {
     const newReport = {
       id: Date.now(),
-      targetType,
+      targetType: targetType || "story",
       reportedUser: reportedUser || "Unknown",
-      reason,
+      reporter: user?.name ? `${user.name} (@${user.username || 'user'})` : "Guest Reader",
+      reason: reason || "Inappropriate Content",
       details: details || "",
-      story: storyTitle || "Avora Library General",
+      story: storyTitle || "Avora Library Content",
       status: "pending",
-      timestamp: "Just now"
+      timestamp: "Just now",
+      createdAt: new Date().toISOString()
     };
     setReports(prev => [newReport, ...prev]);
-    addAuditLog(`Report Filed (${targetType})`, `Target: ${reportedUser || storyTitle}`);
+    addAuditLog(`Report Filed (${targetType || 'story'})`, `Target: @${reportedUser} • Story: ${storyTitle}`);
+  };
+
+  const banUserAndTakeDownContent = async (username, storyIdentifier, reportId, reason) => {
+    const cleanUser = (username || '').toLowerCase().trim();
+
+    // 1. Mark user as banned in registeredUsers
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.map(u => {
+        if (
+          (u.username && u.username.toLowerCase() === cleanUser) ||
+          (u.name && u.name.toLowerCase() === cleanUser) ||
+          (u.email && u.email.toLowerCase() === cleanUser)
+        ) {
+          return {
+            ...u,
+            status: 'banned',
+            isBanned: true,
+            banReason: reason || "Violations of community safety standards",
+            bannedAt: new Date().toISOString()
+          };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
+
+    // 2. If the active session is this user, mark their session banned
+    if (
+      user?.username?.toLowerCase() === cleanUser ||
+      user?.email?.toLowerCase() === cleanUser
+    ) {
+      setUser(prev => prev ? ({ ...prev, status: 'banned', isBanned: true }) : null);
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('avora_user');
+          if (saved) {
+            const p = JSON.parse(saved);
+            p.status = 'banned';
+            p.isBanned = true;
+            localStorage.setItem('avora_user', JSON.stringify(p));
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 3. Take down the reported story and any stories by this banned author
+    setStories(prev => {
+      const updated = prev.map(s => {
+        const isTargetStory = storyIdentifier && (
+          s.id === storyIdentifier ||
+          s.slug === storyIdentifier ||
+          s.title?.toLowerCase() === storyIdentifier.toLowerCase() ||
+          s.title?.toLowerCase().includes(storyIdentifier.toLowerCase())
+        );
+        const isAuthoredByBannedUser = cleanUser && (
+          s.authorUsername?.toLowerCase() === cleanUser ||
+          s.author?.toLowerCase() === cleanUser
+        );
+
+        if (isTargetStory || isAuthoredByBannedUser) {
+          return {
+            ...s,
+            status: 'removed',
+            isRemoved: true,
+            isBanned: true,
+            moderationReason: reason || "Content policy violation",
+            moderatedAt: new Date().toISOString()
+          };
+        }
+        return s;
+      });
+      return computeStoryRankings(updated);
+    });
+
+    // 4. Update the report in reports queue
+    if (reportId) {
+      setReports(prev => prev.map(r => {
+        if (r.id === reportId) {
+          return {
+            ...r,
+            status: 'resolved',
+            resolution: 'Banned User & Removed Content',
+            resolvedAt: new Date().toISOString(),
+            resolvedBy: user?.name || 'Administrator'
+          };
+        }
+        return r;
+      }));
+    }
+
+    // 5. Add audit log
+    addAuditLog(
+      "Admin Banned Writer & Removed Content",
+      `@${username || 'user'} • Content: ${storyIdentifier || 'All stories'} • Reason: ${reason || 'Inappropriate content'}`
+    );
+  };
+
+  const warnUser = (username, reportId, warningMessage) => {
+    const cleanUser = (username || '').toLowerCase().trim();
+    const warnText = warningMessage || "Warning: Your content has been flagged for violating platform community standards. Continued violations will result in account termination.";
+    
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.map(u => {
+        if (
+          (u.username && u.username.toLowerCase() === cleanUser) ||
+          (u.name && u.name.toLowerCase() === cleanUser) ||
+          (u.email && u.email.toLowerCase() === cleanUser)
+        ) {
+          return {
+            ...u,
+            warningsCount: (u.warningsCount || 0) + 1,
+            lastWarning: warnText,
+            lastWarningAt: new Date().toISOString()
+          };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
+
+    if (reportId) {
+      setReports(prev => prev.map(r => {
+        if (r.id === reportId) {
+          return {
+            ...r,
+            status: 'resolved',
+            resolution: 'Warned User',
+            resolvedAt: new Date().toISOString(),
+            resolvedBy: user?.name || 'Administrator'
+          };
+        }
+        return r;
+      }));
+    }
+
+    addAuditLog("Moderation Warning Issued", `@${username} • ${warnText}`);
+  };
+
+  const dismissReport = (reportId) => {
+    setReports(prev => prev.map(r => {
+      if (r.id === reportId) {
+        return {
+          ...r,
+          status: 'dismissed',
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: user?.name || 'Administrator'
+        };
+      }
+      return r;
+    }));
+    addAuditLog("Moderation Report Dismissed", `Report #${reportId}`);
   };
 
   const addAuditLog = (action, target) => {
@@ -2010,19 +2223,116 @@ export function AppProvider({ children }) {
   };
 
   const toggleUserStatus = (userId) => {
-    setRegisteredUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        const nextStatus = u.status === 'active' ? 'suspended' : 'active';
-        addAuditLog('User Status Changed', `${u.name} status: ${nextStatus}`);
-        return { ...u, status: nextStatus };
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.map(u => {
+        if (u.id === userId) {
+          const nextStatus = u.status === 'active' ? 'suspended' : 'active';
+          addAuditLog('User Status Changed', `${u.name} status: ${nextStatus}`);
+          return { ...u, status: nextStatus, isBanned: nextStatus === 'suspended' ? u.isBanned : false };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
       }
-      return u;
-    }));
+      return nextUsers;
+    });
+  };
+
+  const banUser = (userIdOrUsername, reason = "Violations of community safety guidelines") => {
+    let targetUsername = null;
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.map(u => {
+        if (u.id === userIdOrUsername || u.username?.toLowerCase() === String(userIdOrUsername).toLowerCase()) {
+          targetUsername = u.username;
+          addAuditLog('User Banned by Admin', `@${u.username} (${u.name}) • Reason: ${reason}`);
+          return { 
+            ...u, 
+            status: 'banned', 
+            isBanned: true, 
+            banReason: reason, 
+            bannedAt: new Date().toISOString() 
+          };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
+
+    if (targetUsername) {
+      setStories(prev => {
+        const updated = prev.map(s => {
+          if (s.authorUsername?.toLowerCase() === targetUsername.toLowerCase()) {
+            return {
+              ...s,
+              status: 'removed',
+              isRemoved: true,
+              isBanned: true,
+              moderationReason: reason
+            };
+          }
+          return s;
+        });
+        return computeStoryRankings(updated);
+      });
+    }
+  };
+
+  const unbanUser = (userIdOrUsername) => {
+    let targetUsername = null;
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.map(u => {
+        if (u.id === userIdOrUsername || u.username?.toLowerCase() === String(userIdOrUsername).toLowerCase()) {
+          targetUsername = u.username;
+          addAuditLog('User Unbanned by Admin', `@${u.username} restored to active status`);
+          return { ...u, status: 'active', isBanned: false, banReason: null };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
+
+    if (targetUsername) {
+      setStories(prev => {
+        const updated = prev.map(s => {
+          if (s.authorUsername?.toLowerCase() === targetUsername.toLowerCase()) {
+            return {
+              ...s,
+              status: 'published',
+              isRemoved: false,
+              isBanned: false
+            };
+          }
+          return s;
+        });
+        return computeStoryRankings(updated);
+      });
+    }
   };
 
   const deleteUser = (userId) => {
     const target = registeredUsers.find(u => u.id === userId);
-    setRegisteredUsers(prev => prev.filter(u => u.id !== userId));
+    setRegisteredUsers(prev => {
+      const nextUsers = prev.filter(u => u.id !== userId);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_registered_users_cache', JSON.stringify(nextUsers));
+        } catch (e) {}
+      }
+      return nextUsers;
+    });
     if (target) addAuditLog('User Deleted', target.name);
   };
 
@@ -2204,6 +2514,18 @@ export function AppProvider({ children }) {
       const cleanEmail = email.toLowerCase().trim();
       const isAdmin = isUserAdmin(cleanEmail);
 
+      const targetAccount = (registeredUsers || []).find(u => 
+        (u.email && u.email.toLowerCase() === cleanEmail) ||
+        (u.username && u.username.toLowerCase() === cleanEmail)
+      );
+
+      if (targetAccount?.status === 'banned') {
+        throw new Error(`Account Banned: This account (@${targetAccount.username}) has been permanently banned by Avora moderation for content safety violations.`);
+      }
+      if (targetAccount?.status === 'suspended') {
+        throw new Error(`Account Suspended: This account (@${targetAccount.username}) has been temporarily suspended by moderation.`);
+      }
+
       let savedDob = null;
       let savedAge = null;
       let savedMode = EXPERIENCE_MODES.KIDS;
@@ -2358,6 +2680,18 @@ export function AppProvider({ children }) {
     const isDityaAdmin = cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya';
     const isAdmin = isSuperAdmin || isDityaAdmin || isUserAdmin(cleanEmail);
     const isAuthor = cleanEmail.includes('author') || cleanEmail.includes('elena');
+
+    const targetAccount = (registeredUsers || []).find(u => 
+      (u.email && u.email.toLowerCase() === cleanEmail) ||
+      (u.username && u.username.toLowerCase() === cleanEmail)
+    );
+
+    if (targetAccount?.status === 'banned') {
+      throw new Error(`Account Banned: This account (@${targetAccount.username}) has been permanently banned by Avora moderation for content safety violations. (${targetAccount.banReason || 'Policy Violation'})`);
+    }
+    if (targetAccount?.status === 'suspended') {
+      throw new Error(`Account Suspended: This account (@${targetAccount.username}) has been temporarily suspended by moderation.`);
+    }
 
     let savedDob = null;
     let savedAge = null;
@@ -2744,6 +3078,11 @@ export function AppProvider({ children }) {
       reports,
       setReports,
       submitReport,
+      banUserAndTakeDownContent,
+      warnUser,
+      dismissReport,
+      banUser,
+      unbanUser,
       auditLogs,
       addAuditLog,
       library,

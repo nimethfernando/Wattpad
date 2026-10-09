@@ -339,6 +339,50 @@ export default function ReaderPage() {
     );
   }
 
+  // Moderation Enforcement: Check if Story or Author is Banned/Removed
+  if (story.status === 'removed' || story.isBanned || story.isRemoved) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-slate-900 p-8 rounded-3xl border border-rose-500/30 text-center space-y-4 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/15 text-rose-500 border border-rose-500/30 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/20">
+            <ShieldAlert className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-3.5 py-1 rounded-full inline-block border border-rose-500/30">
+            Removed by Moderation
+          </span>
+          <h2 className="text-2xl font-black">Story Unavailable</h2>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Reading access to this serialized story has been terminated because the author was banned for violating community safety standards ({story.moderationReason || 'Content policy violation'}).
+          </p>
+
+          <div className="w-full bg-slate-800/80 p-3.5 rounded-2xl text-left text-xs space-y-1.5 border border-slate-700">
+            <div className="flex justify-between text-slate-400">
+              <span>Title:</span>
+              <strong className="text-white">{story.title}</strong>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>Author:</span>
+              <strong className="text-slate-300">@{story.authorUsername || story.author}</strong>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>Status:</span>
+              <strong className="text-rose-400">Banned & Taken Down</strong>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Link
+              href="/browse"
+              className="w-full inline-block py-3 rounded-full bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-md shadow-brand-500/25 transition-all text-center"
+            >
+              Browse Verified Community Stories →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Core Platform-Level Rule: DOB Age Access Enforcement
   const accessCheck = canUserAccessContent(user, story);
   if (!accessCheck.canAccess) {

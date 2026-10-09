@@ -48,7 +48,8 @@ import {
   Code,
   Upload,
   FileUp,
-  Camera
+  Camera,
+  ShieldAlert
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
@@ -1223,6 +1224,50 @@ export default function AuthorStudio() {
   const { genres, stories, setStories, deleteStory, user, publishStory, addChapterToStory, updateStory, openBankDetailsModal, t } = useApp();
   const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'stories' | 'analytics'
 
+  // Publishing Lockout Guard for Banned Authors
+  if (user?.status === 'banned' || user?.isBanned) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-lg w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mb-6 shadow-xl shadow-rose-500/15">
+            <ShieldAlert className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-rose-600 bg-rose-500/10 px-3.5 py-1 rounded-full mb-3 border border-rose-500/20">
+            Publishing Privileges Revoked
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black mb-3 text-slate-900 dark:text-white">
+            Author Account Banned
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 text-xs sm:text-sm max-w-md leading-relaxed">
+            Your author studio and publishing privileges have been permanently suspended due to content violations flagged and confirmed by administration ({user.banReason || 'Inappropriate content policy violation'}).
+          </p>
+          <div className="w-full bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2 mb-6 shadow-sm">
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Account:</span>
+              <strong className="text-slate-900 dark:text-white">@{user.username || user.name}</strong>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Violation Reason:</span>
+              <span className="font-semibold text-rose-600">{user.banReason || 'Inappropriate content policy violation'}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Status:</span>
+              <span className="font-extrabold text-rose-600">Banned</span>
+            </div>
+          </div>
+          <Link 
+            href="/guidelines" 
+            className="px-6 py-2.5 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm transition-all"
+          >
+            Review Community Guidelines →
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Author stories
   const myStories = stories.filter(s => s.authorUsername === user?.username || s.author === user?.name);
 
@@ -1372,6 +1417,10 @@ export default function AuthorStudio() {
 
   const handlePublish = (e) => {
     e.preventDefault();
+    if (user?.status === 'banned' || user?.isBanned) {
+      alert('Action Denied: Your author account has been banned for content policy violations.');
+      return;
+    }
     if (contentType === 'story') {
       const hasContent = draftChapters.some(c => c.content && c.content.trim());
       if (!storyTitle.trim() || !hasContent) {
@@ -1501,6 +1550,10 @@ export default function AuthorStudio() {
 
   const handleModalPublishChapter = async (e) => {
     e.preventDefault();
+    if (user?.status === 'banned' || user?.isBanned) {
+      alert('Action Denied: Your author account has been banned for content policy violations.');
+      return;
+    }
     if (!targetStoryForChapter) return;
 
     if (targetStoryForChapter.contentType === 'picture_book') {
@@ -1546,6 +1599,10 @@ export default function AuthorStudio() {
 
   const handleExistingStoryPublish = async (e) => {
     e.preventDefault();
+    if (user?.status === 'banned' || user?.isBanned) {
+      alert('Action Denied: Your author account has been banned for content policy violations.');
+      return;
+    }
     const currentStory = myStories.find(s => String(s.id) === String(selectedExistingStoryId)) || myStories[0];
     if (!currentStory) {
       alert('Please select a book to add a chapter to.');

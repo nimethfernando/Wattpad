@@ -37,11 +37,15 @@ export default function LoginPage() {
       return;
     }
     const cleanEmail = email.trim().toLowerCase();
-    const loggedInUser = loginWithEmail(email, password);
-    if (cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle' || cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya') {
-      router.push('/admin', { scroll: false });
-    } else {
-      router.push('/home', { scroll: false });
+    try {
+      const loggedInUser = loginWithEmail(email, password);
+      if (cleanEmail === 'gbncircle@gmail.com' || cleanEmail === 'gbncircle' || cleanEmail === 'groupditya@gmail.com' || cleanEmail === 'groupditya') {
+        router.push('/admin', { scroll: false });
+      } else {
+        router.push('/home', { scroll: false });
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
     }
   };
 
@@ -60,7 +64,7 @@ export default function LoginPage() {
       router.push('/home', { scroll: false });
     } catch (err) {
       console.error('Google login error:', err);
-      setErrorMessage('Authentication error. Please try again.');
+      setErrorMessage(err.message || 'Authentication error. Please try again.');
     } finally {
       setLoading(false);
     }
