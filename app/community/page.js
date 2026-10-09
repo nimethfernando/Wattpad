@@ -393,35 +393,35 @@ export default function CommunityPage() {
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 space-y-4">
             <h3 className="font-black text-lg">Start a Community Thread</h3>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Target Space</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Space</label>
               <select 
                 value={selectedSpace.slug}
                 onChange={(e) => setSelectedSpace(communitySpaces.find(s => s.slug === e.target.value))}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
               >
                 {communitySpaces.map(s => (
-                  <option key={s.id} value={s.slug}>{s.title}</option>
+                  <option key={s.id} value={s.slug} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{s.title}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Thread Title</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Thread Title</label>
               <input 
                 type="text" 
                 placeholder="What's on your mind regarding stories or writing?"
                 value={newThreadTitle}
                 onChange={(e) => setNewThreadTitle(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Discussion Content</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Discussion Content</label>
               <textarea 
                 rows={4}
                 placeholder="Share your theories, feedback, or worldbuilding ideas..."
                 value={newThreadContent}
                 onChange={(e) => setNewThreadContent(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs leading-relaxed outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div className="flex gap-2 pt-2">
@@ -448,27 +448,27 @@ export default function CommunityPage() {
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 space-y-4">
             <h3 className="font-black text-lg">Create Public Reading List</h3>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">List Title</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">List Title</label>
               <input 
                 type="text" 
                 placeholder="e.g. Best Steampunk Serials"
                 value={newListName}
                 onChange={(e) => setNewListName(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Description</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <textarea 
                 rows={2}
                 placeholder="What makes this collection special?"
                 value={newListDesc}
                 onChange={(e) => setNewListDesc(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs leading-relaxed outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Add Stories to List</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Add Stories to List</label>
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {stories.map(s => (
                   <label key={s.id} className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">

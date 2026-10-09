@@ -152,25 +152,25 @@ export default function ReadingListModal({ isOpen, onClose, story }) {
           /* Create New List Form */
           <form onSubmit={handleCreateList} className="space-y-3.5 text-xs">
             <div>
-              <label className="block font-bold text-slate-400 mb-1">List Title</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">List Title</label>
               <input 
                 type="text" 
                 placeholder="e.g. Late Night Fantasy Must-Reads" 
                 value={newListTitle}
                 onChange={(e) => setNewListTitle(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Description (Optional)</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description (Optional)</label>
               <textarea 
                 rows={2}
                 placeholder="What connects the books in this curated collection?" 
                 value={newListDesc}
                 onChange={(e) => setNewListDesc(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
 

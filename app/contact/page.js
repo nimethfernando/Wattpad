@@ -90,52 +90,52 @@ export default function ContactPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Your Full Name</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Your Full Name</label>
                 <input 
                   type="text" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   placeholder="e.g. Maya Chen"
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Email Address</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="e.g. maya@example.com"
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Inquiry Topic</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Inquiry Topic</label>
                 <select 
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
                 >
-                  <option value="support">Technical Support & Reader Help</option>
-                  <option value="author">Author Guidelines & Publishing</option>
-                  <option value="copyright">Copyright / DMCA Notice</option>
-                  <option value="brand">Brand Partnerships & Press</option>
+                  <option value="support" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Technical Support & Reader Help</option>
+                  <option value="author" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Author Guidelines & Publishing</option>
+                  <option value="copyright" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Copyright / DMCA Notice</option>
+                  <option value="brand" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Brand Partnerships & Press</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Message Content</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Message Content</label>
                 <textarea 
                   rows={4}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
                   placeholder="Describe your inquiry in detail..."
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 leading-relaxed outline-none"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 

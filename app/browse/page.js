@@ -263,7 +263,7 @@ export default function BrowsePage() {
                 placeholder="Filter by title, author, tag..."
                 value={searchFilter}
                 onChange={(e) => { setSearchFilter(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
 
@@ -272,7 +272,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedGenre}
                 onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Genres ({accessibleGenres.length})</option>
                 {accessibleGenres.map(g => (
@@ -304,7 +304,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedStatus}
                 onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="ongoing">Ongoing</option>
@@ -317,7 +317,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedMaturity}
                 onChange={(e) => { setSelectedMaturity(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Maturity</option>
                 <option value="everyone">Everyone</option>
@@ -335,7 +335,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedLanguage}
                 onChange={(e) => { setSelectedLanguage(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">🌐 All Languages</option>
                 <option value="en">English (EN)</option>
@@ -349,7 +349,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedMood}
                 onChange={(e) => { setSelectedMood(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Moods</option>
                 <option value="Mysterious">Mysterious</option>
@@ -364,7 +364,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedTrope}
                 onChange={(e) => { setSelectedTrope(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Tropes</option>
                 <option value="Enemies to Lovers">Enemies to Lovers</option>
@@ -379,7 +379,7 @@ export default function BrowsePage() {
               <select 
                 value={selectedLength}
                 onChange={(e) => { setSelectedLength(e.target.value); setCurrentPage(1); }}
-                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none font-semibold cursor-pointer"
+                className="w-full py-2 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none font-semibold cursor-pointer"
               >
                 <option value="all">All Lengths</option>
                 <option value="Short (<10)">Short (&lt;10 Chapters)</option>

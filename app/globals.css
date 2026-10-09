@@ -171,27 +171,30 @@ html.dark .sepia-reader,
   color: #2b1d0c !important;
 }
 
-.sepia-reader h1,
-.sepia-reader h2,
-.sepia-reader h3,
-.sepia-reader h4,
-.sepia-reader h5,
-.sepia-reader h6,
-.sepia-reader strong,
-.sepia-reader b,
-html.dark .sepia-reader h1,
-html.dark .sepia-reader h2,
-html.dark .sepia-reader h3,
-html.dark .sepia-reader h4,
-html.dark .sepia-reader h5,
-html.dark .sepia-reader h6,
-html.dark .sepia-reader strong,
-html.dark .sepia-reader b {
+.sepia-reader main h1,
+.sepia-reader main h2,
+.sepia-reader main h3,
+.sepia-reader main h4,
+.sepia-reader main h5,
+.sepia-reader main h6,
+.sepia-reader main strong,
+.sepia-reader main b,
+.sepia-reader header h1,
+.sepia-reader header h2,
+.sepia-reader header h3,
+html.dark .sepia-reader main h1,
+html.dark .sepia-reader main h2,
+html.dark .sepia-reader main h3,
+html.dark .sepia-reader main h4,
+html.dark .sepia-reader main h5,
+html.dark .sepia-reader main h6,
+html.dark .sepia-reader main strong,
+html.dark .sepia-reader main b {
   color: #2b1d0c !important;
 }
 
-.sepia-reader p,
-html.dark .sepia-reader p {
+.sepia-reader main p,
+html.dark .sepia-reader main p {
   color: #2b1d0c;
 }
 
@@ -287,25 +290,28 @@ html.dark .light-reader,
   color: #0f172a !important;
 }
 
-.light-reader h1,
-.light-reader h2,
-.light-reader h3,
-.light-reader h4,
-.light-reader h5,
-.light-reader h6,
-.light-reader strong,
-.light-reader b,
-html.dark .light-reader h1,
-html.dark .light-reader h2,
-html.dark .light-reader h3,
-html.dark .light-reader h4,
-html.dark .light-reader strong,
-html.dark .light-reader b {
+.light-reader main h1,
+.light-reader main h2,
+.light-reader main h3,
+.light-reader main h4,
+.light-reader main h5,
+.light-reader main h6,
+.light-reader main strong,
+.light-reader main b,
+.light-reader header h1,
+.light-reader header h2,
+.light-reader header h3,
+html.dark .light-reader main h1,
+html.dark .light-reader main h2,
+html.dark .light-reader main h3,
+html.dark .light-reader main h4,
+html.dark .light-reader main strong,
+html.dark .light-reader main b {
   color: #0f172a !important;
 }
 
-.light-reader p,
-html.dark .light-reader p {
+.light-reader main p,
+html.dark .light-reader main p {
   color: #0f172a;
 }
 
@@ -446,14 +452,52 @@ html.dark .light-reader p {
 /* Universal Input Contrast Protection in Dark Mode & Modals */
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
 html.dark textarea,
-html.dark select {
+html.dark select,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+.dark textarea,
+.dark select,
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
   color: #f8fafc !important;
 }
 
 html.dark input::placeholder,
-html.dark textarea::placeholder {
+html.dark textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
   color: #94a3b8 !important;
 }
 
+/* Modal Overlay Isolation: Prevent reader canvas color inheritance on popups/dialogs */
+.sepia-reader .fixed,
+.light-reader .fixed,
+html.dark .sepia-reader .fixed,
+html.dark .light-reader .fixed {
+  color: unset;
+}
 
+/* Fixed modal cards in dark mode must guarantee high-contrast white text */
+html.dark .fixed .dark\:bg-slate-900,
+html.dark .fixed .dark\:bg-slate-950,
+.dark .fixed .dark\:bg-slate-900,
+.dark .fixed .dark\:bg-slate-950 {
+  color: #f8fafc;
+}
 
+html.dark .fixed .dark\:bg-slate-900 h1,
+html.dark .fixed .dark\:bg-slate-900 h2,
+html.dark .fixed .dark\:bg-slate-900 h3,
+html.dark .fixed .dark\:bg-slate-900 h4,
+html.dark .fixed .dark\:bg-slate-900 h5,
+html.dark .fixed .dark\:bg-slate-900 h6,
+.dark .fixed .dark\:bg-slate-900 h1,
+.dark .fixed .dark\:bg-slate-900 h2,
+.dark .fixed .dark\:bg-slate-900 h3,
+.dark .fixed .dark\:bg-slate-900 h4,
+.dark .fixed .dark\:bg-slate-900 h5,
+.dark .fixed .dark\:bg-slate-900 h6 {
+  color: #f8fafc !important;
+}

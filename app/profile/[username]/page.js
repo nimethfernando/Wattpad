@@ -266,7 +266,7 @@ export default function ProfilePage() {
                   onChange={(e) => setMsgInput(e.target.value)}
                   placeholder={`Write something to @${profileData.username}...`}
                   required
-                  className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-xs font-semibold"
+                  className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
                 <div className="flex justify-end">
                   <button

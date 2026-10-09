@@ -541,25 +541,25 @@ export default function LibraryPage() {
             <h3 className="font-black text-xl">Create New Reading List</h3>
             <form onSubmit={handleCreateList} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-400 mb-1">List Title</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">List Title</label>
                 <input 
                   type="text" 
                   value={newListTitle}
                   onChange={(e) => setNewListTitle(e.target.value)}
                   placeholder="e.g. Best Enemies to Lovers 2026"
                   required
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Description (Optional)</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description (Optional)</label>
                 <textarea 
                   rows={3}
                   value={newListDesc}
                   onChange={(e) => setNewListDesc(e.target.value)}
                   placeholder="Describe the mood, tropes, or theme of this list..."
-                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 

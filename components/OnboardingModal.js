@@ -318,7 +318,7 @@ export default function OnboardingModal() {
                     value={genreSearch}
                     onChange={(e) => setGenreSearch(e.target.value)}
                     placeholder={t.searchGenres || "Search all 23 genres (Romance, Werewolf, Fantasy, Sci-Fi...)"}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                   {genreSearch && (
                     <button 

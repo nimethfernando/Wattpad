@@ -41,12 +41,12 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
     >
       <div className="flex min-h-full items-center justify-center p-4 text-center">
         <div 
-          className="w-full max-w-md text-left bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
+          className="w-full max-w-md text-left bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
           onClick={(e) => e.stopPropagation()}
         >
         <button 
           onClick={onClose}
-          className="absolute top-5 right-5 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+          className="absolute top-5 right-5 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -56,42 +56,42 @@ export default function ReportModal({ isOpen, onClose, targetType, reportedUser,
             <Flag className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-black text-base">Report {targetType ? targetType.toUpperCase() : 'Content'}</h3>
-            <p className="text-xs text-slate-400">Target: {storyTitle || reportedUser}</p>
+            <h3 className="font-black text-base text-slate-900 dark:text-white">Report {targetType ? targetType.toUpperCase() : 'Content'}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Target: {storyTitle || reportedUser}</p>
           </div>
         </div>
 
         {isSuccess ? (
           <div className="text-center py-6 space-y-2">
             <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto" />
-            <h4 className="font-bold text-sm">Report Submitted</h4>
-            <p className="text-xs text-slate-500">Our safety & moderation team will review this report within 24 hours.</p>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Report Submitted</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Our safety & moderation team will review this report within 24 hours.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Reason for Report</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Reason for Report</label>
               <select 
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-rose-500"
               >
-                <option value="Copyright / DMCA Infringement">Copyright / DMCA Infringement</option>
-                <option value="Harassment or Hate Speech">Harassment or Hate Speech</option>
-                <option value="Spam or Unauthorized Advertising">Spam or Unauthorized Advertising</option>
-                <option value="Inappropriate Mature Content without 18+ Gate">Inappropriate Mature Content without 18+ Gate</option>
-                <option value="Plagiarism">Plagiarism</option>
+                <option value="Copyright / DMCA Infringement" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Copyright / DMCA Infringement</option>
+                <option value="Harassment or Hate Speech" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Harassment or Hate Speech</option>
+                <option value="Spam or Unauthorized Advertising" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Spam or Unauthorized Advertising</option>
+                <option value="Inappropriate Mature Content without 18+ Gate" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Inappropriate Mature Content without 18+ Gate</option>
+                <option value="Plagiarism" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Plagiarism</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-400 mb-1">Additional Context (Optional)</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Additional Context (Optional)</label>
               <textarea 
                 rows={3}
                 placeholder="Provide timestamps, paragraph numbers, or external proof..."
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 outline-none leading-relaxed"
+                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 outline-none leading-relaxed focus:ring-2 focus:ring-rose-500"
               />
             </div>
 
