@@ -1329,25 +1329,55 @@ export default function AuthorStudio() {
     setPages(prev => prev.map((p, idx) => idx === index ? { ...p, [field]: value } : p));
   };
 
-  // Chapter Content (For standard text novels)
-  const [chapterTitle, setChapterTitle] = useState('');
-  const [chapterContent, setChapterContent] = useState('');
+  // Chapter Content (For standard text novels with multi-chapter drafting)
+  const [draftChapters, setDraftChapters] = useState([
+    { id: 1, number: 1, title: '', content: '' }
+  ]);
+  const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [publishStatus, setPublishStatus] = useState('published'); // 'draft' | 'published' | 'scheduled'
   const [autoSaved, setAutoSaved] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
 
-  // Trigger simulated auto-save on typing
-  const handleContentChange = (e) => {
-    setChapterContent(e.target.value);
+  const activeDraftChapter = draftChapters[activeChapterIndex] || draftChapters[0];
+
+  const handleChapterTitleChange = (val) => {
+    setDraftChapters(prev => prev.map((ch, idx) => idx === activeChapterIndex ? { ...ch, title: val } : ch));
+  };
+
+  const handleChapterContentChange = (val) => {
+    setDraftChapters(prev => prev.map((ch, idx) => idx === activeChapterIndex ? { ...ch, content: val } : ch));
     setAutoSaved(true);
     setTimeout(() => setAutoSaved(false), 2000);
   };
 
+  const handleAddNewChapter = () => {
+    const nextNum = draftChapters.length + 1;
+    const newChap = {
+      id: Date.now(),
+      number: nextNum,
+      title: `Chapter ${nextNum}: `,
+      content: ''
+    };
+    setDraftChapters(prev => [...prev, newChap]);
+    setActiveChapterIndex(draftChapters.length);
+  };
+
+  const handleRemoveChapter = (indexToRemove) => {
+    if (draftChapters.length <= 1) return;
+    setDraftChapters(prev => prev.filter((_, idx) => idx !== indexToRemove).map((ch, idx) => ({ ...ch, number: idx + 1 })));
+    if (activeChapterIndex >= indexToRemove && activeChapterIndex > 0) {
+      setActiveChapterIndex(prev => prev - 1);
+    }
+  };
+
   const handlePublish = (e) => {
     e.preventDefault();
-    if (contentType === 'story' && (!storyTitle.trim() || !chapterContent.trim())) {
-      alert('Please provide a Story Title and Chapter Content.');
-      return;
+    if (contentType === 'story') {
+      const hasContent = draftChapters.some(c => c.content && c.content.trim());
+      if (!storyTitle.trim() || !hasContent) {
+        alert('Please provide a Story Title and Chapter Content.');
+        return;
+      }
     }
 
     if (contentType === 'picture_book' && (!storyTitle.trim() || pages.length === 0)) {
@@ -1356,11 +1386,6 @@ export default function AuthorStudio() {
     }
 
     const slug = storyTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    const paragraphs = chapterContent.split('\n\n').filter(p => p.trim() !== '').map((text, idx) => ({
-      id: idx + 1,
-      text: text.trim(),
-      comments: []
-    }));
 
     const minAge = AGE_THRESHOLDS[ageRating] || 13;
     const targetAudience = ageRating === '3+' 
@@ -1372,6 +1397,40 @@ export default function AuthorStudio() {
       : ageRating === '16+' 
       ? 'Older Teens & Adults' 
       : 'Mature Adults (18+)';
+
+    let publishedChapters = [];
+    if (contentType === 'story') {
+      publishedChapters = draftChapters.map((ch, idx) => {
+        const paragraphs = (ch.content || '').split('\n\n').filter(p => p.trim() !== '').map((text, pIdx) => ({
+          id: pIdx + 1,
+          text: text.trim(),
+          comments: []
+        }));
+        return {
+          id: ch.id || (Date.now() + idx + 1),
+          number: idx + 1,
+          title: ch.title.trim() || `Chapter ${idx + 1}`,
+          publishedAt: new Date().toISOString().split('T')[0],
+          reads: 1,
+          votes: 1,
+          paragraphs,
+          pages: []
+        };
+      });
+    } else {
+      publishedChapters = [
+        {
+          id: Date.now() + 1,
+          number: 1,
+          title: "Illustrated Edition",
+          publishedAt: new Date().toISOString().split('T')[0],
+          reads: 1,
+          votes: 1,
+          paragraphs: [],
+          pages: pages
+        }
+      ];
+    }
 
     const newStory = {
       id: Date.now(),
@@ -1400,18 +1459,7 @@ export default function AuthorStudio() {
       lastUpdated: "Just now",
       tags: tagsInput.split(',').map(s => s.trim()),
       copyright,
-      chapters: [
-        {
-          id: Date.now() + 1,
-          number: 1,
-          title: chapterTitle || (contentType === 'picture_book' ? "Illustrated Edition" : "Chapter 1"),
-          publishedAt: new Date().toISOString().split('T')[0],
-          reads: 1,
-          votes: 1,
-          paragraphs: contentType === 'story' ? paragraphs : [],
-          pages: contentType === 'picture_book' ? pages : []
-        }
-      ]
+      chapters: publishedChapters
     };
 
     publishStory(newStory);
@@ -1634,22 +1682,26 @@ export default function AuthorStudio() {
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <Plus className="w-3.5 h-3.5" /> + Add Chapter to Existing Book ({myStories.length})
+                <Plus className="w-3.5 h-3.5" /> + Add Chapter to Existing Book ({myStories.length > 0 ? myStories.length : '0 published'})
               </button>
             </div>
 
             {editorMode === 'add_chapter' ? (
               myStories.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-                  <BookOpen className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                  <h4 className="font-bold text-base">No Published Books Found</h4>
-                  <p className="text-xs text-slate-500 mt-1 mb-5">You haven't written any books yet. First, create your book, then you can add Chapter 2 and subsequent chapters!</p>
+                <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 max-w-xl mx-auto shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="w-7 h-7" />
+                  </div>
+                  <h4 className="font-black text-lg">No Published Books Found Yet</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 mb-6 leading-relaxed">
+                    You currently have 0 published books in your catalog. You can write and draft multiple chapters in the <strong>"+ Write New Book"</strong> tab right now, or publish Chapter 1 to launch your book and serialize Chapter 2 here!
+                  </p>
                   <button
                     type="button"
                     onClick={() => setEditorMode('new_story')}
                     className="px-6 py-2.5 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 cursor-pointer shadow-md shadow-brand-500/20"
                   >
-                    Start New Book
+                    ← Back to Write New Book
                   </button>
                 </div>
               ) : (
@@ -1855,8 +1907,25 @@ export default function AuthorStudio() {
                     </div>
                   )}
 
-                  {/* Story Title & Chapter */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                  {/* Story Title & Chapters */}
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+                    {/* Serialization Guidance Banner */}
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-brand-500/10 via-amber-500/10 to-transparent border border-brand-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-start sm:items-center gap-2.5 text-slate-700 dark:text-slate-300">
+                        <BookOpen className="w-4 h-4 text-brand-500 shrink-0 mt-0.5 sm:mt-0" />
+                        <div>
+                          <strong className="text-brand-600 dark:text-brand-400">Where to add Chapter 2:</strong> You can add and draft Chapter 2 right here using the <strong>"+ Add Chapter 2"</strong> button below, or publish Chapter 1 first to launch your serial and add subsequent chapters anytime!
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddNewChapter}
+                        className="shrink-0 px-3.5 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> + Add Chapter {draftChapters.length + 1}
+                      </button>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                         Story Title
@@ -1871,18 +1940,75 @@ export default function AuthorStudio() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                        Chapter 1 Title
-                      </label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Chapter 1: The Gathering Storm"
-                        value={chapterTitle}
-                        onChange={(e) => setChapterTitle(e.target.value)}
-                        className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                      />
-                    </div>
+                    {/* Chapter Tabs & Selector (For Text Novels) */}
+                    {contentType === 'story' && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            Book Chapters ({draftChapters.length})
+                          </label>
+                          <span className="text-[11px] text-slate-400">
+                            Editing Chapter {activeChapterIndex + 1} of {draftChapters.length}
+                          </span>
+                        </div>
+
+                        {/* Interactive Chapter Stepper */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                          {draftChapters.map((ch, idx) => (
+                            <div
+                              key={ch.id || idx}
+                              onClick={() => setActiveChapterIndex(idx)}
+                              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0 border ${
+                                activeChapterIndex === idx
+                                  ? 'bg-brand-500 text-white border-brand-500 shadow-sm'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-400'
+                              }`}
+                            >
+                              <span>Chapter {ch.number || idx + 1}</span>
+                              {ch.title && (
+                                <span className={`max-w-[120px] truncate text-[11px] ${activeChapterIndex === idx ? 'text-white/80' : 'text-slate-400'}`}>
+                                  {ch.title.replace(/^Chapter\s+\d+:\s*/i, '')}
+                                </span>
+                              )}
+                              {draftChapters.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveChapter(idx);
+                                  }}
+                                  className={`ml-1 hover:text-rose-300 p-0.5 rounded-full ${activeChapterIndex === idx ? 'text-white/80' : 'text-slate-400'}`}
+                                  title="Remove this draft chapter"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={handleAddNewChapter}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> + Add Chapter {draftChapters.length + 1}
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Chapter {activeChapterIndex + 1} Title
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder={`e.g. Chapter ${activeChapterIndex + 1}: The Discovery`}
+                            value={activeDraftChapter?.title || ''}
+                            onChange={(e) => handleChapterTitleChange(e.target.value)}
+                            className="w-full text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content Canvas: Picture Book vs Novel */}
@@ -1891,7 +2017,7 @@ export default function AuthorStudio() {
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                          Chapter Body (Paragraphs & Scenes)
+                          Chapter {activeChapterIndex + 1} Body (Paragraphs & Scenes)
                         </span>
                         <div className="flex items-center gap-2 text-xs">
                           {autoSaved ? (
@@ -1907,15 +2033,12 @@ export default function AuthorStudio() {
                       </div>
 
                       <VisualBookEditor 
-                        value={chapterContent}
-                        onChange={(val) => {
-                          setChapterContent(val);
-                          setAutoSaved(true);
-                          setTimeout(() => setAutoSaved(false), 2000);
-                        }}
-                        placeholder="Begin drafting your serialized chapter here. Use the visual buttons above to add subheadings, scene breaks, and dialogue without needing any code!"
+                        key={`draft-chapter-${activeChapterIndex}`}
+                        value={activeDraftChapter?.content || ''}
+                        onChange={handleChapterContentChange}
+                        placeholder={`Begin drafting Chapter ${activeChapterIndex + 1} here. Use the visual buttons above to add subheadings, scene breaks, and dialogue without needing any code!`}
                         storyTitle={storyTitle || "Untitled Story"}
-                        chapterTitle={chapterTitle || "Chapter 1"}
+                        chapterTitle={activeDraftChapter?.title || `Chapter ${activeChapterIndex + 1}`}
                         authorName={user?.name || "Author"}
                       />
                     </div>
@@ -2040,7 +2163,7 @@ export default function AuthorStudio() {
                   type="submit"
                   className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4" /> {t.publishChapter}
+                  <Sparkles className="w-4 h-4" /> {draftChapters.length > 1 ? `Publish Book & All ${draftChapters.length} Chapters` : (t.publishChapter || 'Publish Story & Chapter 1')}
                 </button>
               </div>
             </div>
