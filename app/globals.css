@@ -164,23 +164,82 @@ html[lang="hi"] div {
 }
 
 /* Sepia theme dedicated to warm classic serialized reading */
-.sepia-reader {
+.sepia-reader,
+html.dark .sepia-reader,
+.dark .sepia-reader {
   background-color: #faf5eb !important;
   color: #2b1d0c !important;
 }
 
+.sepia-reader h1,
+.sepia-reader h2,
+.sepia-reader h3,
+.sepia-reader h4,
+.sepia-reader h5,
+.sepia-reader h6,
+.sepia-reader strong,
+.sepia-reader b,
+html.dark .sepia-reader h1,
+html.dark .sepia-reader h2,
+html.dark .sepia-reader h3,
+html.dark .sepia-reader h4,
+html.dark .sepia-reader h5,
+html.dark .sepia-reader h6,
+html.dark .sepia-reader strong,
+html.dark .sepia-reader b {
+  color: #2b1d0c !important;
+}
+
+.sepia-reader p,
+html.dark .sepia-reader p {
+  color: #2b1d0c;
+}
+
 .sepia-reader nav,
 .sepia-reader footer,
-.sepia-reader .reader-toolbar {
+.sepia-reader .reader-toolbar,
+html.dark .sepia-reader nav,
+html.dark .sepia-reader footer {
   background-color: #f2ebd9 !important;
   border-color: #e5dac2 !important;
   color: #2b1d0c !important;
 }
 
-.sepia-reader .reader-card {
+.sepia-reader .reader-card,
+html.dark .sepia-reader .reader-card {
   background-color: #fffaf0 !important;
   border-color: #ebdcb9 !important;
-  color: #3b2f1e !important;
+  color: #2b1d0c !important;
+}
+
+/* Light reader theme overrides */
+.light-reader,
+html.dark .light-reader,
+.dark .light-reader {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.light-reader h1,
+.light-reader h2,
+.light-reader h3,
+.light-reader h4,
+.light-reader h5,
+.light-reader h6,
+.light-reader strong,
+.light-reader b,
+html.dark .light-reader h1,
+html.dark .light-reader h2,
+html.dark .light-reader h3,
+html.dark .light-reader h4,
+html.dark .light-reader strong,
+html.dark .light-reader b {
+  color: #0f172a !important;
+}
+
+.light-reader p,
+html.dark .light-reader p {
+  color: #0f172a;
 }
 
 /* Custom modern light scrollbars */

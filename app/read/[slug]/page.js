@@ -37,7 +37,7 @@ function formatInlineText(text) {
   const tokens = text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g);
   return tokens.map((token, idx) => {
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
-      return <strong key={idx} className="font-extrabold text-slate-900 dark:text-white">{token.slice(2, -2)}</strong>;
+      return <strong key={idx} className="font-extrabold text-current">{token.slice(2, -2)}</strong>;
     }
     if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
       return <em key={idx} className="italic">{token.slice(1, -1)}</em>;
@@ -404,14 +404,75 @@ export default function ReaderPage() {
     return b.id - a.id;
   }) : [];
 
+  const themeStyles = {
+    dark: {
+      chapterPill: 'bg-brand-500/15 text-brand-400 border border-brand-500/30 font-black',
+      rankingPill: 'bg-amber-950/80 text-amber-200 border border-amber-700 font-black',
+      readsPill: 'bg-slate-800 text-slate-200 border border-slate-700 font-bold',
+      h1: 'text-white',
+      meta: 'text-slate-300',
+      author: 'text-white font-extrabold',
+      h2: 'text-white border-white/10',
+      h3: 'text-brand-400',
+      h4: 'text-slate-300',
+      quote: 'text-slate-200 bg-brand-500/10 border-brand-500',
+      reactionsHeader: 'text-slate-200',
+      reactionBtn: 'bg-white/10 text-slate-200 border-white/10',
+      divider: 'border-white/10',
+      prevBtn: 'text-slate-200 hover:text-brand-400',
+      topNav: 'border-white/10 bg-slate-900/90 text-slate-100',
+      activeThemePill: 'bg-white/20 text-white font-bold',
+      drawerCard: 'bg-slate-900 border-white/10 text-slate-100',
+    },
+    sepia: {
+      chapterPill: 'bg-brand-500/15 text-brand-700 border border-brand-600/30 font-black',
+      rankingPill: 'bg-[#edd9af] text-[#4a2e0e] border border-[#d6be8c] font-black',
+      readsPill: 'bg-[#ebdcb9] text-[#2b1d0c] border border-[#d6be8c] font-black',
+      h1: 'text-[#2b1d0c]',
+      meta: 'text-[#5c4326]',
+      author: 'text-[#2b1d0c] font-extrabold',
+      h2: 'text-[#2b1d0c] border-[#ebdcb9]',
+      h3: 'text-brand-700',
+      h4: 'text-[#5c4326]',
+      quote: 'text-[#2b1d0c] bg-amber-500/10 border-brand-600',
+      reactionsHeader: 'text-[#2b1d0c]',
+      reactionBtn: 'bg-[#edd9af]/80 text-[#2b1d0c] border-[#d6be8c]',
+      divider: 'border-[#ebdcb9]',
+      prevBtn: 'text-[#2b1d0c] hover:text-brand-600',
+      topNav: 'border-[#e5dac2] bg-[#f2ebd9]/95 text-[#2b1d0c]',
+      activeThemePill: 'bg-[#edd9af] text-[#2b1d0c] font-black shadow-xs',
+      drawerCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
+    },
+    light: {
+      chapterPill: 'bg-brand-500/10 text-brand-600 border border-brand-500/30 font-black',
+      rankingPill: 'bg-amber-100 text-amber-900 border border-amber-300 font-black',
+      readsPill: 'bg-slate-100 text-slate-800 border border-slate-300 font-bold',
+      h1: 'text-slate-900',
+      meta: 'text-slate-600',
+      author: 'text-slate-900 font-extrabold',
+      h2: 'text-slate-900 border-slate-200',
+      h3: 'text-brand-600',
+      h4: 'text-slate-700',
+      quote: 'text-slate-800 bg-brand-500/5 border-brand-500',
+      reactionsHeader: 'text-slate-800',
+      reactionBtn: 'bg-slate-100 text-slate-800 border-slate-200',
+      divider: 'border-slate-200',
+      prevBtn: 'text-slate-800 hover:text-brand-600',
+      topNav: 'border-slate-200 bg-white/95 text-slate-900',
+      activeThemePill: 'bg-slate-200 text-slate-900 font-bold',
+      drawerCard: 'bg-white border-slate-200 text-slate-900',
+    }
+  };
+  const tStyles = themeStyles[readerTheme] || themeStyles.sepia;
+
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
-      readerTheme === 'dark' ? 'bg-slate-950 text-slate-100' :
-      readerTheme === 'sepia' ? 'sepia-reader' : 'bg-slate-50 text-slate-900'
+      readerTheme === 'dark' ? 'dark-reader bg-slate-950 text-slate-100' :
+      readerTheme === 'sepia' ? 'sepia-reader bg-[#faf5eb] text-[#2b1d0c]' : 'light-reader bg-white text-slate-900'
     }`}>
       
       {/* 1. TOP READER NAVIGATION BAR */}
-      <nav className="sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 h-14 flex items-center justify-between border-black/10 dark:border-white/10 relative">
+      <nav className={`sticky top-0 z-40 backdrop-blur-md border-b px-3 sm:px-8 h-14 flex items-center justify-between relative ${tStyles.topNav}`}>
         {/* Animated Reading Progress Bar (Top Edge of Reader) */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/10 z-50 overflow-hidden">
           <div 
@@ -534,23 +595,23 @@ export default function ReaderPage() {
       <main className="max-w-3xl mx-auto px-6 py-12">
         <header className="mb-10 text-center space-y-3">
           <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
-            <span className="text-xs sm:text-sm uppercase font-black tracking-wider px-3.5 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30">
+            <span className={`text-xs sm:text-sm uppercase font-black tracking-wider px-3.5 py-1 rounded-full ${tStyles.chapterPill}`}>
               Chapter {chapter.number}
             </span>
             {story.ranking && (
-              <span className="text-xs sm:text-sm font-black px-3.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shadow-xs flex items-center gap-1.5">
+              <span className={`text-xs sm:text-sm font-black px-3.5 py-1 rounded-full shadow-xs flex items-center gap-1.5 ${tStyles.rankingPill}`}>
                 <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
               </span>
             )}
-            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300/80 dark:border-slate-700 shadow-xs">
+            <span className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 px-3.5 py-1 rounded-full shadow-xs ${tStyles.readsPill}`}>
               <Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()} reads
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white pt-1">
+          <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight pt-1 ${tStyles.h1}`}>
             {chapter.title}
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
-            By <strong className="font-bold text-slate-900 dark:text-white">{story.author}</strong> • Published {chapter.publishedAt}
+          <p className={`text-xs sm:text-sm font-medium ${tStyles.meta}`}>
+            By <strong className={`font-bold ${tStyles.author}`}>{story.author}</strong> • Published {chapter.publishedAt}
           </p>
         </header>
 
@@ -664,7 +725,7 @@ export default function ReaderPage() {
                     onClick={() => setActiveParagraph(p)}
                     className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-8 mb-3"
                   >
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-sans border-b border-black/10 dark:border-white/10 pb-2">
+                    <h2 className={`text-2xl sm:text-3xl font-black tracking-tight font-sans border-b pb-2 ${tStyles.h2}`}>
                       {formatInlineText(rawText.slice(2))}
                     </h2>
                     <button 
@@ -690,7 +751,7 @@ export default function ReaderPage() {
                     onClick={() => setActiveParagraph(p)}
                     className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-7 mb-2"
                   >
-                    <h3 className="text-xl sm:text-2xl font-bold text-brand-600 dark:text-brand-400 tracking-tight flex items-center gap-2.5 font-sans">
+                    <h3 className={`text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2.5 font-sans ${tStyles.h3}`}>
                       <span className="w-1.5 h-5 bg-brand-500 rounded-full inline-block shrink-0"></span>
                       <span>{formatInlineText(rawText.slice(3))}</span>
                     </h3>
@@ -717,7 +778,7 @@ export default function ReaderPage() {
                     onClick={() => setActiveParagraph(p)}
                     className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mt-5 mb-1"
                   >
-                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 font-sans">
+                    <h4 className={`text-xs sm:text-sm font-black uppercase tracking-widest font-sans ${tStyles.h4}`}>
                       {formatInlineText(rawText.slice(4))}
                     </h4>
                     <button 
@@ -743,7 +804,7 @@ export default function ReaderPage() {
                     onClick={() => setActiveParagraph(p)}
                     className="relative group p-2.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer my-4"
                   >
-                    <blockquote className="border-l-4 border-brand-500 pl-4 py-2 italic font-serif text-slate-800 dark:text-slate-200 bg-brand-500/5 rounded-r-xl leading-relaxed">
+                    <blockquote className={`border-l-4 pl-4 py-2 italic font-serif rounded-r-xl leading-relaxed ${tStyles.quote}`}>
                       {formatInlineText(rawText.slice(2))}
                     </blockquote>
                     <button 
@@ -821,8 +882,8 @@ export default function ReaderPage() {
         )}
 
         {/* CHAPTER EMOJI REACTIONS */}
-        <div className="mt-14 pt-8 border-t border-black/10 dark:border-white/10 flex flex-col items-center gap-4 relative">
-          <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+        <div className={`mt-14 pt-8 border-t flex flex-col items-center gap-4 relative ${tStyles.divider}`}>
+          <span className={`text-xs sm:text-sm font-black uppercase tracking-wider ${tStyles.reactionsHeader}`}>
             Chapter Emoji Reactions
           </span>
           
@@ -842,7 +903,7 @@ export default function ReaderPage() {
               <button
                 key={emoji}
                 onClick={() => handleEmojiReact(emoji)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 hover:scale-110 active:scale-95 transition-all text-sm font-bold text-slate-800 dark:text-slate-200 shadow-xs cursor-pointer"
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border hover:scale-110 active:scale-95 transition-all text-sm font-bold shadow-xs cursor-pointer ${tStyles.reactionBtn}`}
               >
                 <span className="text-base">{emoji}</span>
                 <span className="text-xs sm:text-sm font-black">{chapter.emojis?.[emoji] || 0}</span>
@@ -914,7 +975,7 @@ export default function ReaderPage() {
             <button 
               onClick={() => handleChapterChange(Math.max(0, currentChapterIndex - 1))}
               disabled={currentChapterIndex === 0}
-              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-brand-500 disabled:opacity-30 cursor-pointer transition-colors"
+              className={`flex items-center gap-1.5 text-xs sm:text-sm font-bold disabled:opacity-30 cursor-pointer transition-colors ${tStyles.prevBtn}`}
             >
               <ChevronLeft className="w-4 h-4" /> Previous Chapter
             </button>
