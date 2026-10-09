@@ -1019,6 +1019,7 @@ export default function ReaderPage() {
         story={story}
         chapter={chapter}
         user={user}
+        readerTheme={readerTheme}
         onAddComment={(text) => {
           addParagraphComment(story.id, chapter.id, activeParagraph.id, text);
           setActiveParagraph(prev => ({
@@ -1039,31 +1040,89 @@ export default function ReaderPage() {
         openAuthModal={openAuthModal}
       />
 
-      {/* 4. CHAPTERS DRAWER */}
+      {/* 4. CHAPTERS DRAWER (HIGH CONTRAST & THEME AWARE) */}
       {showChapterDrawer && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-start">
-          <div className="w-80 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 h-full p-6 shadow-2xl overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-bold text-sm">All Chapters ({story.chapters.length})</h3>
-              <button onClick={() => setShowChapterDrawer(false)} className="cursor-pointer">
-                <X className="w-5 h-5 text-slate-400" />
+        <div 
+          onClick={() => setShowChapterDrawer(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in duration-150"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className={`chapter-drawer w-84 max-w-[calc(100vw-3rem)] h-full p-6 shadow-2xl overflow-y-auto space-y-4 border-r flex flex-col ${
+              readerTheme === 'dark' 
+                ? 'bg-slate-900 text-slate-100 border-slate-800' 
+                : readerTheme === 'sepia' 
+                ? 'bg-[#faf5eb] text-[#2b1d0c] border-[#ebdcb9]' 
+                : 'bg-white text-slate-900 border-slate-200'
+            }`}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-black/10 dark:border-white/10 shrink-0">
+              <div className="space-y-0.5">
+                <span className="text-[10px] uppercase font-black tracking-widest text-brand-600 dark:text-brand-400">
+                  Table of Contents
+                </span>
+                <h3 className="font-black text-base text-current">
+                  All Chapters ({story.chapters.length})
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowChapterDrawer(false)} 
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                title="Close Table of Contents"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="space-y-1">
-              {story.chapters.map((ch, idx) => (
-                <button
-                  key={ch.id}
-                  onClick={() => { handleChapterChange(idx); setShowChapterDrawer(false); }}
-                  className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-between cursor-pointer ${
-                    idx === currentChapterIndex 
-                      ? 'bg-brand-500 text-white' 
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="truncate pr-2">Ch. {ch.number}: {ch.title}</span>
-                  {idx === currentChapterIndex && <CheckCircle className="w-3.5 h-3.5 shrink-0" />}
-                </button>
-              ))}
+
+            {/* Chapters List */}
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+              {story.chapters.map((ch, idx) => {
+                const isActive = idx === currentChapterIndex;
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={() => { handleChapterChange(idx); setShowChapterDrawer(false); }}
+                    className={`w-full text-left p-3.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer border ${
+                      isActive
+                        ? 'bg-brand-500 text-white border-brand-500 shadow-md scale-[1.01]'
+                        : readerTheme === 'dark'
+                        ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-100 hover:text-white border-slate-700/80 hover:border-slate-600'
+                        : readerTheme === 'sepia'
+                        ? 'bg-[#f4ecd8]/90 hover:bg-[#edd9af] text-[#2b1d0c] hover:text-[#1a1005] border-[#e2d5bd] hover:border-[#cfbc99]'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-900 hover:text-black border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase shrink-0 ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : readerTheme === 'dark'
+                          ? 'bg-slate-700/90 text-slate-200'
+                          : readerTheme === 'sepia'
+                          ? 'bg-[#edd9af] text-[#4a3525]'
+                          : 'bg-slate-200 text-slate-800'
+                      }`}>
+                        Ch. {ch.number}
+                      </span>
+                      <span className={`truncate text-xs font-extrabold ${isActive ? 'text-white' : 'text-current'}`}>
+                        {ch.title?.replace(/^Chapter\s+\d+:\s*/i, '') || `Chapter ${ch.number}`}
+                      </span>
+                    </div>
+                    {isActive ? (
+                      <CheckCircle className="w-4 h-4 shrink-0 text-white" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-40 group-hover:opacity-100" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-black/10 dark:border-white/10 shrink-0 flex items-center justify-between text-[11px] opacity-75 font-semibold">
+              <span>Reading: Chapter {chapter.number}</span>
+              <span>{Math.round(scrollProgress)}% completed</span>
             </div>
           </div>
         </div>
@@ -1071,8 +1130,20 @@ export default function ReaderPage() {
 
       {/* 5. MOBILE READING APPEARANCE BOTTOM SHEET */}
       {showAppearanceModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:hidden">
-          <div className="w-full bg-white dark:bg-slate-900 rounded-t-3xl p-6 border-t border-slate-200 dark:border-slate-800 space-y-5 animate-in slide-in-from-bottom duration-200">
+        <div 
+          onClick={() => setShowAppearanceModal(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:hidden"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full rounded-t-3xl p-6 border-t space-y-5 animate-in slide-in-from-bottom duration-200 ${
+              readerTheme === 'dark' 
+                ? 'bg-slate-900 text-slate-100 border-slate-800' 
+                : readerTheme === 'sepia' 
+                ? 'bg-[#faf5eb] text-[#2b1d0c] border-[#ebdcb9]' 
+                : 'bg-white text-slate-900 border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-black text-sm">Reading Appearance</h3>
               <button onClick={() => setShowAppearanceModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">

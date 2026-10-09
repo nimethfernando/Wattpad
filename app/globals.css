@@ -212,6 +212,73 @@ html.dark .sepia-reader .reader-card {
   color: #2b1d0c !important;
 }
 
+/* Chapter Drawer Strict Visibility Rules */
+.chapter-drawer {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sepia-reader .chapter-drawer,
+html.dark .sepia-reader .chapter-drawer {
+  background-color: #faf5eb !important;
+  color: #2b1d0c !important;
+  border-color: #ebdcb9 !important;
+}
+
+.sepia-reader .chapter-drawer h3,
+.sepia-reader .chapter-drawer span,
+.sepia-reader .chapter-drawer p,
+.sepia-reader .chapter-drawer strong,
+.sepia-reader .chapter-drawer b {
+  color: #2b1d0c !important;
+}
+
+.sepia-reader .chapter-drawer .text-white,
+.sepia-reader .chapter-drawer .text-white *,
+.sepia-reader .chapter-drawer button.bg-brand-500,
+.sepia-reader .chapter-drawer button.bg-brand-500 * {
+  color: #ffffff !important;
+}
+
+.dark-reader .chapter-drawer,
+html.dark .dark-reader .chapter-drawer {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark-reader .chapter-drawer h3,
+.dark-reader .chapter-drawer span,
+.dark-reader .chapter-drawer p {
+  color: #f8fafc !important;
+}
+
+.dark-reader .chapter-drawer .text-white,
+.dark-reader .chapter-drawer .text-white *,
+.dark-reader .chapter-drawer button.bg-brand-500,
+.dark-reader .chapter-drawer button.bg-brand-500 * {
+  color: #ffffff !important;
+}
+
+.light-reader .chapter-drawer,
+html.dark .light-reader .chapter-drawer {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light-reader .chapter-drawer h3,
+.light-reader .chapter-drawer span,
+.light-reader .chapter-drawer p {
+  color: #0f172a !important;
+}
+
+.light-reader .chapter-drawer .text-white,
+.light-reader .chapter-drawer .text-white *,
+.light-reader .chapter-drawer button.bg-brand-500,
+.light-reader .chapter-drawer button.bg-brand-500 * {
+  color: #ffffff !important;
+}
+
 /* Light reader theme overrides */
 .light-reader,
 html.dark .light-reader,
