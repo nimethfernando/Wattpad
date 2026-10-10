@@ -98,6 +98,7 @@ export default function ReaderPage() {
 
   const story = stories.find(s => s.slug === slug || String(s.id) === String(slug)) || localCustomFallback;
   const inLib = story ? isInLibrary(story.id) : false;
+  const isOwnStory = Boolean(user && story && (user.username === story.authorUsername || user.name === story.author));
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const chapter = story?.chapters?.[currentChapterIndex] || story?.chapters?.[0];
@@ -1035,20 +1036,21 @@ export default function ReaderPage() {
               <span>{hasVoted ? t.voted : t.vote} ({chapter.votes + (hasVoted ? 1 : 0)})</span>
             </button>
 
-            {featureFlags?.enablePaidFeatures && (
+            {!isOwnStory && featureFlags?.enablePaidFeatures && (
               <button 
                 onClick={() => {
                   openPaymentModal({
                     mode: 'donate',
                     author: story.author,
+                    authorUsername: story.authorUsername,
                     story: story
                   });
                 }}
                 className="flex items-center gap-2 px-7 py-3.5 rounded-full font-extrabold text-sm sm:text-base bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-all cursor-pointer"
-                title="Send a tip to the author"
+                title={`Send a tip to ${story.author}`}
               >
                 <Sparkles className="w-4 h-4 text-amber-200" />
-                <span>Tip {story.author}</span>
+                <span>{t?.tipAuthor || 'Tip Author'}</span>
               </button>
             )}
           </div>

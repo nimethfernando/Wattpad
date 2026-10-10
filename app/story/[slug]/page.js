@@ -260,6 +260,7 @@ export default function StoryDetailPage() {
   const isFollowing = followingAuthors.includes(story.authorUsername);
   const inLib = isInLibrary(story.id);
   const isWish = isInWishlist ? isInWishlist(story.id) : false;
+  const isOwnStory = Boolean(user && story && (user.username === story.authorUsername || user.name === story.author));
 
   // Reading progress check
   const savedProgress = readingProgress[story.id];
@@ -385,19 +386,21 @@ export default function StoryDetailPage() {
                   </div>
                 </Link>
 
-                <button 
-                  onClick={() => followAuthor(story.authorUsername)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    isFollowing 
-                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200' 
-                      : 'bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-900'
-                  }`}
-                >
-                  {isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                  {isFollowing ? (t?.following || 'Following') : (t?.follow || 'Follow')}
-                </button>
+                {!isOwnStory && (
+                  <button 
+                    onClick={() => followAuthor(story.authorUsername)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                      isFollowing 
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200' 
+                        : 'bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-900'
+                    }`}
+                  >
+                    {isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                    {isFollowing ? (t?.following || 'Following') : (t?.follow || 'Follow')}
+                  </button>
+                )}
 
-                {featureFlags?.enablePaidFeatures && (
+                {!isOwnStory && featureFlags?.enablePaidFeatures && (
                   <button
                     onClick={() => {
                       openPaymentModal({
