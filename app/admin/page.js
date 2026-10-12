@@ -60,7 +60,11 @@ import {
   Clock,
   Briefcase,
   Handshake,
-  HelpCircle
+  HelpCircle,
+  Heart,
+  MessageSquare,
+  TrendingUp,
+  Flame
 } from 'lucide-react';
 import { processImageFile } from '@/lib/imageUtils';
 
@@ -69,6 +73,7 @@ export default function AdminPanel() {
     stories, 
     setStories,
     publishStory,
+    updateStory,
     deleteStory, 
     genres, 
     setGenres, 
@@ -1135,6 +1140,133 @@ export default function AdminPanel() {
   const [selectedStoryToReassign, setSelectedStoryToReassign] = useState(null);
   const [newAuthorName, setNewAuthorName] = useState('');
 
+  // Story Edit & Reader Metrics Boost Modal State
+  const [editingStory, setEditingStory] = useState(null);
+  const [storyEditSuccessNotice, setStoryEditSuccessNotice] = useState(false);
+  const [storyCoverLoading, setStoryCoverLoading] = useState(false);
+  const [storyEditForm, setStoryEditForm] = useState({
+    title: '',
+    slug: '',
+    author: '',
+    authorUsername: '',
+    genre: '',
+    status: 'ongoing',
+    reads: 0,
+    votes: 0,
+    commentsCount: 0,
+    cover: '',
+    description: '',
+    tags: '',
+    ageRating: '13+',
+    maturity: 'everyone',
+    isOriginal: false,
+    isEditorsPick: false,
+    isTrending: false,
+  });
+
+  const handleOpenEditStory = (story) => {
+    if (!story) return;
+    setEditingStory(story);
+    setStoryEditForm({
+      title: story.title || '',
+      slug: story.slug || '',
+      author: story.author || '',
+      authorUsername: story.authorUsername || (story.author ? story.author.toLowerCase().replace(/[^a-z0-9]+/g, '') : ''),
+      genre: story.genre || 'Fantasy',
+      status: story.status || 'ongoing',
+      reads: Number(story.reads) || 0,
+      votes: Number(story.votes) || 0,
+      commentsCount: Number(story.commentsCount) || 0,
+      cover: story.cover || '',
+      description: story.description || '',
+      tags: Array.isArray(story.tags) ? story.tags.join(', ') : (story.tags || ''),
+      ageRating: story.ageRating || '13+',
+      maturity: story.maturity || (story.ageRating === '18+' ? 'mature' : 'everyone'),
+      isOriginal: Boolean(story.isOriginal),
+      isEditorsPick: Boolean(story.isEditorsPick),
+      isTrending: Boolean(story.isTrending),
+    });
+    setStoryEditSuccessNotice(false);
+  };
+
+  const handleQuickBoostMetric = (field, delta) => {
+    setStoryEditForm(prev => {
+      const current = Number(prev[field]) || 0;
+      return {
+        ...prev,
+        [field]: Math.max(0, current + delta)
+      };
+    });
+  };
+
+  const handleStoryCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setStoryCoverLoading(true);
+      const res = await processImageFile(file, 1200, 1600, 0.85);
+      const dataUrl = res?.dataUrl || res;
+      setStoryEditForm(prev => ({ ...prev, cover: dataUrl }));
+    } catch (err) {
+      alert("Failed to process cover image: " + (err.message || err));
+    } finally {
+      setStoryCoverLoading(false);
+    }
+  };
+
+  const handleSaveStoryEdits = async (e) => {
+    e.preventDefault();
+    if (!editingStory) return;
+    if (!storyEditForm.title.trim()) {
+      alert("Please enter a story title.");
+      return;
+    }
+
+    const tagsArray = typeof storyEditForm.tags === 'string'
+      ? storyEditForm.tags.split(',').map(t => t.trim().toLowerCase().replace(/^#/, '')).filter(Boolean)
+      : (storyEditForm.tags || []);
+
+    const numReads = Math.max(0, parseInt(storyEditForm.reads, 10) || 0);
+    const numVotes = Math.max(0, parseInt(storyEditForm.votes, 10) || 0);
+    const numComments = Math.max(0, parseInt(storyEditForm.commentsCount, 10) || 0);
+
+    const updatedStoryObj = {
+      ...editingStory,
+      title: storyEditForm.title.trim(),
+      slug: storyEditForm.slug.trim() || editingStory.slug,
+      author: storyEditForm.author.trim() || editingStory.author,
+      authorUsername: storyEditForm.authorUsername.trim() || editingStory.authorUsername,
+      genre: storyEditForm.genre || editingStory.genre,
+      genreSlug: (storyEditForm.genre || editingStory.genre || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      status: storyEditForm.status,
+      reads: numReads,
+      votes: numVotes,
+      commentsCount: numComments,
+      cover: storyEditForm.cover || editingStory.cover,
+      description: storyEditForm.description || '',
+      tags: tagsArray,
+      ageRating: storyEditForm.ageRating,
+      maturity: storyEditForm.ageRating === '18+' || storyEditForm.maturity === 'mature' ? 'mature' : 'everyone',
+      isOriginal: Boolean(storyEditForm.isOriginal),
+      isEditorsPick: Boolean(storyEditForm.isEditorsPick),
+      isTrending: Boolean(storyEditForm.isTrending),
+      lastUpdated: 'Just now'
+    };
+
+    if (updateStory) {
+      await updateStory(updatedStoryObj);
+    } else {
+      setStories(prev => prev.map(s => s.id === updatedStoryObj.id ? updatedStoryObj : s));
+    }
+
+    addAuditLog(`Updated story & reader metrics for "${updatedStoryObj.title}" (Reads: ${numReads.toLocaleString()}, Votes: ${numVotes.toLocaleString()}, Comments: ${numComments.toLocaleString()})`, 'story');
+    setStoryEditSuccessNotice(true);
+    setTimeout(() => {
+      setStoryEditSuccessNotice(false);
+      setEditingStory(null);
+    }, 1200);
+  };
+
   // Database & Email Notification Dispatcher State
   const [dbInfo, setDbInfo] = useState({ host: '162.241.148.163:3306', database: 'ditya0a7_yourcpaneluser_gbncircle', success: true });
   const [smtpInfo, setSmtpInfo] = useState({ user: 'gnbmailsender@gmail.com', success: true });
@@ -1796,8 +1928,20 @@ export default function AdminPanel() {
                           {story.genre}
                         </td>
                         <td className="p-4 text-slate-500">
-                          <div>{(story.reads || 0).toLocaleString()} reads</div>
-                          <div className="text-[10px] text-slate-400">{(story.votes || 0).toLocaleString()} votes</div>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditStory(story)}
+                            className="text-left group cursor-pointer hover:bg-brand-500/10 dark:hover:bg-brand-500/20 -m-1.5 p-1.5 rounded-xl transition-all block border border-transparent hover:border-brand-500/30"
+                            title="Click to edit reads, votes, comments & story details"
+                          >
+                            <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500">
+                              <span>{(story.reads || 0).toLocaleString()} reads</span>
+                              <Edit3 className="w-3 h-3 text-slate-400 group-hover:text-brand-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                              {(story.votes || 0).toLocaleString()} votes
+                            </div>
+                          </button>
                         </td>
                         <td className="p-4">
                           <div className="flex flex-wrap gap-1.5">
@@ -1820,6 +1964,15 @@ export default function AdminPanel() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            <button 
+                              type="button"
+                              onClick={() => handleOpenEditStory(story)}
+                              className="px-2.5 py-1 rounded-lg bg-brand-500/10 hover:bg-brand-500 text-brand-600 hover:text-white dark:text-brand-400 dark:hover:text-white border border-brand-500/20 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                              title="Edit story metadata and boost reads/votes/comments"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              Edit & Boost
+                            </button>
                             <button 
                               onClick={() => setSelectedStoryToReassign(story)}
                               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
@@ -6982,6 +7135,404 @@ export default function AdminPanel() {
                 >
                   <Save className="w-3.5 h-3.5" />
                   {editingBlogPost ? 'Update Article' : 'Publish Article'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Story & Boost Reader Metrics Modal */}
+      {editingStory && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full p-6 space-y-6 my-8 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold">
+                  <Flame className="w-5 h-5 text-brand-500" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                    Edit Story & Boost Metrics
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Manage reader engagement (reads, votes, comments) and editorial details for early traction.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStory(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {storyEditSuccessNotice && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Story details and reader metrics updated successfully! Live across all pages.</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveStoryEdits} className="space-y-6 text-xs">
+              {/* Engagement Boost Box */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-brand-500/5 via-purple-500/5 to-amber-500/5 border border-brand-500/20 dark:border-brand-500/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-brand-500" />
+                    <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                      Reader Metrics & Engagement Tuner
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/15 text-brand-600 dark:text-brand-400">
+                    Algorithm & Social Proof
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Seed reads, votes, and comments directly to establish momentum while building organic audience traffic.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Reads */}
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-blue-500" /> Total Reads
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-400">views</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={storyEditForm.reads}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, reads: e.target.value }))}
+                      className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono"
+                    />
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {[
+                        { label: '+1K', val: 1000 },
+                        { label: '+5K', val: 5000 },
+                        { label: '+10K', val: 10000 },
+                        { label: '+50K', val: 50000 },
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleQuickBoostMetric('reads', preset.val)}
+                          className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-300 font-mono font-bold text-[10px] transition-colors cursor-pointer"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Votes */}
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Total Votes
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-400">stars</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={storyEditForm.votes}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, votes: e.target.value }))}
+                      className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono"
+                    />
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {[
+                        { label: '+100', val: 100 },
+                        { label: '+500', val: 500 },
+                        { label: '+1K', val: 1000 },
+                        { label: '+5K', val: 5000 },
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleQuickBoostMetric('votes', preset.val)}
+                          className="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-300 font-mono font-bold text-[10px] transition-colors cursor-pointer"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Comments */}
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> Comments
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-400">count</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={storyEditForm.commentsCount}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, commentsCount: e.target.value }))}
+                      className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono"
+                    />
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {[
+                        { label: '+25', val: 25 },
+                        { label: '+50', val: 50 },
+                        { label: '+100', val: 100 },
+                        { label: '+250', val: 250 },
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleQuickBoostMetric('commentsCount', preset.val)}
+                          className="px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 font-mono font-bold text-[10px] transition-colors cursor-pointer"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Story Title & Slug */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Story Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={storyEditForm.title}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Story URL Slug</label>
+                  <input
+                    type="text"
+                    value={storyEditForm.slug}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, slug: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              {/* Author & Author Username */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Author Display Name</label>
+                  <input
+                    type="text"
+                    value={storyEditForm.author}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, author: e.target.value }))}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Author Handle / Username</label>
+                  <input
+                    type="text"
+                    value={storyEditForm.authorUsername}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, authorUsername: e.target.value }))}
+                    placeholder="e.g. elena_vance"
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              {/* Genre, Status, Maturity & Age Rating */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Genre</label>
+                  <select
+                    value={storyEditForm.genre}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, genre: e.target.value }))}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500"
+                  >
+                    {genres && genres.length > 0 ? (
+                      genres.map(g => (
+                        <option key={g.id || g.slug || g.name} value={g.name}>{g.name}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Kids Books">Kids Books</option>
+                        <option value="Teen Fiction">Teen Fiction</option>
+                        <option value="Werewolf">Werewolf</option>
+                        <option value="Horror">Horror</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Status</label>
+                  <select
+                    value={storyEditForm.status}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500"
+                  >
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Age Rating</label>
+                  <select
+                    value={storyEditForm.ageRating}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setStoryEditForm(prev => ({
+                        ...prev,
+                        ageRating: val,
+                        maturity: val === '18+' ? 'mature' : prev.maturity
+                      }));
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500"
+                  >
+                    <option value="All Ages">All Ages</option>
+                    <option value="3+">3+ (Kids)</option>
+                    <option value="7+">7+ (Children)</option>
+                    <option value="13+">13+ (Teens)</option>
+                    <option value="16+">16+ (Young Adult)</option>
+                    <option value="18+">18+ (Mature Only)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-600 dark:text-slate-300">Maturity</label>
+                  <select
+                    value={storyEditForm.maturity}
+                    onChange={(e) => setStoryEditForm(prev => ({ ...prev, maturity: e.target.value }))}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-brand-500"
+                  >
+                    <option value="everyone">Everyone</option>
+                    <option value="mature">Mature (18+)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Cover Artwork & Upload */}
+              <div className="space-y-2">
+                <label className="block font-bold text-slate-600 dark:text-slate-300">Cover Artwork</label>
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <img
+                    src={storyEditForm.cover || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80'}
+                    alt="Cover Preview"
+                    className="w-16 h-24 object-cover rounded-xl shadow-md border border-slate-200 dark:border-slate-700 shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80';
+                    }}
+                  />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors">
+                        <Upload className="w-3.5 h-3.5" />
+                        {storyCoverLoading ? 'Processing...' : 'Upload Image File'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleStoryCoverUpload}
+                          disabled={storyCoverLoading}
+                        />
+                      </label>
+                      <span className="text-[11px] text-slate-400">PNG, JPG, WebP supported</span>
+                    </div>
+                    <input
+                      type="url"
+                      value={storyEditForm.cover}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, cover: e.target.value }))}
+                      placeholder="Or paste cover image URL (https://...)"
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Synopsis */}
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-600 dark:text-slate-300">Story Synopsis / Blurb</label>
+                <textarea
+                  rows={3}
+                  value={storyEditForm.description}
+                  onChange={(e) => setStoryEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Compelling story description or blurb..."
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white outline-none focus:border-brand-500 leading-relaxed"
+                />
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-600 dark:text-slate-300">Tags (comma-separated)</label>
+                <input
+                  type="text"
+                  value={storyEditForm.tags}
+                  onChange={(e) => setStoryEditForm(prev => ({ ...prev, tags: e.target.value }))}
+                  placeholder="e.g. magic, fantasy, slowburn, royalty"
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                />
+              </div>
+
+              {/* Badges & Flags */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <span className="block font-bold text-slate-700 dark:text-slate-200 mb-2">Editorial & Featured Badges</span>
+                <div className="flex flex-wrap gap-4 text-xs font-semibold">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
+                    <input
+                      type="checkbox"
+                      checked={storyEditForm.isOriginal}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, isOriginal: e.target.checked }))}
+                      className="rounded accent-brand-500 w-4 h-4"
+                    />
+                    <span>House Original (Gold Badge)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
+                    <input
+                      type="checkbox"
+                      checked={storyEditForm.isEditorsPick}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, isEditorsPick: e.target.checked }))}
+                      className="rounded accent-brand-500 w-4 h-4"
+                    />
+                    <span>Editor's Pick (Purple Badge)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
+                    <input
+                      type="checkbox"
+                      checked={storyEditForm.isTrending}
+                      onChange={(e) => setStoryEditForm(prev => ({ ...prev, isTrending: e.target.checked }))}
+                      className="rounded accent-brand-500 w-4 h-4"
+                    />
+                    <span>Trending (Flame Badge)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingStory(null)}
+                  className="py-2.5 px-5 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2.5 px-6 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand-500/25 transition-all cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Save Changes & Boost
                 </button>
               </div>
             </form>
