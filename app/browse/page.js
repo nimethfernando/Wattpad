@@ -50,13 +50,17 @@ export default function BrowsePage() {
   const genreNavRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollStartLeft, setScrollStartLeft] = useState(0);
+  const [hasDragged, setHasDragged] = useState(false);
 
   const checkGenreScroll = useCallback(() => {
     const el = genreNavRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 6);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
   }, []);
 
   const handleScrollGenres = (direction) => {
@@ -78,6 +82,29 @@ export default function BrowsePage() {
     }
   };
 
+  const handleMouseDown = (e) => {
+    if (!genreNavRef.current) return;
+    setIsDragging(true);
+    setHasDragged(false);
+    setStartX(e.pageX - genreNavRef.current.offsetLeft);
+    setScrollStartLeft(genreNavRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !genreNavRef.current) return;
+    const x = e.pageX - genreNavRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 5) {
+      setHasDragged(true);
+    }
+    genreNavRef.current.scrollLeft = scrollStartLeft - walk;
+    checkGenreScroll();
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   const activeFiltersCount = useMemo(() => {
     return [
       selectedGenre !== 'all',
@@ -97,11 +124,13 @@ export default function BrowsePage() {
   const accessibleStories = useMemo(() => filterStoriesForUser(stories, user), [stories, user]);
   const accessibleGenres = useMemo(() => filterGenresForUser(genres, user), [genres, user]);
 
-  // Listen for resize and update scroll state
+  // Listen for resize and update scroll state with multi-step layout checks
   useEffect(() => {
     const el = genreNavRef.current;
     if (!el) return;
     checkGenreScroll();
+    const t1 = setTimeout(checkGenreScroll, 100);
+    const t2 = setTimeout(checkGenreScroll, 400);
     
     let resizeObserver = null;
     if (typeof ResizeObserver !== 'undefined') {
@@ -111,6 +140,8 @@ export default function BrowsePage() {
     
     window.addEventListener('resize', checkGenreScroll);
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
       if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener('resize', checkGenreScroll);
     };
@@ -278,48 +309,38 @@ export default function BrowsePage() {
           </div>
         ) : (
           <>
-            {/* Horizontal Quick-Genre Chips with Left/Right Scroll Controls & Gradient Indicators */}
-            <div className="relative group/genres my-2 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 sm:mx-0 sm:px-0">
-              {/* Left Scroll Navigation Button & Gradient Mask */}
-              {canScrollLeft && (
-                <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-8 bg-gradient-to-r from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
-                  <button
-                    type="button"
-                    onClick={() => handleScrollGenres('left')}
-                    aria-label="Scroll genres left"
-                    title="Scroll left"
-                    className="pointer-events-auto ml-1 p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-brand-500 hover:text-white hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+            {/* Horizontal Quick-Genre Bar with Dedicated Flanking Left/Right Scroll Controls & Visible Scrollbar */}
+            <div className="flex items-center gap-1.5 sm:gap-2 my-2 py-1 border-b border-slate-100 dark:border-slate-800">
+              {/* Left Scroll Navigation Button */}
+              <button
+                type="button"
+                onClick={() => handleScrollGenres('left')}
+                disabled={!canScrollLeft}
+                aria-label="Scroll genres left"
+                title="Scroll left to previous genres"
+                className="shrink-0 p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-25 disabled:cursor-not-allowed hover:bg-brand-500 hover:text-white dark:hover:bg-brand-500 dark:hover:text-white hover:border-brand-500 transition-all cursor-pointer shadow-xs"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-              {/* Right Scroll Navigation Button & Gradient Mask */}
-              {canScrollRight && (
-                <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-8 bg-gradient-to-l from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
-                  <button
-                    type="button"
-                    onClick={() => handleScrollGenres('right')}
-                    aria-label="Scroll genres right"
-                    title="Scroll right"
-                    className="pointer-events-auto mr-1 p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-brand-500 hover:text-white hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Scrollable Genre Chips Row */}
+              {/* Scrollable Genre Chips Row with visible scroll track and drag support */}
               <div
                 ref={genreNavRef}
                 onScroll={checkGenreScroll}
                 onWheel={handleGenreWheel}
-                className="flex items-center gap-2 overflow-x-auto scroll-smooth no-scrollbar scrollbar-none py-3"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scroll-smooth py-2.5 cursor-grab active:cursor-grabbing select-none"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(156, 163, 175, 0.4) transparent'
+                }}
               >
                 <button
                   data-genre-slug="all"
-                  onClick={() => { setSelectedGenre('all'); setCurrentPage(1); }}
+                  onClick={() => { if (!hasDragged) { setSelectedGenre('all'); setCurrentPage(1); } }}
                   className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     selectedGenre === 'all'
                       ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25 ring-2 ring-brand-500/20'
@@ -332,7 +353,7 @@ export default function BrowsePage() {
                   <button
                     key={g.id}
                     data-genre-slug={g.slug}
-                    onClick={() => { setSelectedGenre(g.slug); setCurrentPage(1); }}
+                    onClick={() => { if (!hasDragged) { setSelectedGenre(g.slug); setCurrentPage(1); } }}
                     className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedGenre === g.slug
                         ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25 ring-2 ring-brand-500/20'
@@ -343,6 +364,18 @@ export default function BrowsePage() {
                   </button>
                 ))}
               </div>
+
+              {/* Right Scroll Navigation Button */}
+              <button
+                type="button"
+                onClick={() => handleScrollGenres('right')}
+                disabled={!canScrollRight}
+                aria-label="Scroll genres right"
+                title="Scroll right to view more genres (Mystery, Thriller, Sci-Fi...)"
+                className="shrink-0 p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-25 disabled:cursor-not-allowed hover:bg-brand-500 hover:text-white dark:hover:bg-brand-500 dark:hover:text-white hover:border-brand-500 transition-all cursor-pointer shadow-xs"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
         {/* Mobile Filter Toggle Button */}
