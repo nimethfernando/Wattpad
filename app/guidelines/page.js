@@ -10,8 +10,37 @@ export default function GuidelinesPage() {
   const guidelinesData = cmsConfig?.pagesContent?.guidelines || {
     title: "Author & Community Guidelines",
     subtitle: "Rules and best practices for serialized fiction creators and readers.",
-    content: "Ensure respectful interaction across paragraph discussions. Accurately categorize mature fiction. Respect copyright and original storytelling. Support fellow authors with constructive feedback and paragraph cheers."
+    content: "Ensure respectful interaction across paragraph discussions. Accurately categorize mature fiction. Respect copyright and original storytelling. Support fellow authors with constructive feedback and paragraph cheers.",
+    sections: [
+      {
+        heading: "1. The Power of Paragraph Hooks",
+        content: "On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!"
+      },
+      {
+        heading: "2. Chapter Release Cadence",
+        content: "Successful serialized authors publish on a consistent schedule (e.g. Every Tuesday and Friday). Keep individual chapters between 1,200 and 2,500 words for optimal mobile reading pacing."
+      },
+      {
+        heading: "3. Content Ratings & Safety",
+        content: "Always set the correct maturity rating when configuring your story. Graphic violence, strong sexual content, or distressing themes must be labeled as Mature (18+). Plagiarism or copying content from external platforms is strictly prohibited."
+      }
+    ]
   };
+
+  const sections = guidelinesData.sections || [
+    {
+      heading: "1. The Power of Paragraph Hooks",
+      content: "On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!"
+    },
+    {
+      heading: "2. Chapter Release Cadence",
+      content: "Successful serialized authors publish on a consistent schedule (e.g. Every Tuesday and Friday). Keep individual chapters between 1,200 and 2,500 words for optimal mobile reading pacing."
+    },
+    {
+      heading: "3. Content Ratings & Safety",
+      content: "Always set the correct maturity rating when configuring your story. Graphic violence, strong sexual content, or distressing themes must be labeled as Mature (18+). Plagiarism or copying content from external platforms is strictly prohibited."
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -32,32 +61,17 @@ export default function GuidelinesPage() {
               {guidelinesData.content}
             </div>
           )}
-          <section className="space-y-3">
-            <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-brand-500" /> 1. The Power of Paragraph Hooks
-            </h3>
-            <p>
-              On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!
-            </p>
-          </section>
 
-          <section className="space-y-3">
-            <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-500" /> 2. Chapter Release Cadence
-            </h3>
-            <p>
-              Successful serialized authors publish on a consistent schedule (e.g. Every Tuesday and Friday). Keep individual chapters between 1,200 and 2,500 words for optimal mobile reading pacing.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" /> 3. Content Ratings & Safety
-            </h3>
-            <p>
-              Always set the correct maturity rating when configuring your story. Graphic violence, strong sexual content, or distressing themes must be labeled as Mature (18+). Plagiarism or copying content from external platforms is strictly prohibited.
-            </p>
-          </section>
+          {sections.map((sec, idx) => (
+            <section key={idx} className="space-y-3">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-brand-500" /> {sec.heading}
+              </h3>
+              <p className="whitespace-pre-line">
+                {sec.content}
+              </p>
+            </section>
+          ))}
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
             <Link 

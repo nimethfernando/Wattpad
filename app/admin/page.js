@@ -57,7 +57,10 @@ import {
   Palette,
   Eye,
   Calendar,
-  Clock
+  Clock,
+  Briefcase,
+  Handshake,
+  HelpCircle
 } from 'lucide-react';
 import { processImageFile } from '@/lib/imageUtils';
 
@@ -405,6 +408,172 @@ export default function AdminPanel() {
           [pageKey]: {
             ...(prev?.pagesContent?.[pageKey] || {}),
             sections: updated
+          }
+        }
+      };
+    });
+  };
+
+  const updateFaqItem = (pageKey, index, field, value) => {
+    setCmsForm(prev => {
+      const faqs = [...(prev?.pagesContent?.[pageKey]?.faqs || [])];
+      if (faqs[index]) {
+        faqs[index] = { ...faqs[index], [field]: value };
+      }
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            faqs
+          }
+        }
+      };
+    });
+  };
+
+  const addFaqItem = (pageKey) => {
+    setCmsForm(prev => {
+      const currentFaqs = prev?.pagesContent?.[pageKey]?.faqs || [];
+      const newFaq = {
+        q: "New Frequently Asked Question?",
+        a: "Provide a clear and helpful explanation here."
+      };
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            faqs: [...currentFaqs, newFaq]
+          }
+        }
+      };
+    });
+  };
+
+  const removeFaqItem = (pageKey, index) => {
+    setCmsForm(prev => {
+      const currentFaqs = prev?.pagesContent?.[pageKey]?.faqs || [];
+      const updated = currentFaqs.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            faqs: updated
+          }
+        }
+      };
+    });
+  };
+
+  const updateOpeningItem = (index, field, value) => {
+    setCmsForm(prev => {
+      const openings = [...(prev?.pagesContent?.careers?.openings || [])];
+      if (openings[index]) {
+        openings[index] = { ...openings[index], [field]: value };
+      }
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          careers: {
+            ...(prev?.pagesContent?.careers || {}),
+            openings
+          }
+        }
+      };
+    });
+  };
+
+  const addOpeningItem = () => {
+    setCmsForm(prev => {
+      const current = prev?.pagesContent?.careers?.openings || [];
+      const newJob = {
+        id: Date.now(),
+        title: "New Role Title",
+        type: "Remote • Full-time",
+        department: "Editorial & Community",
+        applyEmail: "careers@avoralibrary.com"
+      };
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          careers: {
+            ...(prev?.pagesContent?.careers || {}),
+            openings: [...current, newJob]
+          }
+        }
+      };
+    });
+  };
+
+  const removeOpeningItem = (index) => {
+    setCmsForm(prev => {
+      const current = prev?.pagesContent?.careers?.openings || [];
+      const updated = current.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          careers: {
+            ...(prev?.pagesContent?.careers || {}),
+            openings: updated
+          }
+        }
+      };
+    });
+  };
+
+  const updateListItem = (pageKey, listKey, index, value) => {
+    setCmsForm(prev => {
+      const list = [...(prev?.pagesContent?.[pageKey]?.[listKey] || [])];
+      list[index] = value;
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            [listKey]: list
+          }
+        }
+      };
+    });
+  };
+
+  const addListItem = (pageKey, listKey) => {
+    setCmsForm(prev => {
+      const list = [...(prev?.pagesContent?.[pageKey]?.[listKey] || [])];
+      list.push("New item or guideline bullet point");
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            [listKey]: list
+          }
+        }
+      };
+    });
+  };
+
+  const removeListItem = (pageKey, listKey, index) => {
+    setCmsForm(prev => {
+      const list = [...(prev?.pagesContent?.[pageKey]?.[listKey] || [])];
+      const updated = list.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        pagesContent: {
+          ...(prev?.pagesContent || initialCmsConfig.pagesContent),
+          [pageKey]: {
+            ...(prev?.pagesContent?.[pageKey] || {}),
+            [listKey]: updated
           }
         }
       };
@@ -1443,16 +1612,33 @@ export default function AdminPanel() {
             data-admin-tab="cms"
             onClick={() => {
               setActiveTab('cms');
-              if (cmsSubTab === 'branding') setCmsSubTab('pwa');
+              if (cmsSubTab === 'branding' || cmsSubTab === 'pages') setCmsSubTab('pwa');
             }}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'cms' && cmsSubTab !== 'branding' 
+              activeTab === 'cms' && cmsSubTab !== 'branding' && cmsSubTab !== 'pages'
                 ? 'bg-purple-600 text-white shadow-md' 
                 : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}
           >
             <Globe className="w-3.5 h-3.5 text-emerald-400" />
-            Website CMS &amp; Pages
+            Website CMS &amp; Assets
+          </button>
+
+          {/* DEDICATED ALL PAGES CONTENT BUTTON */}
+          <button 
+            data-admin-tab="cms-pages"
+            onClick={() => {
+              setActiveTab('cms');
+              setCmsSubTab('pages');
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'cms' && cmsSubTab === 'pages'
+                ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400' 
+                : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-emerald-500" />
+            📄 Website Pages Content (15)
           </button>
 
           <button 
@@ -4532,33 +4718,106 @@ export default function AdminPanel() {
             {/* SUB-TAB 3: WEBSITE PAGES CONTENT */}
             {cmsSubTab === 'pages' && (
               <div className="space-y-6">
-                {/* Page Selector Tabs */}
-                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
-                  {[
-                    { key: 'about', label: 'About Us (/about)' },
-                    { key: 'terms', label: 'Terms of Service (/terms)' },
-                    { key: 'privacy', label: 'Privacy Policy (/privacy)' },
-                    { key: 'guidelines', label: 'Guidelines (/guidelines)' },
-                    { key: 'contact', label: 'Contact Us (/contact)' },
-                    { key: 'hero', label: 'Homepage Hero (/)' }
-                  ].map((p) => (
-                    <button
-                      key={p.key}
-                      type="button"
-                      onClick={() => setCmsSelectedPage(p.key)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                        cmsSelectedPage === p.key
-                          ? 'bg-purple-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+                {/* Header & Page Selector */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                      <h3 className="font-black text-base flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-emerald-500" />
+                        Website Pages Content Management (15 Pages)
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Customize copywriting, legal policies, author hub FAQs, career openings, and media contact info in real-time.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 self-stretch sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={handleSaveCms}
+                        className="flex-1 sm:flex-none px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all cursor-pointer"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        Save CMS Changes
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Dropdown & Category Selector */}
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <label className="text-xs font-black text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        Select Page To Edit:
+                      </label>
+                      <select
+                        value={cmsSelectedPage}
+                        onChange={(e) => setCmsSelectedPage(e.target.value)}
+                        className="flex-1 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                      >
+                        <optgroup label="── Core Platform ──">
+                          <option value="hero">Homepage Hero (/)</option>
+                          <option value="about">About Avora Library (/about)</option>
+                          <option value="contact">Contact Us (/contact)</option>
+                        </optgroup>
+                        <optgroup label="── Creators & Community ──">
+                          <option value="writers">Writer Hub & Author FAQ (/writers)</option>
+                          <option value="guidelines">Author & Community Guidelines (/guidelines)</option>
+                          <option value="help">Help Center & FAQ (/help)</option>
+                        </optgroup>
+                        <optgroup label="── Company & Media ──">
+                          <option value="careers">Careers & Openings (/careers)</option>
+                          <option value="press">Press & Media Kit (/press)</option>
+                          <option value="partnerships">Brand Partnerships (/partnerships)</option>
+                        </optgroup>
+                        <optgroup label="── Legal & Policies ──">
+                          <option value="terms">Terms of Service (/terms)</option>
+                          <option value="privacy">Privacy Policy (/privacy)</option>
+                          <option value="dmca">DMCA Copyright Policy (/dmca)</option>
+                          <option value="contentPolicy">Content & Safety Policy (/content-policy)</option>
+                          <option value="accessibility">Accessibility Statement (/accessibility)</option>
+                          <option value="paymentPolicy">Payment Policy (/payment-policy)</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Categorized Pills */}
+                    <div className="pt-2 flex flex-wrap gap-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                      {[
+                        { key: 'hero', label: 'Hero (/)' },
+                        { key: 'about', label: 'About (/about)' },
+                        { key: 'contact', label: 'Contact (/contact)' },
+                        { key: 'writers', label: 'Writer Hub (/writers)' },
+                        { key: 'guidelines', label: 'Guidelines (/guidelines)' },
+                        { key: 'help', label: 'Help & FAQ (/help)' },
+                        { key: 'careers', label: 'Careers (/careers)' },
+                        { key: 'press', label: 'Press (/press)' },
+                        { key: 'partnerships', label: 'Partnerships (/partnerships)' },
+                        { key: 'terms', label: 'Terms (/terms)' },
+                        { key: 'privacy', label: 'Privacy (/privacy)' },
+                        { key: 'dmca', label: 'DMCA (/dmca)' },
+                        { key: 'contentPolicy', label: 'Content Policy (/content-policy)' },
+                        { key: 'accessibility', label: 'Accessibility (/accessibility)' },
+                        { key: 'paymentPolicy', label: 'Payment Policy (/payment-policy)' }
+                      ].map((p) => (
+                        <button
+                          key={p.key}
+                          type="button"
+                          onClick={() => setCmsSelectedPage(p.key)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
+                            cmsSelectedPage === p.key
+                              ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Selected Page Editor */}
+                {/* Selected Page Editor Box */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                  
                   {/* ABOUT US */}
                   {cmsSelectedPage === 'about' && (
                     <div className="space-y-4 text-xs">
@@ -4567,7 +4826,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">About Us Page Content</h4>
                           <p className="text-[11px] text-slate-400">Live at /about</p>
                         </div>
-                        <Link href="/about" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/about" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4579,7 +4838,7 @@ export default function AdminPanel() {
                             type="text"
                             value={cmsForm?.pagesContent?.about?.title || ''}
                             onChange={(e) => updatePageField('about', 'title', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-emerald-500"
                           />
                         </div>
 
@@ -4589,7 +4848,7 @@ export default function AdminPanel() {
                             rows={2}
                             value={cmsForm?.pagesContent?.about?.subtitle || ''}
                             onChange={(e) => updatePageField('about', 'subtitle', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                           />
                         </div>
 
@@ -4640,6 +4899,388 @@ export default function AdminPanel() {
                     </div>
                   )}
 
+                  {/* WRITER HUB & AUTHOR FAQ */}
+                  {cmsSelectedPage === 'writers' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Writer Hub &amp; Author FAQ Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /writers</p>
+                        </div>
+                        <Link href="/writers" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Badge Text</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.writers?.badge || ''}
+                            onChange={(e) => updatePageField('writers', 'badge', e.target.value)}
+                            placeholder="Avora Library Writer Resources & Hub"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Hero Headline</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.writers?.headline || ''}
+                            onChange={(e) => updatePageField('writers', 'headline', e.target.value)}
+                            placeholder="Turn Your Serial Fiction Into a Global Phenomenon"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Hero Subheadline</label>
+                          <textarea
+                            rows={3}
+                            value={cmsForm?.pagesContent?.writers?.subheadline || ''}
+                            onChange={(e) => updatePageField('writers', 'subheadline', e.target.value)}
+                            placeholder="Everything you need to write, publish, and monetize serialized stories..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Stat Badge Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.writers?.statTitle || ''}
+                              onChange={(e) => updatePageField('writers', 'statTitle', e.target.value)}
+                              placeholder="100% Free"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Stat Badge Subtitle</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.writers?.statSubtitle || ''}
+                              onChange={(e) => updatePageField('writers', 'statSubtitle', e.target.value)}
+                              placeholder="Keep all your copyright"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Repeatable Author FAQs */}
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-4 pt-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h5 className="font-black text-slate-900 dark:text-white">Author Frequently Asked Questions</h5>
+                              <p className="text-[11px] text-slate-400">Questions and answers shown on the Writer Hub</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addFaqItem('writers')}
+                              className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Author FAQ
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">FAQ Section Heading</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.writers?.faqTitle || ''}
+                              onChange={(e) => updatePageField('writers', 'faqTitle', e.target.value)}
+                              placeholder="Author Frequently Asked Questions"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            {(cmsForm?.pagesContent?.writers?.faqs || []).map((faq, idx) => (
+                              <div key={idx} className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-slate-400 text-[10px]">FAQ #{idx + 1}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFaqItem('writers', idx)}
+                                    className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3 h-3" /> Remove
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={faq.q || ''}
+                                  onChange={(e) => updateFaqItem('writers', idx, 'q', e.target.value)}
+                                  placeholder="Question (e.g. Do I keep rights to my stories?)"
+                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 font-bold outline-none text-xs"
+                                />
+                                <textarea
+                                  rows={2}
+                                  value={faq.a || ''}
+                                  onChange={(e) => updateFaqItem('writers', idx, 'a', e.target.value)}
+                                  placeholder="Answer details..."
+                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 font-medium outline-none text-xs leading-relaxed"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CAREERS */}
+                  {cmsSelectedPage === 'careers' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Careers &amp; Job Openings Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /careers</p>
+                        </div>
+                        <Link href="/careers" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.careers?.title || ''}
+                              onChange={(e) => updatePageField('careers', 'title', e.target.value)}
+                              placeholder="Careers at Avora Library"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Careers Inquiries Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.careers?.contactEmail || ''}
+                              onChange={(e) => updatePageField('careers', 'contactEmail', e.target.value)}
+                              placeholder="careers@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <textarea
+                            rows={2}
+                            value={cmsForm?.pagesContent?.careers?.subtitle || ''}
+                            onChange={(e) => updatePageField('careers', 'subtitle', e.target.value)}
+                            placeholder="Join our mission to empower the next generation of serialized writers..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        {/* Open Positions List */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="font-black text-slate-700 dark:text-slate-300">
+                              Active Job Openings ({cmsForm?.pagesContent?.careers?.openings?.length || 0})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={addOpeningItem}
+                              className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Job Opening
+                            </button>
+                          </div>
+
+                          {(cmsForm?.pagesContent?.careers?.openings || []).map((job, idx) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-400 text-[10px]">Position #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeOpeningItem(idx)}
+                                  className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Remove
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400">Position Title</label>
+                                  <input
+                                    type="text"
+                                    value={job.title || ''}
+                                    onChange={(e) => updateOpeningItem(idx, 'title', e.target.value)}
+                                    placeholder="e.g. Senior Editorial Curator"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400">Department</label>
+                                  <input
+                                    type="text"
+                                    value={job.department || ''}
+                                    onChange={(e) => updateOpeningItem(idx, 'department', e.target.value)}
+                                    placeholder="e.g. Editorial & Content"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400">Type / Location</label>
+                                  <input
+                                    type="text"
+                                    value={job.type || ''}
+                                    onChange={(e) => updateOpeningItem(idx, 'type', e.target.value)}
+                                    placeholder="e.g. Remote • Full-time"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400">Apply Email</label>
+                                  <input
+                                    type="email"
+                                    value={job.applyEmail || ''}
+                                    onChange={(e) => updateOpeningItem(idx, 'applyEmail', e.target.value)}
+                                    placeholder="careers@avoralibrary.com"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PRESS & MEDIA KIT */}
+                  {cmsSelectedPage === 'press' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Press &amp; Media Kit Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /press</p>
+                        </div>
+                        <Link href="/press" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.press?.title || ''}
+                              onChange={(e) => updatePageField('press', 'title', e.target.value)}
+                              placeholder="Press & Media Kit"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Press Inquiries Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.press?.pressEmail || ''}
+                              onChange={(e) => updatePageField('press', 'pressEmail', e.target.value)}
+                              placeholder="press@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <textarea
+                            rows={2}
+                            value={cmsForm?.pagesContent?.press?.subtitle || ''}
+                            onChange={(e) => updatePageField('press', 'subtitle', e.target.value)}
+                            placeholder="Official announcements, brand assets, and media contact info."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Press Statement / Media Kit Details</label>
+                          <textarea
+                            rows={4}
+                            value={cmsForm?.pagesContent?.press?.content || ''}
+                            onChange={(e) => updatePageField('press', 'content', e.target.value)}
+                            placeholder="For press inquiries, author interviews, or brand assets..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BRAND PARTNERSHIPS */}
+                  {cmsSelectedPage === 'partnerships' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Brand Partnerships Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /partnerships</p>
+                        </div>
+                        <Link href="/partnerships" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.partnerships?.title || ''}
+                              onChange={(e) => updatePageField('partnerships', 'title', e.target.value)}
+                              placeholder="Brand Partnerships"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Partnerships Inquiries Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.partnerships?.partnerEmail || ''}
+                              onChange={(e) => updatePageField('partnerships', 'partnerEmail', e.target.value)}
+                              placeholder="partnerships@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <textarea
+                            rows={2}
+                            value={cmsForm?.pagesContent?.partnerships?.subtitle || ''}
+                            onChange={(e) => updatePageField('partnerships', 'subtitle', e.target.value)}
+                            placeholder="Collaborate with Avora Library on writing contests, literary sponsorships, and adaptations."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Partnerships Overview Content</label>
+                          <textarea
+                            rows={4}
+                            value={cmsForm?.pagesContent?.partnerships?.content || ''}
+                            onChange={(e) => updatePageField('partnerships', 'content', e.target.value)}
+                            placeholder="Connect with an engaged global audience of serialized readers and creators..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* TERMS OF SERVICE */}
                   {cmsSelectedPage === 'terms' && (
                     <div className="space-y-4 text-xs">
@@ -4648,7 +5289,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">Terms of Service Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /terms</p>
                         </div>
-                        <Link href="/terms" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/terms" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4681,7 +5322,7 @@ export default function AdminPanel() {
                           <button
                             type="button"
                             onClick={() => addSectionItem('terms')}
-                            className="px-3 py-1 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold text-xs flex items-center gap-1 hover:bg-purple-200"
+                            className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" /> Add Clause
                           </button>
@@ -4694,7 +5335,7 @@ export default function AdminPanel() {
                               <button
                                 type="button"
                                 onClick={() => removeSectionItem('terms', idx)}
-                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1"
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
                               >
                                 <Trash2 className="w-3 h-3" /> Remove
                               </button>
@@ -4727,7 +5368,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">Privacy Policy Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /privacy</p>
                         </div>
-                        <Link href="/privacy" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/privacy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4760,7 +5401,7 @@ export default function AdminPanel() {
                           <button
                             type="button"
                             onClick={() => addSectionItem('privacy')}
-                            className="px-3 py-1 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold text-xs flex items-center gap-1 hover:bg-purple-200"
+                            className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" /> Add Clause
                           </button>
@@ -4773,7 +5414,7 @@ export default function AdminPanel() {
                               <button
                                 type="button"
                                 onClick={() => removeSectionItem('privacy', idx)}
-                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1"
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
                               >
                                 <Trash2 className="w-3 h-3" /> Remove
                               </button>
@@ -4798,6 +5439,471 @@ export default function AdminPanel() {
                     </div>
                   )}
 
+                  {/* DMCA POLICY */}
+                  {cmsSelectedPage === 'dmca' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">DMCA Copyright Policy Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /dmca</p>
+                        </div>
+                        <Link href="/dmca" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.dmca?.title || ''}
+                              onChange={(e) => updatePageField('dmca', 'title', e.target.value)}
+                              placeholder="DMCA Policy"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-slate-400 mb-1">Designated DMCA Agent Email</label>
+                            <input
+                              type="email"
+                              value={cmsForm?.pagesContent?.dmca?.agentEmail || ''}
+                              onChange={(e) => updatePageField('dmca', 'agentEmail', e.target.value)}
+                              placeholder="copyright@avoralibrary.com"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Required Subject Line</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.dmca?.subjectLine || ''}
+                            onChange={(e) => updatePageField('dmca', 'subjectLine', e.target.value)}
+                            placeholder="DMCA Notice - [Story Title]"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Introductory Statement</label>
+                          <textarea
+                            rows={3}
+                            value={cmsForm?.pagesContent?.dmca?.intro || ''}
+                            onChange={(e) => updatePageField('dmca', 'intro', e.target.value)}
+                            placeholder="Avora Library respects intellectual property rights..."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Requirements Section Heading</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.dmca?.requirementsTitle || ''}
+                            onChange={(e) => updatePageField('dmca', 'requirementsTitle', e.target.value)}
+                            placeholder="Notice Requirements"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        {/* Repeatable DMCA Requirements List */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="font-black text-slate-700 dark:text-slate-300">
+                              Notice Requirements ({cmsForm?.pagesContent?.dmca?.requirements?.length || 0})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => addListItem('dmca', 'requirements')}
+                              className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Requirement
+                            </button>
+                          </div>
+
+                          {(cmsForm?.pagesContent?.dmca?.requirements || []).map((req, idx) => (
+                            <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-2">
+                              <span className="font-bold text-slate-400 text-xs shrink-0">{idx + 1}.</span>
+                              <input
+                                type="text"
+                                value={req || ''}
+                                onChange={(e) => updateListItem('dmca', 'requirements', idx, e.target.value)}
+                                placeholder="Requirement description..."
+                                className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeListItem('dmca', 'requirements', idx)}
+                                className="p-2 text-rose-500 hover:text-rose-600 cursor-pointer"
+                                title="Remove requirement"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CONTENT & SAFETY POLICY */}
+                  {cmsSelectedPage === 'contentPolicy' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Content &amp; Safety Policy Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /content-policy</p>
+                        </div>
+                        <Link href="/content-policy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.contentPolicy?.title || ''}
+                            onChange={(e) => updatePageField('contentPolicy', 'title', e.target.value)}
+                            placeholder="Content & Safety Policy"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.contentPolicy?.lastUpdated || ''}
+                            onChange={(e) => updatePageField('contentPolicy', 'lastUpdated', e.target.value)}
+                            placeholder="e.g. March 2026"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="font-black text-slate-700 dark:text-slate-300">Policy Sections</label>
+                          <button
+                            type="button"
+                            onClick={() => addSectionItem('contentPolicy')}
+                            className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Section
+                          </button>
+                        </div>
+
+                        {cmsForm?.pagesContent?.contentPolicy?.sections?.map((sec, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-400 text-[10px]">Section #{idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSectionItem('contentPolicy', idx)}
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => updateSectionItem('contentPolicy', idx, 'heading', e.target.value)}
+                              placeholder="Section Heading (e.g. Prohibited Content)"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                            <textarea
+                              rows={3}
+                              value={sec.content || ''}
+                              onChange={(e) => updateSectionItem('contentPolicy', idx, 'content', e.target.value)}
+                              placeholder="Section details..."
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ACCESSIBILITY STATEMENT */}
+                  {cmsSelectedPage === 'accessibility' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Accessibility Statement Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /accessibility</p>
+                        </div>
+                        <Link href="/accessibility" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.accessibility?.title || ''}
+                            onChange={(e) => updatePageField('accessibility', 'title', e.target.value)}
+                            placeholder="Accessibility Statement"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.accessibility?.lastUpdated || ''}
+                            onChange={(e) => updatePageField('accessibility', 'lastUpdated', e.target.value)}
+                            placeholder="e.g. March 2026"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-slate-400 mb-1">Introductory Statement</label>
+                        <textarea
+                          rows={3}
+                          value={cmsForm?.pagesContent?.accessibility?.intro || ''}
+                          onChange={(e) => updatePageField('accessibility', 'intro', e.target.value)}
+                          placeholder="Avora Library is committed to digital accessibility..."
+                          className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                        />
+                      </div>
+
+                      {/* Repeatable Features List */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="font-black text-slate-700 dark:text-slate-300">
+                            Built-in Accessibility Features ({cmsForm?.pagesContent?.accessibility?.features?.length || 0})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => addListItem('accessibility', 'features')}
+                            className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Feature Point
+                          </button>
+                        </div>
+
+                        {(cmsForm?.pagesContent?.accessibility?.features || []).map((feat, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-2">
+                            <span className="font-bold text-slate-400 text-xs shrink-0">{idx + 1}.</span>
+                            <input
+                              type="text"
+                              value={feat || ''}
+                              onChange={(e) => updateListItem('accessibility', 'features', idx, e.target.value)}
+                              placeholder="Feature description..."
+                              className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeListItem('accessibility', 'features', idx)}
+                              className="p-2 text-rose-500 hover:text-rose-600 cursor-pointer"
+                              title="Remove feature"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PAYMENT POLICY */}
+                  {cmsSelectedPage === 'paymentPolicy' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Payment Policy Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /payment-policy</p>
+                        </div>
+                        <Link href="/payment-policy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.paymentPolicy?.title || ''}
+                            onChange={(e) => updatePageField('paymentPolicy', 'title', e.target.value)}
+                            placeholder="Payment Policy"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.paymentPolicy?.lastUpdated || ''}
+                            onChange={(e) => updatePageField('paymentPolicy', 'lastUpdated', e.target.value)}
+                            placeholder="e.g. March 2026"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="font-black text-slate-700 dark:text-slate-300">Payment Clauses &amp; Rules</label>
+                          <button
+                            type="button"
+                            onClick={() => addSectionItem('paymentPolicy')}
+                            className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Section
+                          </button>
+                        </div>
+
+                        {cmsForm?.pagesContent?.paymentPolicy?.sections?.map((sec, idx) => (
+                          <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-400 text-[10px]">Clause #{idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSectionItem('paymentPolicy', idx)}
+                                className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => updateSectionItem('paymentPolicy', idx, 'heading', e.target.value)}
+                              placeholder="Heading (e.g. 100% Free Reading)"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                            />
+                            <textarea
+                              rows={3}
+                              value={sec.content || ''}
+                              onChange={(e) => updateSectionItem('paymentPolicy', idx, 'content', e.target.value)}
+                              placeholder="Clause content details..."
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* HELP CENTER & FAQ */}
+                  {cmsSelectedPage === 'help' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-black text-sm">Help Center &amp; FAQ Page</h4>
+                          <p className="text-[11px] text-slate-400">Live at /help</p>
+                        </div>
+                        <Link href="/help" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                          View Live Page <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <input
+                            type="text"
+                            value={cmsForm?.pagesContent?.help?.title || ''}
+                            onChange={(e) => updatePageField('help', 'title', e.target.value)}
+                            placeholder="Help Center & FAQ"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <textarea
+                            rows={2}
+                            value={cmsForm?.pagesContent?.help?.subtitle || ''}
+                            onChange={(e) => updatePageField('help', 'subtitle', e.target.value)}
+                            placeholder="Answers to common questions about reading, author tools, and PWA setup."
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        {/* Repeatable Help FAQs */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="font-black text-slate-700 dark:text-slate-300">
+                              Frequently Asked Questions ({cmsForm?.pagesContent?.help?.faqs?.length || 0})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => addFaqItem('help')}
+                              className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add FAQ Item
+                            </button>
+                          </div>
+
+                          {(cmsForm?.pagesContent?.help?.faqs || []).map((faq, idx) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-400 text-[10px]">FAQ #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFaqItem('help', idx)}
+                                  className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Remove
+                                </button>
+                              </div>
+                              <input
+                                type="text"
+                                value={faq.q || ''}
+                                onChange={(e) => updateFaqItem('help', idx, 'q', e.target.value)}
+                                placeholder="Question (e.g. How do inline paragraph comments work?)"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                              />
+                              <textarea
+                                rows={3}
+                                value={faq.a || ''}
+                                onChange={(e) => updateFaqItem('help', idx, 'a', e.target.value)}
+                                placeholder="Answer details..."
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Still need assistance box */}
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3 mt-4">
+                          <label className="block font-black text-slate-700 dark:text-slate-300">Support Desk Callout Box</label>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-1">Heading</label>
+                            <input
+                              type="text"
+                              value={cmsForm?.pagesContent?.help?.supportHeading || ''}
+                              onChange={(e) => updatePageField('help', 'supportHeading', e.target.value)}
+                              placeholder="Still need assistance?"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-1">Body Text</label>
+                            <textarea
+                              rows={2}
+                              value={cmsForm?.pagesContent?.help?.supportText || ''}
+                              onChange={(e) => updatePageField('help', 'supportText', e.target.value)}
+                              placeholder="Our support desk is available to assist authors and readers..."
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* GUIDELINES */}
                   {cmsSelectedPage === 'guidelines' && (
                     <div className="space-y-4 text-xs">
@@ -4806,7 +5912,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">Author &amp; Community Guidelines</h4>
                           <p className="text-[11px] text-slate-400">Live at /guidelines</p>
                         </div>
-                        <Link href="/guidelines" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/guidelines" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4835,11 +5941,56 @@ export default function AdminPanel() {
                         <div>
                           <label className="block font-bold text-slate-400 mb-1">Editorial Notice &amp; Core Platform Rules</label>
                           <textarea
-                            rows={4}
+                            rows={3}
                             value={cmsForm?.pagesContent?.guidelines?.content || ''}
                             onChange={(e) => updatePageField('guidelines', 'content', e.target.value)}
                             className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
                           />
+                        </div>
+
+                        {/* Repeatable Guidelines Sections */}
+                        <div className="space-y-4 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="font-black text-slate-700 dark:text-slate-300">
+                              Guideline Sections ({cmsForm?.pagesContent?.guidelines?.sections?.length || 0})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => addSectionItem('guidelines')}
+                              className="px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 hover:bg-emerald-200 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Add Section
+                            </button>
+                          </div>
+
+                          {(cmsForm?.pagesContent?.guidelines?.sections || []).map((sec, idx) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-400 text-[10px]">Section #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSectionItem('guidelines', idx)}
+                                  className="text-rose-500 hover:text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Remove
+                                </button>
+                              </div>
+                              <input
+                                type="text"
+                                value={sec.heading || ''}
+                                onChange={(e) => updateSectionItem('guidelines', idx, 'heading', e.target.value)}
+                                placeholder="Heading (e.g. 1. The Power of Paragraph Hooks)"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                              />
+                              <textarea
+                                rows={3}
+                                value={sec.content || ''}
+                                onChange={(e) => updateSectionItem('guidelines', idx, 'content', e.target.value)}
+                                placeholder="Section guidance details..."
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                              />
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -4853,7 +6004,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">Contact Us Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /contact</p>
                         </div>
-                        <Link href="/contact" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/contact" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4925,7 +6076,7 @@ export default function AdminPanel() {
                           <h4 className="font-black text-sm">Homepage Hero Section</h4>
                           <p className="text-[11px] text-slate-400">Live at / (Public Landing)</p>
                         </div>
-                        <Link href="/" target="_blank" className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                        <Link href="/" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
                           View Live Page <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
@@ -4978,6 +6129,22 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   )}
+
+                  {/* Bottom Save Button */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
+                      Changes will take effect immediately across all devices and PWA offline caches upon saving.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSaveCms}
+                      className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all cursor-pointer"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      Save CMS Changes
+                    </button>
+                  </div>
+
                 </div>
               </div>
             )}

@@ -635,6 +635,22 @@ export function AppProvider({ children }) {
             branding: {
               ...initialCmsConfig.branding,
               ...(parsed.branding || {})
+            },
+            pwaSection: {
+              ...initialCmsConfig.pwaSection,
+              ...(parsed.pwaSection || {})
+            },
+            socialLinks: {
+              ...initialCmsConfig.socialLinks,
+              ...(parsed.socialLinks || {})
+            },
+            footerConfig: {
+              ...initialCmsConfig.footerConfig,
+              ...(parsed.footerConfig || {})
+            },
+            pagesContent: {
+              ...initialCmsConfig.pagesContent,
+              ...(parsed.pagesContent || {})
             }
           };
         }
@@ -866,7 +882,11 @@ export function AppProvider({ children }) {
             pwaSection: { ...prev.pwaSection, ...(parsedCms.pwaSection || {}) },
             socialLinks: { ...prev.socialLinks, ...(parsedCms.socialLinks || {}) },
             footerConfig: { ...prev.footerConfig, ...(parsedCms.footerConfig || {}) },
-            pagesContent: { ...prev.pagesContent, ...(parsedCms.pagesContent || {}) }
+            pagesContent: {
+              ...initialCmsConfig.pagesContent,
+              ...prev.pagesContent,
+              ...(parsedCms.pagesContent || {})
+            }
           }));
         }
       } catch (e) {

@@ -19,7 +19,65 @@ import {
 } from 'lucide-react';
 
 export default function WritersPage() {
-  const { t } = useApp();
+  const { t, cmsConfig } = useApp();
+
+  const writersData = cmsConfig?.pagesContent?.writers || {
+    badge: "Avora Library Writer Resources & Hub",
+    headline: "Turn Your Serial Fiction Into a Global Phenomenon",
+    subheadline: "Everything you need to write, publish, and monetize serialized stories. Access craft masterclasses, formatting guides, and community growth playbooks.",
+    statTitle: "100% Free",
+    statSubtitle: "Keep all your copyright",
+    faqTitle: "Author Frequently Asked Questions",
+    faqs: [
+      {
+        q: "Do I keep rights to my stories?",
+        a: "Yes, absolutely. You retain 100% of your copyright and intellectual property rights. You can unpublish or edit your stories at any time."
+      },
+      {
+        q: "How often should I publish chapters?",
+        a: "Most top serialized authors publish 1 to 2 chapters per week (approx. 1,500–2,500 words). Consistency builds loyal readership."
+      },
+      {
+        q: "Can I schedule chapters in advance?",
+        a: "Yes! When writing in Author Studio, switch the status to \"Schedule Release\" and pick your desired date and time."
+      },
+      {
+        q: "How do I qualify for House Originals?",
+        a: "Our editorial team monitors active trending stories with high reader engagement, positive reaction ratios, and completed story arcs."
+      }
+    ]
+  };
+
+  const faqs = writersData.faqs || [];
+
+  const defaultPillars = [
+    {
+      num: 1,
+      title: "Write Without Friction",
+      desc: "Auto-saving studio editor with rich formatting, draft mode, and scheduled chapter releases.",
+      bg: "bg-brand-50 dark:bg-brand-950 text-brand-600"
+    },
+    {
+      num: 2,
+      title: "Inline Community Feedback",
+      desc: "Readers comment directly on your paragraphs, providing immediate pulse checks on plot twists.",
+      bg: "bg-purple-50 dark:bg-purple-950 text-purple-600"
+    },
+    {
+      num: 3,
+      title: "Editorial Consideration",
+      desc: "Top trending serials are selected for House Originals spotlighting and adaptation development.",
+      bg: "bg-amber-50 dark:bg-amber-950 text-amber-600"
+    },
+    {
+      num: 4,
+      title: "Watty Contest Grants",
+      desc: "Submit ongoing serials to annual awards competitions with official badges and cash prizes.",
+      bg: "bg-emerald-50 dark:bg-emerald-950 text-emerald-600"
+    }
+  ];
+
+  const pillars = writersData.pillars || defaultPillars;
 
   const resources = [
     {
@@ -66,13 +124,13 @@ export default function WritersPage() {
         <div className="rounded-3xl bg-gradient-to-r from-brand-600 via-amber-600 to-rose-600 p-8 sm:p-14 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="max-w-2xl space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Avora Library Writer Resources & Hub
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {writersData.badge || "Avora Library Writer Resources & Hub"}
             </span>
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-              Turn Your Serial Fiction Into a Global Phenomenon
+              {writersData.headline || "Turn Your Serial Fiction Into a Global Phenomenon"}
             </h1>
             <p className="text-white/90 text-xs sm:text-sm leading-relaxed max-w-xl">
-              Everything you need to write, publish, and monetize serialized stories. Access craft masterclasses, formatting guides, and community growth playbooks.
+              {writersData.subheadline || "Everything you need to write, publish, and monetize serialized stories. Access craft masterclasses, formatting guides, and community growth playbooks."}
             </p>
             <div className="pt-2 flex flex-wrap gap-3">
               <Link 
@@ -92,52 +150,24 @@ export default function WritersPage() {
 
           <div className="hidden md:flex flex-col items-center justify-center w-52 h-52 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 p-6 text-center shadow-2xl">
             <PenTool className="w-16 h-16 text-amber-300 mb-2 animate-bounce" />
-            <span className="font-black text-xl">100% Free</span>
-            <span className="text-xs text-white/80">Keep all your copyright</span>
+            <span className="font-black text-xl">{writersData.statTitle || "100% Free"}</span>
+            <span className="text-xs text-white/80">{writersData.statSubtitle || "Keep all your copyright"}</span>
           </div>
         </div>
 
         {/* 4 Pillars of Success */}
         <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center font-bold">
-              1
+          {pillars.map((pillar, idx) => (
+            <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${pillar.bg || 'bg-brand-50 dark:bg-brand-950 text-brand-600'}`}>
+                {pillar.num || idx + 1}
+              </div>
+              <h3 className="font-bold text-sm">{pillar.title}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {pillar.desc}
+              </p>
             </div>
-            <h3 className="font-bold text-sm">Write Without Friction</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Auto-saving studio editor with rich formatting, draft mode, and scheduled chapter releases.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center font-bold">
-              2
-            </div>
-            <h3 className="font-bold text-sm">Inline Community Feedback</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Readers comment directly on your paragraphs, providing immediate pulse checks on plot twists.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center font-bold">
-              3
-            </div>
-            <h3 className="font-bold text-sm">Editorial Consideration</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Top trending serials are selected for House Originals spotlighting and adaptation development.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold">
-              4
-            </div>
-            <h3 className="font-bold text-sm">Watty Contest Grants</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Submit ongoing serials to annual awards competitions with official badges and cash prizes.
-            </p>
-          </div>
+          ))}
         </section>
 
         {/* Writing Craft Resources */}
@@ -178,33 +208,17 @@ export default function WritersPage() {
         </section>
 
         {/* Writer FAQ Section */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 space-y-6">
-          <h2 className="text-xl font-black">Author Frequently Asked Questions</h2>
+        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm">
+          <h2 className="text-xl font-black">{writersData.faqTitle || "Author Frequently Asked Questions"}</h2>
           <div className="grid md:grid-cols-2 gap-6 text-xs">
-            <div className="space-y-1.5">
-              <h4 className="font-bold text-slate-900 dark:text-white">Do I keep rights to my stories?</h4>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Yes, absolutely. You retain 100% of your copyright and intellectual property rights. You can unpublish or edit your stories at any time.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <h4 className="font-bold text-slate-900 dark:text-white">How often should I publish chapters?</h4>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Most top serialized authors publish 1 to 2 chapters per week (approx. 1,500–2,500 words). Consistency builds loyal readership.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <h4 className="font-bold text-slate-900 dark:text-white">Can I schedule chapters in advance?</h4>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Yes! When writing in Author Studio, switch the status to "Schedule Release" and pick your desired date and time.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <h4 className="font-bold text-slate-900 dark:text-white">How do I qualify for House Originals?</h4>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Our editorial team monitors active trending stories with high reader engagement, positive reaction ratios, and completed story arcs.
-              </p>
-            </div>
+            {faqs.map((faq, idx) => (
+              <div key={idx} className="space-y-1.5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <h4 className="font-bold text-slate-900 dark:text-white">{faq.q}</h4>
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
