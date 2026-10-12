@@ -12,14 +12,17 @@ export default function Pagination({
   onPageSizeChange,
   pageSizeOptions = [5, 6, 9, 10, 12, 20, 24],
   syncToUrl = false,
-  urlParam = 'page'
+  urlParam = 'page',
+  hideOnSinglePage = false,
+  className = ''
 }) {
   const effectivePageSize = pageSize || itemsPerPage || 9;
   const computedTotalPages = totalPages || (totalItems > 0 ? Math.ceil(totalItems / effectivePageSize) : 1);
   const handlePageSizeChange = onPageSizeChange || onItemsPerPageChange;
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, computedTotalPages));
 
   const handlePageSelect = (page) => {
-    if (page < 1 || page > computedTotalPages || page === currentPage) return;
+    if (page < 1 || page > computedTotalPages || page === safeCurrentPage) return;
     if (onPageChange) onPageChange(page);
 
     if (syncToUrl && typeof window !== 'undefined') {
@@ -33,7 +36,13 @@ export default function Pagination({
     }
   };
 
-  if (computedTotalPages <= 1 && totalItems <= effectivePageSize) {
+  // If there are zero items, hide pagination
+  if (totalItems === 0 && (!totalPages || totalPages <= 0)) {
+    return null;
+  }
+
+  // If there is only 1 page AND no page size selector is available, hide only if explicitly requested or untracked
+  if (computedTotalPages <= 1 && !handlePageSizeChange && (hideOnSinglePage || !totalItems)) {
     return null;
   }
 
@@ -44,23 +53,24 @@ export default function Pagination({
     if (computedTotalPages <= maxVisible) {
       for (let i = 1; i <= computedTotalPages; i++) pages.push(i);
     } else {
-      if (currentPage <= 3) {
+      if (safeCurrentPage <= 3) {
         pages.push(1, 2, 3, 4, '...', computedTotalPages);
-      } else if (currentPage >= computedTotalPages - 2) {
+      } else if (safeCurrentPage >= computedTotalPages - 2) {
         pages.push(1, '...', computedTotalPages - 3, computedTotalPages - 2, computedTotalPages - 1, computedTotalPages);
       } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', computedTotalPages);
+        pages.push(1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', computedTotalPages);
       }
     }
     return pages;
   };
 
-  const startItem = totalItems > 0 ? (currentPage - 1) * effectivePageSize + 1 : 0;
-  const endItem = totalItems > 0 ? Math.min(currentPage * effectivePageSize, totalItems) : 0;
+  const startItem = totalItems > 0 ? (safeCurrentPage - 1) * effectivePageSize + 1 : 0;
+  const endItem = totalItems > 0 ? Math.min(safeCurrentPage * effectivePageSize, totalItems) : 0;
+  const uniqueOptions = Array.from(new Set([...(pageSizeOptions || []), effectivePageSize])).sort((a, b) => a - b);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-      {/* Items count summary */}
+    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 py-3 text-xs text-slate-500 dark:text-slate-400 ${className}`}>
+      {/* Items count summary & Per Page Selector */}
       <div className="flex flex-wrap items-center gap-3">
         {totalItems > 0 && (
           <span>
@@ -78,9 +88,9 @@ export default function Pagination({
                 handlePageSizeChange(newSize);
                 if (onPageChange) onPageChange(1);
               }}
-              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold px-2 py-1 rounded-lg border-none outline-none cursor-pointer"
+              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
             >
-              {pageSizeOptions.map(size => (
+              {uniqueOptions.map(size => (
                 <option key={size} value={size}>{size}</option>
               ))}
             </select>
@@ -89,11 +99,11 @@ export default function Pagination({
       </div>
 
       {/* Page controls */}
-      {computedTotalPages > 1 && (
+      {computedTotalPages > 1 ? (
         <div className="flex items-center gap-1">
           <button
             onClick={() => handlePageSelect(1)}
-            disabled={currentPage === 1}
+            disabled={safeCurrentPage === 1}
             aria-label="First page"
             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
@@ -101,8 +111,8 @@ export default function Pagination({
           </button>
 
           <button
-            onClick={() => handlePageSelect(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={() => handlePageSelect(safeCurrentPage - 1)}
+            disabled={safeCurrentPage === 1}
             aria-label="Previous page"
             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
@@ -118,7 +128,7 @@ export default function Pagination({
                   </span>
                 );
               }
-              const isCurrent = p === currentPage;
+              const isCurrent = p === safeCurrentPage;
               return (
                 <button
                   key={p}
@@ -136,8 +146,8 @@ export default function Pagination({
           </div>
 
           <button
-            onClick={() => handlePageSelect(currentPage + 1)}
-            disabled={currentPage === computedTotalPages}
+            onClick={() => handlePageSelect(safeCurrentPage + 1)}
+            disabled={safeCurrentPage === computedTotalPages}
             aria-label="Next page"
             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
@@ -146,12 +156,18 @@ export default function Pagination({
 
           <button
             onClick={() => handlePageSelect(computedTotalPages)}
-            disabled={currentPage === computedTotalPages}
+            disabled={safeCurrentPage === computedTotalPages}
             aria-label="Last page"
             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <ChevronsRight className="w-4 h-4" />
           </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+          <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
+            Page 1 of 1
+          </span>
         </div>
       )}
     </div>
