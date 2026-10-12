@@ -1267,6 +1267,25 @@ export default function AdminPanel() {
     }, 1200);
   };
 
+  // Razorpay Gateway Status State
+  const [razorpayGatewayStatus, setRazorpayGatewayStatus] = useState(null);
+
+  const fetchRazorpayGatewayStatus = async () => {
+    try {
+      const res = await fetch('/api/razorpay/status');
+      const data = await res.json();
+      if (data.success) {
+        setRazorpayGatewayStatus(data);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch Razorpay gateway status:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchRazorpayGatewayStatus();
+  }, []);
+
   // Database & Email Notification Dispatcher State
   const [dbInfo, setDbInfo] = useState({ host: '162.241.148.163:3306', database: 'ditya0a7_yourcpaneluser_gbncircle', success: true });
   const [smtpInfo, setSmtpInfo] = useState({ user: 'gnbmailsender@gmail.com', success: true });
@@ -2992,7 +3011,75 @@ export default function AdminPanel() {
 
         {/* TAB 4: PAYMENTS & VIP LEDGER */}
         {activeTab === 'payments' && (
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-5">
+            {/* Razorpay Production Gateway Status Banner */}
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-brand-500/10 via-amber-500/5 to-purple-500/10 border border-brand-500/20 dark:border-brand-500/30 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-bold shadow-md shadow-brand-500/20">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-base text-slate-900 dark:text-white">
+                        Razorpay Payments Engine (Production Level)
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        razorpayGatewayStatus?.isConfigured 
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-500/20' 
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-500/20'
+                      }`}>
+                        {razorpayGatewayStatus?.isConfigured ? '🟢 Live Gateway Active' : '🟡 Keys Pending in .env'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Accepts UPI (GPay, PhonePe, Paytm, QR), RuPay, Visa, MasterCard, and NetBanking across India with automatic 90/10 creator revenue sharing.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://dashboard.razorpay.com/#/access/api-keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <span>Razorpay Dashboard</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Gateway specs row */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs pt-1">
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <span className="text-[11px] text-slate-400 block font-semibold">Active Key ID</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs truncate block">
+                    {razorpayGatewayStatus?.keyIdMasked || 'RAZORPAY_KEY_ID in .env'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <span className="text-[11px] text-slate-400 block font-semibold">Supported Indian Rails</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5" /> UPI • Cards • NetBanking
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <span className="text-[11px] text-slate-400 block font-semibold">Creator Revenue Split</span>
+                  <span className="font-bold text-brand-600 dark:text-brand-400 text-xs">
+                    90% Author / 10% Platform
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <span className="text-[11px] text-slate-400 block font-semibold">Settlement Currency</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    INR (₹ Indian Rupee)
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="relative w-full sm:w-72">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
@@ -3058,30 +3145,35 @@ export default function AdminPanel() {
                     {paginatedTransactions.map(tx => (
                       <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <td className="p-4 font-mono text-[11px] text-slate-500">
-                          {tx.id}
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block">{tx.id}</span>
+                          {tx.razorpayPaymentId && (
+                            <span className="text-[10px] text-slate-400 block font-mono">
+                              RZP: {tx.razorpayPaymentId}
+                            </span>
+                          )}
                         </td>
                         <td className="p-4">
                           <span className="font-bold text-slate-900 dark:text-white block">{tx.description}</span>
                           {tx.author && <span className="text-[11px] text-slate-400">Recipient: {tx.author}</span>}
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-1.5 font-mono text-xs capitalize">
-                            <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{tx.cardBrand || 'Card'} •••• {tx.cardLast4 || '4242'}</span>
+                          <div className="flex items-center gap-1.5 font-mono text-xs">
+                            <CreditCard className="w-3.5 h-3.5 text-brand-500" />
+                            <span>{tx.paymentMethod || `${tx.cardBrand || 'UPI'} •••• ${tx.cardLast4 || '4242'}`}</span>
                           </div>
                         </td>
                         <td className="p-4 font-extrabold text-slate-900 dark:text-white">
-                          ${tx.amount?.toFixed(2)}
+                          {tx.currency === 'USD' ? `$${tx.amount?.toFixed(2)}` : `₹${tx.amount?.toLocaleString('en-IN')}`}
                         </td>
                         <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">
                           {tx.type === 'subscription' ? (
                             <span className="text-slate-400 text-[11px] font-normal">—</span>
                           ) : (
-                            <span>${(tx.authorPayout !== undefined ? tx.authorPayout : (tx.amount * 0.9)).toFixed(2)}</span>
+                            <span>{tx.currency === 'USD' ? `$${(tx.authorPayout !== undefined ? tx.authorPayout : (tx.amount * 0.9)).toFixed(2)}` : `₹${(tx.authorPayout !== undefined ? tx.authorPayout : (tx.amount * 0.9)).toLocaleString('en-IN')}`}</span>
                           )}
                         </td>
                         <td className="p-4 font-bold text-purple-600 dark:text-purple-400">
-                          ${(tx.platformCommission !== undefined ? tx.platformCommission : (tx.type === 'subscription' ? tx.amount : tx.amount * 0.1)).toFixed(2)}
+                          {tx.currency === 'USD' ? `$${(tx.platformCommission !== undefined ? tx.platformCommission : (tx.type === 'subscription' ? tx.amount : tx.amount * 0.1)).toFixed(2)}` : `₹${(tx.platformCommission !== undefined ? tx.platformCommission : (tx.type === 'subscription' ? tx.amount : tx.amount * 0.1)).toLocaleString('en-IN')}`}
                           {tx.type === 'subscription' && <span className="text-[10px] text-purple-400 block font-normal">VIP Pass</span>}
                         </td>
                         <td className="p-4">
@@ -3102,7 +3194,8 @@ export default function AdminPanel() {
                           {tx.status === 'succeeded' && (
                             <button
                               onClick={() => {
-                                if (confirm(`Issue full refund of $${tx.amount.toFixed(2)} for ${tx.id}?`)) {
+                                const sym = tx.currency === 'USD' ? '$' : '₹';
+                                if (confirm(`Issue full refund of ${sym}${tx.amount.toLocaleString('en-IN')} for ${tx.id}?`)) {
                                   refundTransaction(tx.id);
                                 }
                               }}

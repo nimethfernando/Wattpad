@@ -2485,24 +2485,29 @@ export function AppProvider({ children }) {
     setPaymentModalOpen(true);
   };
 
-  const addTransaction = ({ type, amount, plan = null, cardBrand = 'visa', cardLast4 = '4242', author, authorUsername, storyTitle, donorName, message }) => {
+  const addTransaction = ({ type, amount, currency = 'INR', plan = null, cardBrand = 'upi', cardLast4 = 'UPI', paymentMethod = 'Razorpay (UPI / Card)', razorpayPaymentId = '', razorpayOrderId = '', author, authorUsername, storyTitle, donorName, message }) => {
     const totalAmount = Number(amount) || 0;
     const isDonation = type === 'donation' || type === 'tip';
     // 90% goes directly to the author, 10% platform commission
     const authorPayout = isDonation ? Number((totalAmount * 0.90).toFixed(2)) : 0;
     const platformCommission = isDonation ? Number((totalAmount * 0.10).toFixed(2)) : totalAmount;
+    const currSym = currency === 'USD' ? '$' : '₹';
 
     const newTx = {
-      id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: razorpayPaymentId ? `RZP-${razorpayPaymentId.slice(-8).toUpperCase()}` : `TX-${Math.floor(1000 + Math.random() * 9000)}`,
+      razorpayPaymentId: razorpayPaymentId || null,
+      razorpayOrderId: razorpayOrderId || null,
       date: new Date().toISOString().split('T')[0],
       type,
       plan,
       amount: totalAmount,
+      currency,
       authorPayout,
       platformCommission,
       revenueSplit: isDonation ? '90% Author / 10% Platform' : '100% Platform VIP',
       cardBrand,
       cardLast4,
+      paymentMethod: paymentMethod || 'Razorpay Gateway',
       user: donorName || user?.name || "Anonymous Reader",
       author: author || (isDonation ? "Author" : "Platform"),
       authorUsername: authorUsername || (isDonation ? "author" : "avoralibrary"),
@@ -2514,8 +2519,8 @@ export function AppProvider({ children }) {
 
     setTransactions(prev => [newTx, ...prev]);
     addAuditLog(
-      type === 'subscription' ? 'VIP Pass Subscribed' : 'Author Tip Sent (90/10 Split)', 
-      `$${totalAmount.toFixed(2)} ($${authorPayout.toFixed(2)} to ${author || 'Author'}, $${platformCommission.toFixed(2)} Platform fee)`
+      type === 'subscription' ? 'VIP Pass Subscribed (Razorpay)' : 'Author Tip Sent (Razorpay 90/10 Split)', 
+      `${currSym}${totalAmount.toLocaleString()} (${currSym}${authorPayout.toLocaleString()} to ${author || 'Author'}, ${currSym}${platformCommission.toLocaleString()} Platform fee)`
     );
     return newTx;
   };
@@ -2525,14 +2530,19 @@ export function AppProvider({ children }) {
     addAuditLog('Transaction Refunded', `Transaction ID: ${txId}`);
   };
 
-  const subscribe = (plan, cardDetails) => {
-    const amount = plan.includes('Annual') ? 49.99 : 5.99;
+  const subscribe = (plan, paymentDetails) => {
+    const isAnnual = String(plan).toLowerCase().includes('annual');
+    const amount = isAnnual ? 2499 : 299;
     addTransaction({
       type: 'subscription',
       amount,
+      currency: 'INR',
       plan,
-      cardBrand: cardDetails?.brand || 'visa',
-      cardLast4: cardDetails?.last4 || '4242',
+      cardBrand: paymentDetails?.brand || paymentDetails?.cardBrand || 'upi',
+      cardLast4: paymentDetails?.last4 || paymentDetails?.cardLast4 || 'UPI',
+      paymentMethod: paymentDetails?.paymentMethod || 'Razorpay UPI / Cards',
+      razorpayPaymentId: paymentDetails?.razorpayPaymentId || '',
+      razorpayOrderId: paymentDetails?.razorpayOrderId || '',
       author: 'Platform',
       authorUsername: 'avoralibrary',
       storyTitle: 'Avora VIP Membership'
@@ -2540,9 +2550,9 @@ export function AppProvider({ children }) {
     setSubscription({
       active: true,
       plan,
-      renewDate: 'April 30, 2026',
-      cardBrand: cardDetails?.brand || 'visa',
-      cardLast4: cardDetails?.last4 || '4242'
+      renewDate: new Date(Date.now() + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      paymentMethod: paymentDetails?.paymentMethod || 'Razorpay UPI',
+      razorpayPaymentId: paymentDetails?.razorpayPaymentId || ''
     });
   };
 

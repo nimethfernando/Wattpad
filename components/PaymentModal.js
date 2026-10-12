@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { loadRazorpayScript } from '@/lib/loadRazorpay';
 import { 
   X, 
-  CreditCard, 
   Heart, 
   Crown, 
   CheckCircle, 
@@ -12,7 +12,13 @@ import {
   Lock, 
   AlertCircle,
   Coffee,
-  Check
+  Check,
+  QrCode,
+  Smartphone,
+  CreditCard,
+  Building,
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 
 export default function PaymentModal() {
@@ -26,19 +32,20 @@ export default function PaymentModal() {
   } = useApp();
 
   const mode = paymentModalData?.mode || paymentModalData?.type || 'donate'; // 'donate' | 'subscribe'
-  const targetAuthor = paymentModalData?.author || 'Elena Vance';
+  const targetAuthor = paymentModalData?.author || 'Author';
   const targetStory = paymentModalData?.story || null;
 
-  // Donation state
-  const [selectedAmount, setSelectedAmount] = useState(5);
-  const [customAmount, setCustomAmount] = useState('');
+  // Tip / Donation State (in INR)
+  const [selectedInrAmount, setSelectedInrAmount] = useState(100);
+  const [customInrAmount, setCustomInrAmount] = useState('');
   const [donorMessage, setDonorMessage] = useState('');
 
-  // Subscription state
+  // Subscription Plan State (in INR)
   const getInitialPlan = (p) => {
-    if (p === 'annual') return 'Annual VIP ($49.99/yr)';
-    if (p === 'monthly') return 'Monthly VIP ($5.99/mo)';
-    return p || 'Monthly VIP ($5.99/mo)';
+    if (p === 'annual' || String(p).toLowerCase().includes('annual')) {
+      return 'Annual VIP (₹2,499/yr)';
+    }
+    return 'Monthly VIP (₹299/mo)';
   };
 
   const [selectedPlan, setSelectedPlan] = useState(getInitialPlan(paymentModalData?.plan));
@@ -49,186 +56,288 @@ export default function PaymentModal() {
     }
   }, [paymentModalData]);
 
-  // Card Inputs
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardHolder, setCardHolder] = useState(user?.name || '');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-
-  // UI state
+  // UI & Processing States
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [successReceipt, setSuccessReceipt] = useState(null);
-  const [cardError, setCardError] = useState('');
+  const [configMissing, setConfigMissing] = useState(false);
 
   if (!paymentModalOpen) return null;
 
-  // Detect card brand dynamically
-  const cleanNumber = cardNumber.replace(/\s+/g, '');
-  let detectedBrand = 'card';
-  if (/^4/.test(cleanNumber)) {
-    detectedBrand = 'visa';
-  } else if (/^(5[1-5]|2[2-7])/.test(cleanNumber)) {
-    detectedBrand = 'mastercard';
-  } else if (/^3[47]/.test(cleanNumber)) {
-    detectedBrand = 'amex';
-  }
+  const finalInrAmount = mode === 'donate'
+    ? (customInrAmount ? Number(customInrAmount) : selectedInrAmount)
+    : (selectedPlan.includes('Annual') ? 2499 : 299);
 
-  const handleCardNumberChange = (e) => {
-    let val = e.target.value.replace(/\D/g, '').substring(0, 16);
-    let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
-    setCardNumber(formatted);
-    if (cardError) setCardError('');
-  };
+  // Author 90/10 Split
+  const authorShare = Number((finalInrAmount * 0.90).toFixed(2));
+  const platformFee = Number((finalInrAmount * 0.10).toFixed(2));
 
-  const handleExpiryChange = (e) => {
-    let val = e.target.value.replace(/\D/g, '').substring(0, 4);
-    if (val.length >= 2) {
-      val = val.substring(0, 2) + '/' + val.substring(2);
-    }
-    setExpiry(val);
-  };
-
-  const handleCvvChange = (e) => {
-    let val = e.target.value.replace(/\D/g, '').substring(0, 4);
-    setCvv(val);
-  };
-
-  const finalAmount = mode === 'donate'
-    ? (customAmount ? Number(customAmount) : selectedAmount)
-    : (selectedPlan.includes('Annual') ? 49.99 : 5.99);
-
-  const handleSubmit = (e) => {
+  /**
+   * Production Razorpay Checkout Handler
+   * 1. Dynamically loads official checkout.js
+   * 2. Calls /api/razorpay/create-order to create server-side order
+   * 3. Launches official Razorpay modal (UPI, Cards, NetBanking, Wallets)
+   * 4. Cryptographically verifies HMAC signature via /api/razorpay/verify-payment
+   */
+  const handleRazorpayCheckout = async (e) => {
     e.preventDefault();
-    if (cleanNumber.length < 15) {
-      setCardError('Please enter a valid 16-digit card number.');
-      return;
-    }
-    if (expiry.length < 5) {
-      setCardError('Please enter card expiry in MM/YY format.');
-      return;
-    }
-    if (cvv.length < 3) {
-      setCardError('Please enter a valid 3-digit security code (CVV).');
-      return;
-    }
-
+    setErrorMessage('');
+    setConfigMissing(false);
     setIsProcessing(true);
-    setCardError('');
 
-    setTimeout(() => {
-      const last4 = cleanNumber.slice(-4) || '4242';
-
-      if (mode === 'subscribe') {
-        subscribe(selectedPlan, { brand: detectedBrand === 'card' ? 'visa' : detectedBrand, last4 });
+    try {
+      // 1. Ensure Razorpay SDK script is loaded
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded || !window.Razorpay) {
+        throw new Error('Unable to connect to Razorpay payment network. Please check your internet connection.');
       }
 
-      const receipt = addTransaction({
-        type: mode === 'subscribe' ? 'subscription' : 'donation',
-        amount: finalAmount,
-        cardBrand: detectedBrand === 'card' ? 'visa' : detectedBrand,
-        cardLast4: last4,
-        donorName: cardHolder || user?.name || 'Reader',
-        author: mode === 'subscribe' ? 'Avora Platform' : targetAuthor,
-        authorUsername: mode === 'subscribe' ? 'avoralibrary' : (paymentModalData?.authorUsername || 'author'),
-        storyTitle: targetStory?.title || (mode === 'subscribe' ? 'Avora VIP Membership' : 'Serialized Story'),
-        message: donorMessage,
-        plan: mode === 'subscribe' ? selectedPlan : null
+      // 2. Request order from backend
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          plan: mode === 'subscribe' ? selectedPlan : null,
+          amount: finalInrAmount,
+          currency: 'INR',
+          donorName: user?.name || 'Reader',
+          donorEmail: user?.email || '',
+          donorPhone: user?.phone || '',
+          author: targetAuthor,
+          authorUsername: paymentModalData?.authorUsername || 'author',
+          storyTitle: targetStory?.title || (mode === 'subscribe' ? 'Avora VIP Membership' : 'Serialized Story'),
+          donorMessage
+        })
       });
 
+      const orderData = await res.json();
+
+      if (!res.ok || !orderData.success) {
+        if (!orderData.isConfigured || res.status === 503) {
+          setConfigMissing(true);
+        }
+        throw new Error(orderData.error || 'Failed to initialize secure payment order.');
+      }
+
+      // 3. Configure Razorpay Standard Checkout
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Avora Library',
+        description: mode === 'subscribe' 
+          ? `VIP Membership • ${selectedPlan}` 
+          : `Author Tip for ${targetAuthor}`,
+        image: 'https://www.avoralibrary.com/tab-icon.png',
+        order_id: orderData.orderId,
+        prefill: {
+          name: user?.name || 'Avora Reader',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        notes: orderData.notes || {},
+        theme: {
+          color: '#f97316' // Avora brand orange
+        },
+        modal: {
+          confirm_close: true,
+          ondismiss: () => {
+            setIsProcessing(false);
+          }
+        },
+        handler: async (response) => {
+          try {
+            // 4. Server-Side Cryptographic Signature Verification
+            const verifyRes = await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                metadata: {
+                  mode,
+                  plan: mode === 'subscribe' ? selectedPlan : null,
+                  amount: finalInrAmount,
+                  donorName: user?.name || 'Reader',
+                  author: targetAuthor,
+                  authorUsername: paymentModalData?.authorUsername || 'author',
+                  storyTitle: targetStory?.title || (mode === 'subscribe' ? 'Avora VIP Membership' : 'Serialized Story'),
+                  donorMessage
+                }
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Payment signature verification failed.');
+            }
+
+            const verifiedTx = verifyData.transaction;
+
+            // 5. Update local platform state
+            if (mode === 'subscribe') {
+              subscribe(selectedPlan, {
+                brand: verifiedTx.methodType || 'upi',
+                last4: verifiedTx.cardLast4 || 'UPI',
+                paymentMethod: verifiedTx.paymentMethod,
+                razorpayPaymentId: verifiedTx.razorpayPaymentId,
+                razorpayOrderId: verifiedTx.razorpayOrderId
+              });
+            }
+
+            const receipt = addTransaction({
+              type: mode === 'subscribe' ? 'subscription' : 'donation',
+              amount: finalInrAmount,
+              currency: 'INR',
+              plan: mode === 'subscribe' ? selectedPlan : null,
+              cardBrand: verifiedTx.methodType || 'upi',
+              cardLast4: verifiedTx.cardLast4 || 'UPI',
+              paymentMethod: verifiedTx.paymentMethod,
+              razorpayPaymentId: verifiedTx.razorpayPaymentId,
+              razorpayOrderId: verifiedTx.razorpayOrderId,
+              author: mode === 'subscribe' ? 'Avora Platform' : targetAuthor,
+              authorUsername: mode === 'subscribe' ? 'avoralibrary' : (paymentModalData?.authorUsername || 'author'),
+              storyTitle: targetStory?.title || (mode === 'subscribe' ? 'Avora VIP Membership' : 'Serialized Story'),
+              donorName: user?.name || 'Reader',
+              message: donorMessage
+            });
+
+            setIsProcessing(false);
+            setSuccessReceipt({
+              ...receipt,
+              razorpayPaymentId: verifiedTx.razorpayPaymentId,
+              paymentMethod: verifiedTx.paymentMethod
+            });
+          } catch (verifyErr) {
+            console.error('Verification error:', verifyErr);
+            setIsProcessing(false);
+            setErrorMessage(verifyErr.message || 'Payment received but verification check failed. Please contact support.');
+          }
+        }
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+
+      razorpayInstance.on('payment.failed', (failResp) => {
+        setIsProcessing(false);
+        const reason = failResp?.error?.description || 'Payment was declined or cancelled.';
+        setErrorMessage(`Payment Failed: ${reason}`);
+      });
+
+      razorpayInstance.open();
+    } catch (err) {
+      console.error('Checkout error:', err);
       setIsProcessing(false);
-      setSuccessReceipt(receipt);
-    }, 1400);
+      setErrorMessage(err.message || 'Unable to open Razorpay payment gateway.');
+    }
   };
 
   const handleClose = () => {
     setPaymentModalOpen(false);
     setSuccessReceipt(null);
     setIsProcessing(false);
-    setCardNumber('');
-    setExpiry('');
-    setCvv('');
+    setErrorMessage('');
+    setConfigMissing(false);
   };
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={handleClose}
     >
       <div 
-        className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8"
+        className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl relative my-8 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        
+        {/* Subtle Ambient Decorative Gradient */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-brand-500/10 via-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer z-10"
+          aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
 
         {successReceipt ? (
-          /* SUCCESS RECEIPT VIEW */
-          <div className="text-center py-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          /* ========================================================
+             OFFICIAL SUCCESS RECEIPT VIEW WITH RAZORPAY VERIFICATION
+             ======================================================== */
+          <div className="text-center py-4 space-y-5 animate-in fade-in zoom-in-95 duration-200">
             <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto ring-8 ring-emerald-50 dark:ring-emerald-950/30">
               <CheckCircle className="w-9 h-9" />
             </div>
 
             <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                <ShieldCheck className="w-3.5 h-3.5" /> Razorpay Verified Payment
+              </div>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                {mode === 'subscribe' ? 'Welcome to VIP!' : 'Donation Successful!'}
+                {mode === 'subscribe' ? 'Welcome to Avora VIP!' : 'Tip Sent Successfully!'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {mode === 'subscribe' 
-                  ? 'Your subscription is now active with all VIP perks.'
-                  : `Thank you for supporting ${targetAuthor}!`
+                  ? 'Your VIP membership is active with ad-free reading and profile badges.'
+                  : `Your contribution directly supports ${targetAuthor}.`
                 }
               </p>
             </div>
 
-            {/* Receipt Summary Card */}
-            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 text-xs space-y-2.5 text-left">
+            {/* Official Receipt Card */}
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 text-xs space-y-2.5 text-left font-sans">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="text-slate-400">Transaction ID</span>
-                <span className="font-mono font-bold">{successReceipt.id}</span>
+                <span className="text-slate-400">Razorpay Payment ID</span>
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                  {successReceipt.razorpayPaymentId || successReceipt.id}
+                </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Total Charged</span>
-                <span className="text-base font-black text-brand-600 dark:text-brand-400">${finalAmount.toFixed(2)} USD</span>
+                <span className="text-slate-400">Amount Paid</span>
+                <span className="text-lg font-black text-brand-600 dark:text-brand-400">
+                  ₹{finalInrAmount.toLocaleString('en-IN')} INR
+                </span>
               </div>
+              
               {mode !== 'subscribe' && (
-                <div className="py-2 my-1 border-y border-slate-200 dark:border-slate-700/60 space-y-1.5 bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 rounded-xl">
+                <div className="py-2.5 my-1 border-y border-slate-200 dark:border-slate-700/60 space-y-1.5 bg-emerald-50/60 dark:bg-emerald-950/30 px-3 rounded-xl">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                       <Heart className="w-3 h-3 text-emerald-500 fill-emerald-500" />
                       Author Payout (90%)
                     </span>
                     <span className="font-black text-emerald-700 dark:text-emerald-300">
-                      ${(finalAmount * 0.90).toFixed(2)} USD
+                      ₹{authorShare.toLocaleString('en-IN')} INR
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
-                    <span>Platform Commission (10%)</span>
-                    <span>${(finalAmount * 0.10).toFixed(2)} USD</span>
+                    <span>Platform Infrastructure (10%)</span>
+                    <span>₹{platformFee.toLocaleString('en-IN')} INR</span>
                   </div>
                 </div>
               )}
+
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Payment Method</span>
-                <span className="font-bold uppercase flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[10px] font-black">
-                    {successReceipt.cardBrand.toUpperCase()}
-                  </span>
-                  •••• {successReceipt.cardLast4}
+                <span className="text-slate-400">Payment Gateway</span>
+                <span className="font-bold text-slate-700 dark:text-slate-200">
+                  {successReceipt.paymentMethod || 'Razorpay UPI / Cards'}
                 </span>
               </div>
+
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Recipient</span>
-                <span className="font-bold">{successReceipt.author}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-200">
+                  {mode === 'subscribe' ? 'Avora Library Platform' : targetAuthor}
+                </span>
               </div>
+
               {successReceipt.message && (
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-400 block mb-0.5">Author Note:</span>
+                  <span className="text-slate-400 block mb-0.5 text-[11px]">Author Note:</span>
                   <p className="italic text-slate-600 dark:text-slate-300">"{successReceipt.message}"</p>
                 </div>
               )}
@@ -236,14 +345,16 @@ export default function PaymentModal() {
 
             <button
               onClick={handleClose}
-              className="w-full py-3.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-opacity"
+              className="w-full py-3.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-md"
             >
-              Done & Return
+              Done & Return to Story
             </button>
           </div>
         ) : (
-          /* PAYMENT ENTRY FORM */
-          <form onSubmit={handleSubmit} className="space-y-6">
+          /* ========================================================
+             PRODUCTION RAZORPAY CHECKOUT CONFIGURATION & ENTRY FORM
+             ======================================================== */
+          <form onSubmit={handleRazorpayCheckout} className="space-y-6">
             
             {/* Header Badge & Title */}
             <div>
@@ -251,70 +362,97 @@ export default function PaymentModal() {
                 {mode === 'subscribe' ? (
                   <><Crown className="w-3.5 h-3.5 text-amber-500" /> Avora VIP Membership</>
                 ) : (
-                  <><Coffee className="w-3.5 h-3.5 text-brand-500" /> Reader Tip & Donation</>
+                  <><Coffee className="w-3.5 h-3.5 text-brand-500" /> Support the Author</>
                 )}
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                {mode === 'subscribe' ? 'Upgrade to VIP Reader' : `Support ${targetAuthor}`}
+                {mode === 'subscribe' ? 'Upgrade to VIP Reader' : `Tip & Support ${targetAuthor}`}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                 {mode === 'subscribe' 
-                  ? 'Unlock ad-free serialized reading, exclusive badges, and offline PWA reading.' 
-                  : (targetStory ? `Sending a reader tip for "${targetStory.title}"` : 'Empower creators with direct reader support')
+                  ? 'Zero advertisements, gold profile badge, and offline PWA reading on all your devices.' 
+                  : (targetStory ? `Sending an author tip for "${targetStory.title}". 90% goes directly to the author.` : 'Support serialized fiction writers with instant domestic UPI & card payouts.')
                 }
               </p>
             </div>
 
-            {/* Donation Amount Chips */}
+            {/* Error / Notification Banner */}
+            {errorMessage && (
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                <div className="flex-1">
+                  <span>{errorMessage}</span>
+                  {configMissing && (
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      To accept live Indian payments, add <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_ID</code> and <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_SECRET</code> in your production <code className="font-mono">.env</code> file.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mode 1: Tip Author Amount Selection (INR) */}
             {mode === 'donate' && (
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400">Select Donation Amount</label>
+              <div className="space-y-4">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Select Tip Amount (INR ₹)
+                </label>
+                
+                {/* INR Presets */}
                 <div className="grid grid-cols-4 gap-2">
-                  {[2, 5, 10, 25].map(amt => (
+                  {[50, 100, 250, 500].map(amt => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => {
-                        setSelectedAmount(amt);
-                        setCustomAmount('');
+                        setSelectedInrAmount(amt);
+                        setCustomInrAmount('');
+                        if (errorMessage) setErrorMessage('');
                       }}
-                      className={`py-2.5 rounded-xl font-black text-sm transition-all ${
-                        selectedAmount === amt && !customAmount
+                      className={`py-3 rounded-2xl font-black text-sm transition-all cursor-pointer ${
+                        selectedInrAmount === amt && !customInrAmount
                           ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 ring-2 ring-brand-500'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
-                      ${amt}
+                      ₹{amt}
                     </button>
                   ))}
                 </div>
 
+                {/* Custom INR Input */}
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
                   <input
                     type="number"
-                    min="1"
-                    step="1"
-                    placeholder="Custom amount (e.g. 15)"
-                    value={customAmount}
-                    onChange={(e) => setCustomAmount(e.target.value)}
-                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl pl-8 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                    min="10"
+                    step="5"
+                    placeholder="Enter custom amount in ₹ (e.g. 150)"
+                    value={customInrAmount}
+                    onChange={(e) => {
+                      setCustomInrAmount(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl pl-8 pr-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
+                {/* Author Encouragement Message */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Encouraging Note to Author (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                    Note of Appreciation to Author (Optional)
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. Loved chapter 4! Keep writing!"
+                    placeholder="e.g. The character arc in chapter 3 was brilliant! Keep going!"
                     value={donorMessage}
                     onChange={(e) => setDonorMessage(e.target.value)}
                     className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
 
-                {/* 90/10 Revenue Split Transparency Card */}
-                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 space-y-1.5 text-[11px]">
+                {/* 90/10 Fair Creator Split Transparency Card */}
+                <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40 space-y-2 text-[11px]">
                   <div className="flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-300">
                     <span className="flex items-center gap-1.5">
                       <Heart className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
@@ -324,195 +462,137 @@ export default function PaymentModal() {
                       90% to Author
                     </span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300 pt-0.5">
-                    <span>Direct Author Payout (90%):</span>
+                  <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                    <span>Direct Author Earnings (90%):</span>
                     <span className="font-extrabold text-emerald-700 dark:text-emerald-300">
-                      ${(finalAmount * 0.90).toFixed(2)} USD
+                      ₹{authorShare.toLocaleString('en-IN')} INR
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-500 text-[10px]">
-                    <span>Platform Commission &amp; Processing (10%):</span>
+                    <span>Platform Servers &amp; Processing (10%):</span>
                     <span className="font-semibold">
-                      ${(finalAmount * 0.10).toFixed(2)} USD
+                      ₹{platformFee.toLocaleString('en-IN')} INR
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Subscription Plan Cards */}
+            {/* Mode 2: VIP Membership Plans (INR) */}
             {mode === 'subscribe' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
+                  {/* Monthly Pass */}
                   <div
-                    onClick={() => setSelectedPlan('Monthly VIP ($5.99/mo)')}
+                    onClick={() => setSelectedPlan('Monthly VIP (₹299/mo)')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                       selectedPlan.includes('Monthly')
-                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20'
+                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-bold">Monthly</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Monthly VIP</span>
                       {selectedPlan.includes('Monthly') && <Check className="w-4 h-4 text-brand-500" />}
                     </div>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">$5.99<span className="text-xs text-slate-400 font-normal">/mo</span></p>
-                    <p className="text-[10px] text-slate-400 mt-1">Billed every month</p>
+                    <p className="text-xl font-black text-slate-900 dark:text-white">
+                      ₹299<span className="text-xs text-slate-400 font-normal">/mo</span>
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">Full ad-free access</p>
                   </div>
 
+                  {/* Annual Pass */}
                   <div
-                    onClick={() => setSelectedPlan('Annual VIP ($49.99/yr)')}
+                    onClick={() => setSelectedPlan('Annual VIP (₹2,499/yr)')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative ${
                       selectedPlan.includes('Annual')
-                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20'
+                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
                     }`}
                   >
-                    <span className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-brand-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-brand-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
                       Save 30%
                     </span>
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-bold">Annual</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Annual Pass</span>
                       {selectedPlan.includes('Annual') && <Check className="w-4 h-4 text-brand-500" />}
                     </div>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">$49.99<span className="text-xs text-slate-400 font-normal">/yr</span></p>
-                    <p className="text-[10px] text-slate-400 mt-1">$4.16/mo equivalent</p>
+                    <p className="text-xl font-black text-slate-900 dark:text-white">
+                      ₹2,499<span className="text-xs text-slate-400 font-normal">/yr</span>
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">₹208/month equivalent</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                  <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> 100% Ad-Free reading experience</div>
-                  <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Golden Crown Profile Crest badge</div>
-                  <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Offline PWA priority caching</div>
-                  <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Cancel anytime in Account Settings</div>
+                {/* VIP Perks */}
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-2 text-[11px] text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> 100% Ad-Free reading across all web and mobile pages</div>
+                  <div className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Golden Crown Profile Crest badge shown across reader comments</div>
+                  <div className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Offline reading and priority caching for mobile readers</div>
+                  <div className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Manage or cancel easily anytime in Account Settings</div>
                 </div>
               </div>
             )}
 
-            {/* Credit / Debit Card Module */}
-            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-slate-400" /> Payment Details
-                </label>
-                
-                {/* 1-Click Test Card Autofill */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">Fill:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCardNumber('4242 4242 4242 4242');
-                      setCardHolder(user?.name || 'Elena Vance');
-                      setExpiry('12/28');
-                      setCvv('123');
-                      setCardError('');
-                    }}
-                    className="px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px] font-bold hover:bg-blue-100 cursor-pointer"
-                    title="Autofill with Test Visa Card"
-                  >
-                    ⚡ Visa 4242
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCardNumber('5454 5454 5454 5454');
-                      setCardHolder(user?.name || 'Marcus Vance');
-                      setExpiry('10/27');
-                      setCvv('888');
-                      setCardError('');
-                    }}
-                    className="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-[10px] font-bold hover:bg-rose-100 cursor-pointer"
-                    title="Autofill with Test Mastercard"
-                  >
-                    ⚡ MC 5454
-                  </button>
+            {/* Supported Payment Channels Banner (India & International) */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-brand-500" />
+                  Supported Payment Options
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">Powered by Razorpay</span>
+              </div>
+
+              {/* Payment Methods Badges */}
+              <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
+                  <Smartphone className="w-4 h-4 text-emerald-500" />
+                  <span>UPI / QR Code</span>
+                  <span className="text-[9px] text-slate-400 font-normal">GPay, PhonePe, Paytm</span>
+                </div>
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
+                  <CreditCard className="w-4 h-4 text-blue-500" />
+                  <span>Debit &amp; Credit Cards</span>
+                  <span className="text-[9px] text-slate-400 font-normal">RuPay, Visa, Master</span>
+                </div>
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
+                  <Building className="w-4 h-4 text-purple-500" />
+                  <span>Net Banking</span>
+                  <span className="text-[9px] text-slate-400 font-normal">SBI, HDFC, ICICI, 50+</span>
                 </div>
               </div>
-
-              {/* Card Number Input */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Card Number (e.g. 4242 4242 4242 4242)"
-                  value={cardNumber}
-                  onChange={handleCardNumberChange}
-                  required
-                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
-                />
-                <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
-              </div>
-
-              {/* Cardholder Name */}
-              <div>
-                <input
-                  type="text"
-                  placeholder="Cardholder Name"
-                  value={cardHolder}
-                  onChange={(e) => setCardHolder(e.target.value)}
-                  required
-                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-
-              {/* Expiry & CVV */}
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="MM / YY"
-                  value={expiry}
-                  onChange={handleExpiryChange}
-                  required
-                  className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
-                />
-                <input
-                  type="password"
-                  maxLength={4}
-                  placeholder="CVC / CVV"
-                  value={cvv}
-                  onChange={handleCvvChange}
-                  required
-                  className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-
-              {cardError && (
-                <div className="text-rose-500 text-xs font-bold flex items-center gap-1.5 pt-1">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {cardError}
-                </div>
-              )}
             </div>
 
-            {/* Submit Button */}
-            <div className="space-y-2 pt-2">
+            {/* Submission CTA */}
+            <div className="space-y-3 pt-2">
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-black text-sm shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+                className="w-full py-4 rounded-full bg-gradient-to-r from-brand-500 to-amber-500 hover:from-brand-600 hover:to-amber-600 disabled:opacity-50 text-white font-extrabold text-sm shadow-xl shadow-brand-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isProcessing ? (
-                  <div className="flex items-center gap-2">
+                  <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Processing securely...</span>
-                  </div>
+                    <span>Connecting to Razorpay Secure Gateway...</span>
+                  </>
                 ) : (
-                  <span>
-                    Pay ${finalAmount.toFixed(2)} USD • Confirm
-                  </span>
+                  <>
+                    <span>Pay ₹{finalInrAmount.toLocaleString('en-IN')} with Razorpay</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>256-Bit SSL Encrypted Sandbox Gateway</span>
+              <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
+                <Lock className="w-3.5 h-3.5 text-emerald-500" />
+                <span>256-Bit TLS Bank Encryption • RBI &amp; PCI-DSS Level 1 Certified</span>
               </div>
             </div>
 
           </form>
         )}
-
       </div>
     </div>
   );
 }
-

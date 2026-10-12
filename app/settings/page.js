@@ -365,25 +365,25 @@ export default function SettingsPage() {
                   onClick={() => openPaymentModal({ type: 'subscribe', plan: 'monthly' })}
                   className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer"
                 >
-                  Upgrade to Monthly VIP ($5.99/mo)
+                  Upgrade to Monthly VIP (₹299/mo)
                 </button>
                 <button
                   onClick={() => openPaymentModal({ type: 'subscribe', plan: 'annual' })}
                   className="px-6 py-2.5 rounded-full border border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-bold text-xs transition-all cursor-pointer"
                 >
-                  Annual Pass ($49.99/yr • Save 30%)
+                  Annual Pass (₹2,499/yr • Save 30%)
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Creator Revenue & Stripe Payouts (90/10 Split) */}
+        {/* Creator Revenue & Razorpay Payouts (90/10 Split) */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-500" />
-              <h3 className="font-bold text-base">Creator Earnings &amp; Stripe Payouts</h3>
+              <h3 className="font-bold text-base">Creator Earnings &amp; Razorpay Payouts</h3>
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 border border-emerald-500/20">
               90% Creator Revenue Share
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                     Transparent 90 / 10 Revenue Split
                   </h4>
                   <p className="text-slate-600 dark:text-slate-300 text-xs mt-0.5">
-                    For every tip and donation sent by readers, <strong>90%</strong> routes directly to your connected bank account via Stripe Connect. The platform retains a modest <strong>10%</strong> infrastructure fee.
+                    For every tip and contribution sent by readers via Razorpay, <strong>90%</strong> routes directly to your connected bank account or UPI ID. The platform retains a modest <strong>10%</strong> infrastructure fee.
                   </p>
                 </div>
               </div>
