@@ -6,7 +6,10 @@ import {
   Heart, 
   Send, 
   Sparkles, 
-  CornerDownRight 
+  Pencil,
+  Trash2,
+  Check,
+  CornerDownRight
 } from 'lucide-react';
 
 export default function InlineCommentDrawer({
@@ -17,6 +20,11 @@ export default function InlineCommentDrawer({
   chapter,
   user,
   onAddComment,
+  onEditComment,
+  onDeleteComment,
+  onAddReply,
+  onEditReply,
+  onDeleteReply,
   openAuthModal,
   readerTheme = 'sepia'
 }) {
@@ -25,6 +33,16 @@ export default function InlineCommentDrawer({
   const [replyToId, setReplyToId] = useState(null);
   const [replyText, setReplyText] = useState('');
 
+  // Comment edit & delete state
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  // Reply edit & delete state
+  const [editingReplyKey, setEditingReplyKey] = useState(null); // `${commentId}_${replyId}`
+  const [editReplyText, setEditReplyText] = useState('');
+  const [confirmDeleteReplyKey, setConfirmDeleteReplyKey] = useState(null);
+
   if (!isOpen || !paragraph) return null;
 
   const comments = paragraph.comments || [];
@@ -32,6 +50,32 @@ export default function InlineCommentDrawer({
     if (commentSort === 'likes') return (b.likes || 0) - (a.likes || 0);
     return b.id - a.id;
   });
+
+  const isCommentOwner = (item) => {
+    if (!user || !item) return false;
+    const authorName = (item.author || '').trim().toLowerCase();
+    const userName = (user.name || '').trim().toLowerCase();
+    const userHandle = (user.username || '').trim().toLowerCase();
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const authorEmail = (item.authorEmail || '').trim().toLowerCase();
+    const authorHandle = (item.authorUsername || '').trim().toLowerCase();
+
+    return Boolean(
+      (item.userId && user.id && item.userId === user.id) ||
+      (authorEmail && userEmail && authorEmail === userEmail) ||
+      (authorHandle && userHandle && authorHandle === userHandle) ||
+      (userName && authorName === userName) ||
+      (userHandle && authorName === userHandle)
+    );
+  };
+
+  const canModerateComment = (item) => {
+    if (!user) return false;
+    if (isCommentOwner(item)) return true;
+    if (user.role === 'admin' || user.isSuperAdmin || user.isDityaAdmin) return true;
+    if (story?.authorUsername && user.username && story.authorUsername.toLowerCase() === user.username.toLowerCase()) return true;
+    return false;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,6 +94,40 @@ export default function InlineCommentDrawer({
     setCommentInput('');
   };
 
+  const handleStartEditComment = (c) => {
+    setEditingCommentId(c.id);
+    setEditCommentText(c.text);
+    setConfirmDeleteId(null);
+    setReplyToId(null);
+  };
+
+  const handleSaveEditComment = (commentId) => {
+    if (!editCommentText.trim()) return;
+    if (onEditComment) {
+      onEditComment(commentId, editCommentText.trim());
+    } else {
+      const target = comments.find(c => c.id === commentId);
+      if (target) {
+        target.text = editCommentText.trim();
+        target.isEdited = true;
+      }
+    }
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  const handleDeleteComment = (commentId) => {
+    if (onDeleteComment) {
+      onDeleteComment(commentId);
+    } else {
+      const idx = comments.findIndex(c => c.id === commentId);
+      if (idx !== -1) {
+        comments.splice(idx, 1);
+      }
+    }
+    setConfirmDeleteId(null);
+  };
+
   const handleReplySubmit = (parentCommentId) => {
     if (!replyText.trim()) return;
     if (!user) {
@@ -57,19 +135,62 @@ export default function InlineCommentDrawer({
       return;
     }
 
-    const parent = comments.find(c => c.id === parentCommentId);
-    if (parent) {
-      if (!parent.replies) parent.replies = [];
-      parent.replies.push({
-        id: Date.now(),
-        author: user?.name || "Reader",
-        avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
-        time: "Just now",
-        text: replyText.trim()
-      });
+    if (onAddReply) {
+      onAddReply(parentCommentId, replyText.trim());
+    } else {
+      const parent = comments.find(c => c.id === parentCommentId);
+      if (parent) {
+        if (!parent.replies) parent.replies = [];
+        parent.replies.push({
+          id: Date.now(),
+          author: user?.name || "Reader",
+          authorUsername: user?.username || null,
+          authorEmail: user?.email || null,
+          userId: user?.id || null,
+          avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+          time: "Just now",
+          text: replyText.trim()
+        });
+      }
     }
     setReplyToId(null);
     setReplyText('');
+  };
+
+  const handleStartEditReply = (c, r) => {
+    setEditingReplyKey(`${c.id}_${r.id}`);
+    setEditReplyText(r.text);
+    setConfirmDeleteReplyKey(null);
+  };
+
+  const handleSaveEditReply = (commentId, replyId) => {
+    if (!editReplyText.trim()) return;
+    if (onEditReply) {
+      onEditReply(commentId, replyId, editReplyText.trim());
+    } else {
+      const parent = comments.find(c => c.id === commentId);
+      if (parent && parent.replies) {
+        const reply = parent.replies.find(r => r.id === replyId);
+        if (reply) {
+          reply.text = editReplyText.trim();
+          reply.isEdited = true;
+        }
+      }
+    }
+    setEditingReplyKey(null);
+    setEditReplyText('');
+  };
+
+  const handleDeleteReply = (commentId, replyId) => {
+    if (onDeleteReply) {
+      onDeleteReply(commentId, replyId);
+    } else {
+      const parent = comments.find(c => c.id === commentId);
+      if (parent && parent.replies) {
+        parent.replies = parent.replies.filter(r => r.id !== replyId);
+      }
+    }
+    setConfirmDeleteReplyKey(null);
   };
 
   return (
@@ -139,88 +260,295 @@ export default function InlineCommentDrawer({
             <p className="text-xs text-slate-500 dark:text-slate-400">Be the first reader to react to this line!</p>
           </div>
         ) : (
-          sortedComments.map(c => (
-            <div key={c.id} className={`space-y-2 p-3.5 rounded-2xl border ${
-              readerTheme === 'dark'
-                ? 'bg-slate-800/40 border-slate-800 text-slate-100'
-                : readerTheme === 'sepia'
-                ? 'bg-[#f4ecd8]/90 border-[#e2d5bd] text-[#2b1d0c]'
-                : 'bg-slate-50 border-slate-200 text-slate-900'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <img src={c.avatar} alt={c.author} className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700" />
-                  <span className="font-extrabold text-xs sm:text-sm text-current">{c.author}</span>
-                </div>
-                <span className="text-xs opacity-60 font-medium">{c.time}</span>
-              </div>
-              <p className="text-xs sm:text-sm pl-8 leading-relaxed opacity-95">
-                {c.text}
-              </p>
+          sortedComments.map(c => {
+            const isOwner = isCommentOwner(c);
+            const canMod = canModerateComment(c);
+            const isEditing = editingCommentId === c.id;
+            const isConfirmingDelete = confirmDeleteId === c.id;
 
-              {/* Reaction bar */}
-              <div className="pl-8 flex items-center justify-between pt-1 text-xs opacity-75 font-semibold">
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => {
-                      c.likes = (c.likes || 0) + 1;
-                    }}
-                    className="flex items-center gap-1 hover:text-rose-500 transition-colors cursor-pointer"
-                  >
-                    <Heart className="w-3.5 h-3.5" /> {c.likes || 0}
-                  </button>
-                  <button 
-                    onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
-                    className="hover:text-brand-500 transition-colors cursor-pointer"
-                  >
-                    Reply
-                  </button>
+            return (
+              <div key={c.id} className={`space-y-2 p-3.5 rounded-2xl border transition-all ${
+                readerTheme === 'dark'
+                  ? 'bg-slate-800/40 border-slate-800 text-slate-100'
+                  : readerTheme === 'sepia'
+                  ? 'bg-[#f4ecd8]/90 border-[#e2d5bd] text-[#2b1d0c]'
+                  : 'bg-slate-50 border-slate-200 text-slate-900'
+              } ${isOwner ? 'ring-1 ring-brand-500/30' : ''}`}>
+                
+                {/* Comment Author Header */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img src={c.avatar} alt={c.author} className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700 shrink-0" />
+                    <span className="font-extrabold text-xs sm:text-sm text-current truncate">{c.author}</span>
+                    {isOwner && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-400 font-extrabold shrink-0">
+                        You
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {c.isEdited && (
+                      <span className="text-[10px] opacity-50 italic">(edited)</span>
+                    )}
+                    <span className="text-[11px] opacity-60 font-medium">{c.time}</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Nested Replies Stream */}
-              {c.replies && c.replies.length > 0 && (
-                <div className="pl-8 pt-2 space-y-2 border-l-2 border-black/10 dark:border-white/10 ml-3">
-                  {c.replies.map(r => (
-                    <div key={r.id} className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <img src={r.avatar} alt={r.author} className="w-5 h-5 rounded-full" />
-                        <span className="font-bold text-xs text-current">{r.author}</span>
-                        <span className="text-[10px] opacity-60">{r.time}</span>
-                      </div>
-                      <p className="text-xs pl-7 leading-relaxed opacity-90">{r.text}</p>
+                {/* Comment Body / Inline Edit Mode */}
+                {isEditing ? (
+                  <div className="pl-8 pt-1 space-y-2">
+                    <textarea
+                      value={editCommentText}
+                      onChange={(e) => setEditCommentText(e.target.value)}
+                      rows={3}
+                      className={`w-full p-2.5 rounded-xl border text-xs outline-none resize-none focus:ring-2 focus:ring-brand-500/30 ${
+                        readerTheme === 'dark'
+                          ? 'bg-slate-800 text-white border-slate-700'
+                          : readerTheme === 'sepia'
+                          ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
+                          : 'bg-white text-slate-900 border-slate-200'
+                      }`}
+                      autoFocus
+                    />
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditCommentText('');
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!editCommentText.trim()}
+                        onClick={() => handleSaveEditComment(c.id)}
+                        className="px-3 py-1 rounded-lg text-xs font-bold bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Check className="w-3.5 h-3.5" /> Save
+                      </button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ) : isConfirmingDelete ? (
+                  <div className="pl-8 pt-1">
+                    <div className="flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-rose-600 dark:text-rose-400">
+                      <span className="text-xs font-bold">Delete this review?</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(c.id)}
+                          className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold cursor-pointer shadow-xs transition-all"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-1 rounded-lg text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm pl-8 leading-relaxed opacity-95 whitespace-pre-wrap break-words">
+                    {c.text}
+                  </p>
+                )}
 
-              {/* Inline Reply Input */}
-              {replyToId === c.id && (
-                <div className="pl-7 pt-2 flex items-center gap-2">
-                  <input 
-                    type="text"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write a reply..."
-                    className={`flex-1 p-2 rounded-lg border text-xs outline-none ${
-                      readerTheme === 'dark'
-                        ? 'bg-slate-800 text-white border-slate-700'
-                        : readerTheme === 'sepia'
-                        ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
-                        : 'bg-white text-slate-900 border-slate-200'
-                    }`}
-                    onKeyDown={(e) => e.key === 'Enter' && handleReplySubmit(c.id)}
-                  />
-                  <button 
-                    onClick={() => handleReplySubmit(c.id)}
-                    className="p-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 cursor-pointer"
-                  >
-                    <Send className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          ))
+                {/* Reaction and Action bar */}
+                {!isEditing && !isConfirmingDelete && (
+                  <div className="pl-8 flex items-center justify-between pt-1 text-xs opacity-80 font-semibold flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => {
+                          c.likes = (c.likes || 0) + 1;
+                        }}
+                        className="flex items-center gap-1 hover:text-rose-500 transition-colors cursor-pointer"
+                      >
+                        <Heart className="w-3.5 h-3.5" /> {c.likes || 0}
+                      </button>
+                      <button 
+                        onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
+                        className="hover:text-brand-500 transition-colors cursor-pointer"
+                      >
+                        Reply
+                      </button>
+                    </div>
+
+                    {/* Owner / Moderator Actions: Edit & Delete */}
+                    <div className="flex items-center gap-2.5">
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditComment(c)}
+                          className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors cursor-pointer"
+                          title="Edit your review"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                      )}
+                      {canMod && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(c.id)}
+                          className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Delete review"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Nested Replies Stream */}
+                {c.replies && c.replies.length > 0 && (
+                  <div className="pl-8 pt-2 space-y-2.5 border-l-2 border-black/10 dark:border-white/10 ml-3">
+                    {c.replies.map(r => {
+                      const isMyReply = isCommentOwner(r);
+                      const canModReply = canModerateComment(r);
+                      const isEditingReply = editingReplyKey === `${c.id}_${r.id}`;
+                      const isConfirmingDeleteReply = confirmDeleteReplyKey === `${c.id}_${r.id}`;
+
+                      return (
+                        <div key={r.id} className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <img src={r.avatar} alt={r.author} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                              <span className="font-bold text-xs text-current truncate">{r.author}</span>
+                              {isMyReply && (
+                                <span className="text-[9px] px-1 py-0.2 rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-400 font-extrabold shrink-0">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {r.isEdited && (
+                                <span className="text-[9px] opacity-50 italic">(edited)</span>
+                              )}
+                              <span className="text-[10px] opacity-60">{r.time}</span>
+                            </div>
+                          </div>
+
+                          {isEditingReply ? (
+                            <div className="pl-6 space-y-2">
+                              <input
+                                type="text"
+                                value={editReplyText}
+                                onChange={(e) => setEditReplyText(e.target.value)}
+                                className={`w-full p-2 rounded-lg border text-xs outline-none ${
+                                  readerTheme === 'dark'
+                                    ? 'bg-slate-800 text-white border-slate-700'
+                                    : readerTheme === 'sepia'
+                                    ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
+                                    : 'bg-white text-slate-900 border-slate-200'
+                                }`}
+                                autoFocus
+                              />
+                              <div className="flex items-center gap-2 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingReplyKey(null);
+                                    setEditReplyText('');
+                                  }}
+                                  className="px-2 py-0.5 rounded text-[11px] font-medium opacity-70 hover:opacity-100 cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!editReplyText.trim()}
+                                  onClick={() => handleSaveEditReply(c.id, r.id)}
+                                  className="px-2.5 py-0.5 rounded bg-brand-500 hover:bg-brand-600 text-white text-[11px] font-bold cursor-pointer"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : isConfirmingDeleteReply ? (
+                            <div className="pl-6 flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 p-2 rounded-lg text-rose-600 dark:text-rose-400">
+                              <span className="text-[11px] font-bold">Delete reply?</span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReply(c.id, r.id)}
+                                  className="px-2 py-0.5 rounded bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteReplyKey(null)}
+                                  className="px-2 py-0.5 rounded text-[11px] font-semibold hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="pl-6">
+                              <p className="text-xs leading-relaxed opacity-90 break-words">{r.text}</p>
+                              <div className="flex items-center gap-3 pt-1 text-[11px] opacity-75">
+                                {isMyReply && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditReply(c, r)}
+                                    className="hover:text-brand-500 transition-colors cursor-pointer flex items-center gap-0.5 font-semibold"
+                                  >
+                                    <Pencil className="w-2.5 h-2.5" /> Edit
+                                  </button>
+                                )}
+                                {canModReply && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteReplyKey(`${c.id}_${r.id}`)}
+                                    className="hover:text-rose-500 transition-colors cursor-pointer flex items-center gap-0.5 font-semibold"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5" /> Delete
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Inline Reply Input */}
+                {replyToId === c.id && (
+                  <div className="pl-7 pt-2 flex items-center gap-2">
+                    <input 
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write a reply..."
+                      className={`flex-1 p-2 rounded-lg border text-xs outline-none ${
+                        readerTheme === 'dark'
+                          ? 'bg-slate-800 text-white border-slate-700'
+                          : readerTheme === 'sepia'
+                          ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
+                          : 'bg-white text-slate-900 border-slate-200'
+                      }`}
+                      onKeyDown={(e) => e.key === 'Enter' && handleReplySubmit(c.id)}
+                    />
+                    <button 
+                      onClick={() => handleReplySubmit(c.id)}
+                      className="p-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 cursor-pointer shadow-xs"
+                    >
+                      <Send className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -230,7 +558,7 @@ export default function InlineCommentDrawer({
           type="text"
           value={commentInput}
           onChange={(e) => setCommentInput(e.target.value)}
-          placeholder={user ? "React to this line..." : "Sign in to react..."}
+          placeholder={user ? "React or review this line..." : "Sign in to react..."}
           className={`flex-1 p-2.5 rounded-full border text-xs outline-none px-4 ${
             readerTheme === 'dark'
               ? 'bg-slate-800 text-white border-slate-700 placeholder:text-slate-500'
@@ -251,4 +579,3 @@ export default function InlineCommentDrawer({
     </>
   );
 }
-

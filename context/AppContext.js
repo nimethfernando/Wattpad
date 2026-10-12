@@ -919,6 +919,29 @@ export function AppProvider({ children }) {
         if (savedFeatureFlags) {
           setFeatureFlags(prev => ({ ...prev, ...JSON.parse(savedFeatureFlags) }));
         }
+
+        // Sync paragraph inline comments from localStorage
+        const savedComments = localStorage.getItem('avora_paragraph_comments');
+        if (savedComments) {
+          try {
+            const commentsStore = JSON.parse(savedComments);
+            setStories(prev => prev.map(s => {
+              const updatedChapters = s.chapters?.map(c => {
+                const updatedParagraphs = c.paragraphs?.map(p => {
+                  const key = `${s.id}_ch_${c.id}_p_${p.id}`;
+                  if (commentsStore[key]) {
+                    return { ...p, comments: commentsStore[key] };
+                  }
+                  return p;
+                }) || [];
+                return { ...c, paragraphs: updatedParagraphs };
+              }) || [];
+              return { ...s, chapters: updatedChapters };
+            }));
+          } catch (err) {
+            console.error("Failed to parse saved paragraph comments:", err);
+          }
+        }
       } catch (e) {
         console.error("Could not load story read counts from localStorage", e);
       }
@@ -1720,44 +1743,289 @@ export function AppProvider({ children }) {
     }));
   };
 
-  const addParagraphComment = (storyId, chapterId, paragraphId, text, authorName = user?.name || "Anonymous Reader") => {
-    setStories(prev => prev.map(s => {
-      if (s.id === storyId) {
-        return {
-          ...s,
-          commentsCount: s.commentsCount + 1,
-          chapters: s.chapters.map(c => {
-            if (c.id === chapterId) {
-              return {
-                ...c,
-                paragraphs: c.paragraphs.map(p => {
-                  if (p.id === paragraphId) {
-                    return {
-                      ...p,
-                      comments: [
-                        ...p.comments,
-                        {
-                          id: Date.now(),
-                          author: authorName,
-                          avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
-                          time: "Just now",
-                          text,
-                          likes: 0,
-                          emojis: { "❤️": 1 }
-                        }
-                      ]
-                    };
-                  }
-                  return p;
-                })
-              };
+  // Helper to persist all inline comments to localStorage
+  const persistCommentsToStorage = (updatedStories) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const commentsStore = {};
+      updatedStories.forEach(s => {
+        s.chapters?.forEach(c => {
+          c.paragraphs?.forEach(p => {
+            if (p.comments && p.comments.length > 0) {
+              commentsStore[`${s.id}_ch_${c.id}_p_${p.id}`] = p.comments;
             }
-            return c;
-          })
-        };
-      }
-      return s;
-    }));
+          });
+        });
+      });
+      localStorage.setItem('avora_paragraph_comments', JSON.stringify(commentsStore));
+    } catch (e) {
+      console.error("Failed to persist comments to storage:", e);
+    }
+  };
+
+  const addParagraphComment = (storyId, chapterId, paragraphId, text, authorName = user?.name || "Anonymous Reader") => {
+    const newComment = {
+      id: Date.now(),
+      author: authorName,
+      authorUsername: user?.username || null,
+      authorEmail: user?.email || null,
+      userId: user?.id || null,
+      avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+      time: "Just now",
+      text,
+      likes: 0,
+      emojis: { "❤️": 1 },
+      replies: []
+    };
+
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            commentsCount: (s.commentsCount || 0) + 1,
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: [
+                          ...p.comments,
+                          newComment
+                        ]
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
+
+    return newComment;
+  };
+
+  const editParagraphComment = (storyId, chapterId, paragraphId, commentId, newText) => {
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: p.comments.map(cm => {
+                          if (cm.id === commentId) {
+                            return {
+                              ...cm,
+                              text: newText,
+                              isEdited: true,
+                              editedAt: "Just now"
+                            };
+                          }
+                          return cm;
+                        })
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
+  };
+
+  const deleteParagraphComment = (storyId, chapterId, paragraphId, commentId) => {
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            commentsCount: Math.max(0, (s.commentsCount || 1) - 1),
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: p.comments.filter(cm => cm.id !== commentId)
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
+  };
+
+  const addParagraphReply = (storyId, chapterId, paragraphId, commentId, replyText) => {
+    const newReply = {
+      id: Date.now(),
+      author: user?.name || "Reader",
+      authorUsername: user?.username || null,
+      authorEmail: user?.email || null,
+      userId: user?.id || null,
+      avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+      time: "Just now",
+      text: replyText
+    };
+
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: p.comments.map(cm => {
+                          if (cm.id === commentId) {
+                            return {
+                              ...cm,
+                              replies: [...(cm.replies || []), newReply]
+                            };
+                          }
+                          return cm;
+                        })
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
+
+    return newReply;
+  };
+
+  const editParagraphReply = (storyId, chapterId, paragraphId, commentId, replyId, newText) => {
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: p.comments.map(cm => {
+                          if (cm.id === commentId) {
+                            return {
+                              ...cm,
+                              replies: (cm.replies || []).map(r => {
+                                if (r.id === replyId) {
+                                  return { ...r, text: newText, isEdited: true, editedAt: "Just now" };
+                                }
+                                return r;
+                              })
+                            };
+                          }
+                          return cm;
+                        })
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
+  };
+
+  const deleteParagraphReply = (storyId, chapterId, paragraphId, commentId, replyId) => {
+    setStories(prev => {
+      const nextStories = prev.map(s => {
+        if (s.id === storyId) {
+          return {
+            ...s,
+            chapters: s.chapters.map(c => {
+              if (c.id === chapterId) {
+                return {
+                  ...c,
+                  paragraphs: c.paragraphs.map(p => {
+                    if (p.id === paragraphId) {
+                      return {
+                        ...p,
+                        comments: p.comments.map(cm => {
+                          if (cm.id === commentId) {
+                            return {
+                              ...cm,
+                              replies: (cm.replies || []).filter(r => r.id !== replyId)
+                            };
+                          }
+                          return cm;
+                        })
+                      };
+                    }
+                    return p;
+                  })
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return s;
+      });
+      persistCommentsToStorage(nextStories);
+      return nextStories;
+    });
   };
 
   const incrementStoryReads = (storyId, chapterId = null, amount = 1) => {
@@ -3441,6 +3709,11 @@ export function AppProvider({ children }) {
       voteChapter,
       reactChapterEmoji,
       addParagraphComment,
+      editParagraphComment,
+      deleteParagraphComment,
+      addParagraphReply,
+      editParagraphReply,
+      deleteParagraphReply,
       incrementStoryReads,
       publishStory,
       addChapterToStory,

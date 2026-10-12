@@ -59,6 +59,11 @@ export default function ReaderPage() {
     voteChapter, 
     reactChapterEmoji, 
     addParagraphComment, 
+    editParagraphComment,
+    deleteParagraphComment,
+    addParagraphReply,
+    editParagraphReply,
+    deleteParagraphReply,
     saveReadingProgress, 
     library,
     addToLibrary,
@@ -1106,13 +1111,16 @@ export default function ReaderPage() {
         user={user}
         readerTheme={readerTheme}
         onAddComment={(text) => {
-          addParagraphComment(story.id, chapter.id, activeParagraph.id, text);
+          const newComment = addParagraphComment(story.id, chapter.id, activeParagraph.id, text);
           setActiveParagraph(prev => ({
             ...prev,
             comments: [
-              {
+              newComment || {
                 id: Date.now(),
                 author: user?.name || "Reader",
+                authorUsername: user?.username || null,
+                authorEmail: user?.email || null,
+                userId: user?.id || null,
                 avatar: user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
                 time: "Just now",
                 text,
@@ -1120,6 +1128,53 @@ export default function ReaderPage() {
               },
               ...(prev?.comments || [])
             ]
+          }));
+        }}
+        onEditComment={(commentId, newText) => {
+          editParagraphComment(story.id, chapter.id, activeParagraph.id, commentId, newText);
+          setActiveParagraph(prev => ({
+            ...prev,
+            comments: (prev?.comments || []).map(c => 
+              c.id === commentId ? { ...c, text: newText, isEdited: true, editedAt: 'Just now' } : c
+            )
+          }));
+        }}
+        onDeleteComment={(commentId) => {
+          deleteParagraphComment(story.id, chapter.id, activeParagraph.id, commentId);
+          setActiveParagraph(prev => ({
+            ...prev,
+            comments: (prev?.comments || []).filter(c => c.id !== commentId)
+          }));
+        }}
+        onAddReply={(commentId, replyText) => {
+          const newReply = addParagraphReply(story.id, chapter.id, activeParagraph.id, commentId, replyText);
+          setActiveParagraph(prev => ({
+            ...prev,
+            comments: (prev?.comments || []).map(c => 
+              c.id === commentId ? { ...c, replies: [...(c.replies || []), newReply] } : c
+            )
+          }));
+        }}
+        onEditReply={(commentId, replyId, newText) => {
+          editParagraphReply(story.id, chapter.id, activeParagraph.id, commentId, replyId, newText);
+          setActiveParagraph(prev => ({
+            ...prev,
+            comments: (prev?.comments || []).map(c => 
+              c.id === commentId 
+                ? { ...c, replies: (c.replies || []).map(r => r.id === replyId ? { ...r, text: newText, isEdited: true } : r) }
+                : c
+            )
+          }));
+        }}
+        onDeleteReply={(commentId, replyId) => {
+          deleteParagraphReply(story.id, chapter.id, activeParagraph.id, commentId, replyId);
+          setActiveParagraph(prev => ({
+            ...prev,
+            comments: (prev?.comments || []).map(c => 
+              c.id === commentId 
+                ? { ...c, replies: (c.replies || []).filter(r => r.id !== replyId) }
+                : c
+            )
           }));
         }}
         openAuthModal={openAuthModal}
