@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -62,6 +62,21 @@ export default function StoryDetailPage() {
   const [showListDropdown, setShowListDropdown] = useState(false);
   const [showReadingListModal, setShowReadingListModal] = useState(false);
   const [localCustomFallback, setLocalCustomFallback] = useState(null);
+  const listDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (listDropdownRef.current && !listDropdownRef.current.contains(e.target)) {
+        setShowListDropdown(false);
+      }
+    };
+    if (showListDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showListDropdown]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !stories.some(s => s.slug === slug || String(s.id) === String(slug))) {
@@ -304,7 +319,7 @@ export default function StoryDetailPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
         {/* Story Hero Header Card with Ambient Blurred Backdrop (Wattpad Style) */}
-        <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 lg:p-10 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-12">
+        <div className="relative z-20 bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 lg:p-10 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col md:flex-row gap-6 sm:gap-8 lg:gap-12">
           
           {/* Ambient Glow Backdrop */}
           <div className="absolute inset-0 overflow-hidden rounded-3xl -z-10 opacity-20 dark:opacity-30 blur-3xl pointer-events-none">
@@ -497,18 +512,18 @@ export default function StoryDetailPage() {
                 </button>
 
                 {/* Add to Reading List Popover */}
-                <div className="relative">
+                <div className="relative" ref={listDropdownRef}>
                   <button
                     onClick={() => setShowListDropdown(!showListDropdown)}
                     className="p-3 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
                     title="Add to Reading List"
                   >
                     <BookMarked className="w-4 h-4" />
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showListDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showListDropdown && (
-                    <div className="absolute left-0 bottom-14 sm:bottom-auto sm:top-14 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-xs">
+                    <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                       <div className="flex items-center justify-between px-2 py-1">
                         <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
                           Save to Reading List
@@ -523,20 +538,31 @@ export default function StoryDetailPage() {
                           <Plus className="w-3 h-3" /> New
                         </button>
                       </div>
-                      <div className="space-y-1 my-1 max-h-48 overflow-y-auto">
-                        {readingLists.map((list) => {
-                          const isContained = list.storyIds.includes(story.id);
-                          return (
-                            <button
-                              key={list.id}
-                              onClick={() => handleToggleReadingList(list.id)}
-                              className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold cursor-pointer"
-                            >
-                              <span className="truncate">{list.title}</span>
-                              {isContained && <Check className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
-                            </button>
-                          );
-                        })}
+                      <div className="space-y-1 my-2 max-h-56 overflow-y-auto pr-1">
+                        {readingLists && readingLists.length > 0 ? (
+                          readingLists.map((list) => {
+                            const isContained = list.storyIds.includes(story.id);
+                            return (
+                              <button
+                                key={list.id}
+                                onClick={() => handleToggleReadingList(list.id)}
+                                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left font-semibold cursor-pointer transition-colors ${
+                                  isContained 
+                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' 
+                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                }`}
+                              >
+                                <span className="truncate pr-2">{list.title}</span>
+                                {isContained && <Check className="w-4 h-4 text-brand-500 shrink-0" />}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="py-4 text-center text-slate-400 dark:text-slate-500 text-xs">
+                            No reading lists found.<br />
+                            <span className="text-[10px]">Click "+ New" above to create one.</span>
+                          </div>
+                        )}
                       </div>
                       <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800">
                         <button
