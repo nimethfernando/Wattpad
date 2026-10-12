@@ -1274,7 +1274,65 @@ export default function AdminPanel() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Action: Direct Edit Logo & Brand */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('cms');
+                setCmsSubTab('branding');
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                activeTab === 'cms' && cmsSubTab === 'branding'
+                  ? 'bg-purple-600 text-white shadow-purple-500/25 ring-2 ring-purple-400'
+                  : 'bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40'
+              }`}
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span>🎨 Edit Logo &amp; Brand</span>
+            </button>
+
+            {/* Quick Action: Direct Manage Blog */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('blogs')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                activeTab === 'blogs'
+                  ? 'bg-purple-600 text-white shadow-purple-500/25 ring-2 ring-purple-400'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5 text-blue-400" />
+              <span>📝 Manage Blog Articles</span>
+            </button>
+
+            {/* Quick Action: Force Cache Purge & Refresh */}
+            <button
+              type="button"
+              onClick={async () => {
+                if (typeof window !== 'undefined' && 'caches' in window) {
+                  try {
+                    const keys = await window.caches.keys();
+                    await Promise.all(keys.map(k => window.caches.delete(k)));
+                  } catch (e) {}
+                }
+                if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+                  try {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (let r of regs) {
+                      await r.unregister();
+                    }
+                  } catch (e) {}
+                }
+                window.location.reload();
+              }}
+              title="Purge browser cache and reload newest live version"
+              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Refresh Cache</span>
+            </button>
+
             <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${
               featureFlags?.enablePaidFeatures 
                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' 
@@ -1290,14 +1348,26 @@ export default function AdminPanel() {
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quick Jump Tab:</span>
             <select
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value)}
+              value={activeTab === 'cms' && cmsSubTab === 'branding' ? 'cms-branding' : activeTab}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'cms-branding') {
+                  setActiveTab('cms');
+                  setCmsSubTab('branding');
+                } else if (val === 'cms-pwa') {
+                  setActiveTab('cms');
+                  setCmsSubTab('pwa');
+                } else {
+                  setActiveTab(val);
+                }
+              }}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-purple-600 dark:text-purple-400 outline-none cursor-pointer shadow-xs"
             >
               <option value="stories">📚 Stories &amp; Originals ({stories.length})</option>
               <option value="publish">✨ + Publish Story</option>
+              <option value="cms-branding">🎨 Logo &amp; Brand Identity</option>
               <option value="blogs">📝 Blog &amp; Editorial Articles ({blogPosts?.length || 0})</option>
-              <option value="cms">🎨 CMS, Logo &amp; Website Content</option>
+              <option value="cms-pwa">🌐 Website CMS, PWA &amp; Social</option>
               <option value="users">👥 User Moderation ({registeredUsers?.length || 0})</option>
               <option value="moderation">🚨 Reports Queue ({reports.filter(r => r.status === 'pending').length} pending)</option>
               <option value="payments">💳 Payments &amp; VIP Ledger ({transactions?.length || 0})</option>
@@ -1308,173 +1378,173 @@ export default function AdminPanel() {
               <option value="email_notifications">📧 DB &amp; Email Dispatcher</option>
             </select>
           </div>
-          <span className="text-[11px] text-slate-400 hidden sm:inline">Use arrows or mouse wheel to scroll tabs</span>
+          <span className="text-[11px] text-slate-400">All admin modules visible and accessible below</span>
         </div>
 
-        {/* Tab Navigation Controls with Horizontal Scroll Chevrons & Edge Fades */}
-        <div className="relative group/admintabs border-b border-slate-200 dark:border-slate-800 pb-2">
-          {/* Left Scroll Navigation Button */}
-          {canScrollAdminLeft && (
-            <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-8 bg-gradient-to-r from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
-              <button
-                type="button"
-                onClick={() => handleScrollAdminTabs('left')}
-                aria-label="Scroll admin tabs left"
-                title="Scroll left"
-                className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 dark:hover:bg-purple-600 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Right Scroll Navigation Button */}
-          {canScrollAdminRight && (
-            <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-8 bg-gradient-to-l from-slate-50 via-slate-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent pointer-events-none">
-              <button
-                type="button"
-                onClick={() => handleScrollAdminTabs('right')}
-                aria-label="Scroll admin tabs right"
-                title="Scroll right"
-                className="pointer-events-auto p-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 dark:hover:bg-purple-600 dark:hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          <div
-            ref={adminNavRef}
-            onScroll={checkAdminNavScroll}
-            onWheel={handleAdminTabWheel}
-            className="flex items-center gap-2 overflow-x-auto scroll-smooth no-scrollbar scrollbar-none py-1"
+        {/* Responsive Wrapping Tab Navigation (Guarantees NO cut off tabs on any screen) */}
+        <div className="flex flex-wrap items-center gap-2 p-2.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm my-3">
+          <button 
+            data-admin-tab="stories"
+            onClick={() => setActiveTab('stories')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'stories' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
           >
-            <button 
-              data-admin-tab="stories"
-              onClick={() => setActiveTab('stories')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'stories' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Stories &amp; Originals ({stories.length})
-            </button>
-            <button 
-              data-admin-tab="publish"
-              onClick={() => {
-                setActiveTab('publish');
-                setPublishSuccessNotice(null);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'publish' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 font-extrabold'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              + Publish Story
-            </button>
-            <button 
-              data-admin-tab="blogs"
-              onClick={() => setActiveTab('blogs')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'blogs' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <Newspaper className="w-3.5 h-3.5" />
-              Blog &amp; Articles ({blogPosts?.length || 0})
-            </button>
-            <button 
-              data-admin-tab="cms"
-              onClick={() => setActiveTab('cms')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'cms' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <Palette className="w-3.5 h-3.5 text-amber-400" />
-              CMS, Logo &amp; Branding
-            </button>
-            <button 
-              data-admin-tab="users"
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              User Moderation ({registeredUsers?.length || 0})
-            </button>
-            <button 
-              data-admin-tab="moderation"
-              onClick={() => setActiveTab('moderation')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <span>Reports Queue</span>
-              {reports.filter(r => r.status === 'pending').length > 0 ? (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
-                  {reports.filter(r => r.status === 'pending').length} pending
-                </span>
-              ) : (
-                <span className="text-[10px] opacity-75">({reports.length})</span>
-              )}
-            </button>
-            <button 
-              data-admin-tab="payments"
-              onClick={() => setActiveTab('payments')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'payments' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Payments &amp; VIP Ledger ({transactions?.length || 0})
-            </button>
-            <button 
-              data-admin-tab="genres"
-              onClick={() => setActiveTab('genres')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'genres' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Genre Library ({genres.length})
-            </button>
-            <button 
-              data-admin-tab="authors"
-              onClick={() => setActiveTab('authors')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'authors' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Author Persona
-            </button>
-            <button 
-              data-admin-tab="audit"
-              onClick={() => setActiveTab('audit')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'audit' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Audit Log ({auditLogs.length})
-            </button>
-            <button 
-              data-admin-tab="settings"
-              onClick={() => setActiveTab('settings')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              Platform Settings &amp; Flags
-            </button>
-            <button 
-              data-admin-tab="email_notifications"
-              onClick={() => {
-                setActiveTab('email_notifications');
-                fetchEmailLogsAndStatus();
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'email_notifications' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              DB &amp; Email Dispatcher
-            </button>
-          </div>
+            Stories &amp; Originals ({stories.length})
+          </button>
+
+          <button 
+            data-admin-tab="publish"
+            onClick={() => {
+              setActiveTab('publish');
+              setPublishSuccessNotice(null);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'publish' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 font-extrabold'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            + Publish Story
+          </button>
+
+          {/* DEDICATED LOGO & BRAND IDENTITY TAB */}
+          <button 
+            data-admin-tab="cms-branding"
+            onClick={() => {
+              setActiveTab('cms');
+              setCmsSubTab('branding');
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'cms' && cmsSubTab === 'branding' 
+                ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400' 
+                : 'bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5 text-amber-400" />
+            🎨 Logo &amp; Brand
+          </button>
+
+          {/* DEDICATED BLOG ARTICLES TAB */}
+          <button 
+            data-admin-tab="blogs"
+            onClick={() => setActiveTab('blogs')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'blogs' 
+                ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400' 
+                : 'bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+            }`}
+          >
+            <Newspaper className="w-3.5 h-3.5 text-blue-400" />
+            📝 Blog Articles ({blogPosts?.length || 0})
+          </button>
+
+          {/* WEBSITE CONTENT / CMS TAB */}
+          <button 
+            data-admin-tab="cms"
+            onClick={() => {
+              setActiveTab('cms');
+              if (cmsSubTab === 'branding') setCmsSubTab('pwa');
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'cms' && cmsSubTab !== 'branding' 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            Website CMS &amp; Pages
+          </button>
+
+          <button 
+            data-admin-tab="users"
+            onClick={() => setActiveTab('users')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            User Moderation ({registeredUsers?.length || 0})
+          </button>
+
+          <button 
+            data-admin-tab="moderation"
+            onClick={() => setActiveTab('moderation')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'moderation' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <span>Reports Queue</span>
+            {reports.filter(r => r.status === 'pending').length > 0 ? (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
+                {reports.filter(r => r.status === 'pending').length} pending
+              </span>
+            ) : (
+              <span className="text-[10px] opacity-75">({reports.length})</span>
+            )}
+          </button>
+
+          <button 
+            data-admin-tab="payments"
+            onClick={() => setActiveTab('payments')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'payments' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Payments &amp; VIP Ledger ({transactions?.length || 0})
+          </button>
+
+          <button 
+            data-admin-tab="genres"
+            onClick={() => setActiveTab('genres')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'genres' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Genre Library ({genres.length})
+          </button>
+
+          <button 
+            data-admin-tab="authors"
+            onClick={() => setActiveTab('authors')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'authors' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Author Persona
+          </button>
+
+          <button 
+            data-admin-tab="audit"
+            onClick={() => setActiveTab('audit')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'audit' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Audit Log ({auditLogs.length})
+          </button>
+
+          <button 
+            data-admin-tab="settings"
+            onClick={() => setActiveTab('settings')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            Platform Settings &amp; Flags
+          </button>
+
+          <button 
+            data-admin-tab="email_notifications"
+            onClick={() => {
+              setActiveTab('email_notifications');
+              fetchEmailLogsAndStatus();
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'email_notifications' ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            DB &amp; Email Dispatcher
+          </button>
         </div>
 
         {/* TAB 1: STORIES & ORIGINALS MANAGEMENT */}
