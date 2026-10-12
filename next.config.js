@@ -14,6 +14,32 @@ const nextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wattpad-sigma.vercel.app',
+          },
+        ],
+        destination: 'https://www.avoralibrary.com/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'avoralibrary.vercel.app',
+          },
+        ],
+        destination: 'https://www.avoralibrary.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

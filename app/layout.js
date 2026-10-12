@@ -55,6 +55,15 @@ export default function RootLayout({ children }) {
         <link rel="shortcut icon" href="/tab-icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && (window.location.hostname.indexOf('wattpad-sigma.vercel.app') !== -1 || window.location.hostname.indexOf('avoralibrary.vercel.app') !== -1)) {
+                window.location.replace('https://www.avoralibrary.com' + window.location.pathname + window.location.search + window.location.hash);
+              }
+            `,
+          }}
+        />
       </head>
       <body className="pb-16 md:pb-0 min-h-screen">
         <AuthProvider>

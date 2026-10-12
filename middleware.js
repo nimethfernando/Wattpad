@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
+  const host = request.headers.get('host') || '';
+
+  // Canonical redirect: If accessed via default Vercel domains, redirect permanently to official custom domain
+  if (
+    host.includes('wattpad-sigma.vercel.app') ||
+    host.includes('avoralibrary.vercel.app')
+  ) {
+    const url = request.nextUrl.clone();
+    url.host = 'www.avoralibrary.com';
+    url.port = '';
+    url.protocol = 'https:';
+    return NextResponse.redirect(url, 308);
+  }
+
   return NextResponse.next();
 }
 

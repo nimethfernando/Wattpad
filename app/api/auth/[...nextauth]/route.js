@@ -47,9 +47,26 @@ const handler = NextAuth({
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
+      const canonicalBase = (process.env.NODE_ENV === 'production' && !baseUrl.includes('localhost'))
+        ? 'https://www.avoralibrary.com'
+        : baseUrl;
+
+      if (url.startsWith("/")) return `${canonicalBase}${url}`;
+      try {
+        const parsedUrl = new URL(url);
+        if (
+          parsedUrl.origin === baseUrl ||
+          parsedUrl.origin === 'https://www.avoralibrary.com' ||
+          parsedUrl.hostname.includes('avoralibrary.com') ||
+          parsedUrl.hostname.includes('vercel.app')
+        ) {
+          if (process.env.NODE_ENV === 'production' && !parsedUrl.hostname.includes('localhost')) {
+            return `https://www.avoralibrary.com${parsedUrl.pathname}${parsedUrl.search}`;
+          }
+          return url;
+        }
+      } catch (e) {}
+      return canonicalBase;
     },
     async session({ session, token }) {
       if (session?.user) {
