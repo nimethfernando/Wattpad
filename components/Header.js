@@ -255,20 +255,22 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => openParentalGateModal()}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
                     user.hasPending18Request
                       ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-100 shadow-sm'
-                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 shadow-xs'
                   }`}
-                  title="Protected Kids Mode (1-Click switch disabled). Click to request parental approval or enter parent PIN."
+                  title="Protected Kids Mode (1-Click switch disabled). Parental approval or parent PIN required."
                 >
                   <span>🧒 Kids</span>
                   {user.hasPending18Request ? (
-                    <span className="text-[10px] bg-amber-200/80 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 px-1 rounded font-black">
-                      ⏳ Pending
+                    <span className="text-[10px] bg-amber-200/90 dark:bg-amber-900/90 text-amber-900 dark:text-amber-100 px-1.5 py-0.5 rounded font-black flex items-center gap-0.5">
+                      ⏳ Pending Approval
                     </span>
                   ) : (
-                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded font-black flex items-center gap-1">
+                      Locked <Lock className="w-2.5 h-2.5" />
+                    </span>
                   )}
                 </button>
               ) : (
@@ -398,13 +400,15 @@ export default function Header() {
                           type="button"
                           onClick={() => { setShowProfileMenu(false); openParentalGateModal(); }}
                           className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                          title="Click to request parental approval or enter parent PIN"
+                          title="Protected Kids Mode (1-Click switch disabled). Parental approval or parent PIN required."
                         >
                           <span>{t.kidsOnly || '🧒 Kids'}</span>
                           {user?.hasPending18Request ? (
-                            <span className="text-[9px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 px-1 rounded font-bold">⏳ Pending</span>
+                            <span className="text-[9px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 px-1 rounded font-bold">⏳ Pending Approval</span>
                           ) : (
-                            <Lock className="w-2.5 h-2.5" />
+                            <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-1 rounded font-bold flex items-center gap-0.5">
+                              Locked <Lock className="w-2.5 h-2.5" />
+                            </span>
                           )}
                         </button>
                       ) : (
@@ -629,13 +633,15 @@ export default function Header() {
                         <button
                           type="button"
                           onClick={() => { setMobileMenuOpen(false); openParentalGateModal(); }}
-                          className="font-bold text-emerald-600 flex items-center gap-1 cursor-pointer"
+                          className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>🧒 Kids</span>
                           {user?.hasPending18Request ? (
-                            <span className="text-[10px] bg-amber-200 text-amber-800 px-1 rounded font-bold">⏳ Pending</span>
+                            <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold">⏳ Awaiting Approval</span>
                           ) : (
-                            <Lock className="w-3 h-3" />
+                            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                              Locked <Lock className="w-2.5 h-2.5" />
+                            </span>
                           )}
                         </button>
                       ) : (

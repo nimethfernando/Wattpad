@@ -494,6 +494,29 @@ export default function AdminPanel() {
     setPubSlug(generated);
   };
 
+  const loadSampleKidsPages = () => {
+    setPubPages([
+      {
+        id: Date.now() + 1,
+        image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1200&q=80',
+        caption: 'The Enchanted Woodland',
+        text: 'Once upon a time, in a cozy hollow beneath the old oak tree, little Barnaby Bear woke to the singing of golden robins.'
+      },
+      {
+        id: Date.now() + 2,
+        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+        caption: 'The Secret River',
+        text: 'Barnaby followed a trail of sparkling stardust down to the laughing brook, where water lilies danced in the morning sun.'
+      },
+      {
+        id: Date.now() + 3,
+        image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
+        caption: 'The Firefly Lantern',
+        text: 'As twilight fell, his forest friends gathered round to tell bedtime tales under the cozy glow of a thousand friendly fireflies.'
+      }
+    ]);
+  };
+
   const handleContentTypeSelect = (type) => {
     setPubContentType(type);
     if (type === 'picture_book') {
@@ -506,6 +529,10 @@ export default function AdminPanel() {
       }
       if (pubChapterTitle.includes('Chapter 1')) {
         setPubChapterTitle('Illustrated Edition: Bedtime Adventure');
+      }
+      // Auto-load 3 sample kids pages if none exist yet or placeholder
+      if (pubPages.length === 0 || (pubPages.length === 1 && !pubPages[0].text)) {
+        loadSampleKidsPages();
       }
     }
   };
@@ -584,20 +611,65 @@ export default function AdminPanel() {
           </p>
         </div>
 
-        {/* Upload Multiple Pages Button */}
-        <label className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-brand-500/20 cursor-pointer transition-all shrink-0">
-          <Upload className="w-4 h-4" />
-          <span>Upload Pictures from Device</span>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleBatchPagesUpload(e.target.files)}
-          />
-        </label>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={loadSampleKidsPages}
+            className="px-3 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 text-amber-800 dark:text-amber-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Populate with 3 illustrated sample pages for testing"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>⚡ Load Sample Pages</span>
+          </button>
+
+          {/* Upload Multiple Pages Button */}
+          <label className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-brand-500/20 cursor-pointer transition-all shrink-0">
+            <Upload className="w-4 h-4" />
+            <span>Upload Pictures from Device</span>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleBatchPagesUpload(e.target.files)}
+            />
+          </label>
+        </div>
       </div>
 
+      {pubPages.length === 0 ? (
+        <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-amber-300 dark:border-amber-800/80 space-y-3">
+          <ImageIcon className="w-10 h-10 text-amber-400 mx-auto" />
+          <div className="space-y-1">
+            <h5 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">No Illustrated Pages Added Yet</h5>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Click below to select multiple pictures from your computer or load 3 sample kids pages to preview instantly.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <label className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm">
+              <Upload className="w-4 h-4" />
+              <span>Select Pictures from Device</span>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleBatchPagesUpload(e.target.files)}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={loadSampleKidsPages}
+              className="px-3.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 text-amber-800 dark:text-amber-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Load 3 Sample Pages</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Pages List */}
       <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
         {pubPages.map((page, pIdx) => (
@@ -752,6 +824,8 @@ export default function AdminPanel() {
           />
         </label>
       </div>
+      </>
+      )}
     </div>
   );
 
@@ -1751,6 +1825,33 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Picture Book Mode Alert Banner */}
+            {pubContentType === 'picture_book' && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/60 flex items-start gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h5 className="font-extrabold text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                      🎨 Picture Book Mode Active • Auto-Categorized for Kids &amp; Family (3+ / 7+)
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={loadSampleKidsPages}
+                      className="px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>⚡ Load 3 Sample Pages</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
+                    Upload story picture pages and narration below. The <strong>Synopsis / Description</strong> textarea serves as the catalog cover blurb for young readers &amp; parents.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Description & Tags */}
             <div className="space-y-4 pt-2">
               <div>
@@ -2007,62 +2108,18 @@ export default function AdminPanel() {
                 />
               </div>
             ) : (
-              <div className="space-y-4">
-                {pubPages.map((page, pIdx) => (
-                  <div key={page.id || pIdx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-brand-600 dark:text-brand-400">Page {pIdx + 1}</span>
-                      {pubPages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setPubPages(prev => prev.filter((_, i) => i !== pIdx))}
-                          className="text-xs text-rose-500 hover:underline cursor-pointer"
-                        >
-                          Remove Page
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Image URL</label>
-                        <input
-                          type="url"
-                          value={page.image}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, image: val } : p));
-                          }}
-                          placeholder="https://..."
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs font-mono outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Text / Caption</label>
-                        <input
-                          type="text"
-                          value={page.text}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
-                          }}
-                          placeholder="Text narrative for this page..."
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => setPubPages(prev => [
-                    ...prev,
-                    { id: prev.length + 1, image: pubCover, text: 'And so the story continues...', caption: `Page ${prev.length + 1}` }
-                  ])}
-                  className="px-4 py-2 rounded-xl border border-dashed border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-bold transition-all cursor-pointer"
-                >
-                  + Add Another Illustrated Page
-                </button>
+              <div className="p-6 rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Illustrated Picture Book Mode Active ({pubPages.length} Pages Configured)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    All {pubPages.length} illustrated story pages, device pictures, and captions are configured in the Picture Book Manager in Section 1 above. Chapter 1 will automatically publish as an interactive illustrated page-turner for children and parents.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -5114,6 +5171,33 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Picture Book Mode Alert Banner */}
+            {pubContentType === 'picture_book' && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/60 flex items-start gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h5 className="font-extrabold text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                      🎨 Picture Book Mode Active • Auto-Categorized for Kids &amp; Family (3+ / 7+)
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={loadSampleKidsPages}
+                      className="px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>⚡ Load 3 Sample Pages</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
+                    Upload story picture pages and narration below. The <strong>Synopsis / Description</strong> textarea serves as the catalog cover blurb for young readers &amp; parents.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Description & Tags */}
             <div className="space-y-4 pt-2">
               <div>
@@ -5370,62 +5454,18 @@ export default function AdminPanel() {
                 />
               </div>
             ) : (
-              <div className="space-y-4">
-                {pubPages.map((page, pIdx) => (
-                  <div key={page.id || pIdx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-brand-600 dark:text-brand-400">Page {pIdx + 1}</span>
-                      {pubPages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setPubPages(prev => prev.filter((_, i) => i !== pIdx))}
-                          className="text-xs text-rose-500 hover:underline cursor-pointer"
-                        >
-                          Remove Page
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Image URL</label>
-                        <input
-                          type="url"
-                          value={page.image}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, image: val } : p));
-                          }}
-                          placeholder="https://..."
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs font-mono outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-400 mb-1">Page Text / Caption</label>
-                        <input
-                          type="text"
-                          value={page.text}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
-                          }}
-                          placeholder="Text narrative for this page..."
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-xs outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => setPubPages(prev => [
-                    ...prev,
-                    { id: prev.length + 1, image: pubCover, text: 'And so the story continues...', caption: `Page ${prev.length + 1}` }
-                  ])}
-                  className="px-4 py-2 rounded-xl border border-dashed border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-bold transition-all cursor-pointer"
-                >
-                  + Add Another Illustrated Page
-                </button>
+              <div className="p-6 rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Illustrated Picture Book Mode Active ({pubPages.length} Pages Configured)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    All {pubPages.length} illustrated story pages, device pictures, and captions are configured in the Picture Book Manager in Section 1 above. Chapter 1 will automatically publish as an interactive illustrated page-turner for children and parents.
+                  </p>
+                </div>
               </div>
             )}
           </div>
