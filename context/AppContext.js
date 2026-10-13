@@ -1109,6 +1109,55 @@ export function AppProvider({ children }) {
           console.warn("Could not fetch stories from API on initial mount:", err);
         });
 
+      // Hydrate CMS Configuration from backend API (persists across all browsers/devices)
+      fetch('/api/cms', { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+          if (data?.success) {
+            const serverCms = data.cmsConfig;
+
+            let localRaw = null;
+            try {
+              const raw = localStorage.getItem('avora_cms_config');
+              if (raw) localRaw = JSON.parse(raw);
+            } catch (e) {}
+
+            const localLogo = localRaw?.branding?.logoUrl;
+            const isLocalCustom = localLogo && typeof localLogo === 'string' && localLogo !== '/icon-192.png' && localLogo !== '/favicon.ico' && localLogo !== '/favicon.svg' && !localLogo.includes('[object Object]');
+
+            const serverLogo = serverCms?.branding?.logoUrl;
+            const isServerCustom = serverLogo && typeof serverLogo === 'string' && serverLogo !== '/icon-192.png' && serverLogo !== '/favicon.ico' && serverLogo !== '/favicon.svg' && !serverLogo.includes('[object Object]');
+
+            if (serverCms && (isServerCustom || !isLocalCustom)) {
+              // Server has the custom or authoritative CMS config: apply to state and localStorage
+              const merged = {
+                ...initialCmsConfig,
+                ...serverCms,
+                branding: sanitizeBrandingConfig(initialCmsConfig.branding, serverCms.branding),
+                pwaSection: { ...initialCmsConfig.pwaSection, ...(serverCms.pwaSection || {}) },
+                socialLinks: { ...initialCmsConfig.socialLinks, ...(serverCms.socialLinks || {}) },
+                footerConfig: { ...initialCmsConfig.footerConfig, ...(serverCms.footerConfig || {}) },
+                pagesContent: { ...initialCmsConfig.pagesContent, ...(serverCms.pagesContent || {}) }
+              };
+              setCmsConfig(merged);
+              try {
+                localStorage.setItem('avora_cms_config', JSON.stringify(merged));
+              } catch (e) {}
+            } else if (isLocalCustom && (!serverCms || !isServerCustom)) {
+              // Client (e.g. Chrome) has a custom logo that was saved locally prior to server persistence!
+              // Automatically sync it to the server database so Edge and all devices get it immediately!
+              fetch('/api/cms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cmsConfig: localRaw })
+              }).catch(() => {});
+            }
+          }
+        })
+        .catch(err => {
+          console.warn("Could not fetch CMS config from API on initial mount:", err);
+        });
+
       setIsHydrated(true);
     }
   }, []);
@@ -3474,6 +3523,13 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.error("Could not save CMS config to localStorage", e);
         }
+
+        // Persist to backend database API so all browsers and all users receive it!
+        fetch('/api/cms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cmsConfig: next })
+        }).catch(err => console.warn('Could not persist CMS to server:', err));
       }
       return next;
     });
@@ -3501,6 +3557,12 @@ export function AppProvider({ children }) {
         try {
           localStorage.setItem('avora_cms_config', JSON.stringify(next));
         } catch (e) {}
+
+        fetch('/api/cms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cmsConfig: next })
+        }).catch(() => {});
       }
       return next;
     });
@@ -3528,6 +3590,12 @@ export function AppProvider({ children }) {
         try {
           localStorage.setItem('avora_cms_config', JSON.stringify(next));
         } catch (e) {}
+
+        fetch('/api/cms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cmsConfig: next })
+        }).catch(() => {});
       }
       return next;
     });
@@ -3598,6 +3666,12 @@ export function AppProvider({ children }) {
       } catch (e) {
         console.error("Could not reset CMS config in localStorage", e);
       }
+
+      fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmsConfig: initialCmsConfig })
+      }).catch(() => {});
     }
     addAuditLog("CMS Reset", "Website content restored to defaults");
   };

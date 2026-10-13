@@ -283,18 +283,34 @@ export default function AdminPanel() {
     }
   }, [cmsConfig]);
 
-  const handleSaveCms = () => {
+  const handleSaveCms = async () => {
     updateCmsConfig(cmsForm);
+    try {
+      await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmsConfig: cmsForm })
+      });
+    } catch (e) {
+      console.warn("Error persisting CMS config to backend API:", e);
+    }
     setCmsSaveNotice(true);
     setTimeout(() => {
       setCmsSaveNotice(false);
     }, 3500);
   };
 
-  const handleResetCms = () => {
+  const handleResetCms = async () => {
     if (confirm("Are you sure you want to reset all CMS content to platform factory defaults?")) {
       resetCmsConfig();
       setCmsForm(initialCmsConfig);
+      try {
+        await fetch('/api/cms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cmsConfig: initialCmsConfig })
+        });
+      } catch (e) {}
       setCmsSaveNotice(true);
       setTimeout(() => {
         setCmsSaveNotice(false);
