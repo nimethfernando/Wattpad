@@ -66,7 +66,8 @@ import {
   TrendingUp,
   Flame
 } from 'lucide-react';
-import { processImageFile } from '@/lib/imageUtils';
+import { processImageFile, removeSolidBackground } from '@/lib/imageUtils';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function AdminPanel() {
   const { 
@@ -315,20 +316,28 @@ export default function AdminPanel() {
     }));
   };
 
+  const [isProcessingBg, setIsProcessingBg] = useState(false);
+
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const res = await processImageFile(file, 400, 400, 0.9);
+      const res = await processImageFile(file, 900, 350, 0.95);
       const dataUrl = typeof res === 'string' ? res : res?.dataUrl;
       if (dataUrl) {
-        updateBrandingField('logoUrl', dataUrl);
+        const nextBranding = {
+          ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+          logoUrl: dataUrl,
+          logoMode: 'full_image',
+          showBrandText: false
+        };
+        setCmsForm(prev => ({
+          ...prev,
+          branding: nextBranding
+        }));
         updateCmsConfig({
           ...cmsForm,
-          branding: {
-            ...(cmsForm?.branding || initialCmsConfig.branding || {}),
-            logoUrl: dataUrl
-          }
+          branding: nextBranding
         });
         setCmsSaveNotice(true);
         setTimeout(() => setCmsSaveNotice(false), 3500);
@@ -336,6 +345,75 @@ export default function AdminPanel() {
     } catch (err) {
       alert("Failed to process logo image: " + err.message);
     }
+  };
+
+  const handleMakeLogoTransparent = async (targetColor = 'auto') => {
+    const rawLogo = cmsForm?.branding?.logoUrl;
+    const currentSrc = typeof rawLogo === 'object' && rawLogo !== null ? rawLogo.dataUrl : (rawLogo || '/icon-192.png');
+    if (!currentSrc || currentSrc === '/icon-192.png') {
+      alert("Please upload or provide a custom logo image first.");
+      return;
+    }
+    try {
+      setIsProcessingBg(true);
+      const transparentDataUrl = await removeSolidBackground(currentSrc, targetColor, 42);
+      const nextBranding = {
+        ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+        logoUrl: transparentDataUrl
+      };
+      setCmsForm(prev => ({
+        ...prev,
+        branding: nextBranding
+      }));
+      updateCmsConfig({
+        ...cmsForm,
+        branding: nextBranding
+      });
+      setCmsSaveNotice(true);
+      setTimeout(() => setCmsSaveNotice(false), 3500);
+    } catch (err) {
+      alert("Background removal error: " + err.message);
+    } finally {
+      setIsProcessingBg(false);
+    }
+  };
+
+  const setBrandLogoPreset = (presetType) => {
+    let nextBranding = {};
+    if (presetType === 'official_transparent') {
+      nextBranding = {
+        ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+        logoUrl: '/logo.png',
+        logoMode: 'full_image',
+        showBrandText: false
+      };
+    } else if (presetType === 'dark_theme') {
+      nextBranding = {
+        ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+        logoUrl: '/logo-dark.png',
+        logoMode: 'full_image',
+        showBrandText: false
+      };
+    } else if (presetType === 'default_icon') {
+      nextBranding = {
+        ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+        logoUrl: '/icon-192.png',
+        brandName: 'Avora',
+        brandSubtitle: 'Library',
+        logoMode: 'icon_and_text',
+        showBrandText: true
+      };
+    }
+    setCmsForm(prev => ({
+      ...prev,
+      branding: nextBranding
+    }));
+    updateCmsConfig({
+      ...cmsForm,
+      branding: nextBranding
+    });
+    setCmsSaveNotice(true);
+    setTimeout(() => setCmsSaveNotice(false), 3500);
   };
 
   const updatePwaField = (field, value) => {
@@ -4382,21 +4460,279 @@ export default function AdminPanel() {
             {/* SUB-TAB 0: LOGO & BRAND IDENTITY */}
             {cmsSubTab === 'branding' && (
               <div className="space-y-6">
+                {/* 1. Quick Helper Banner if user has custom logo */}
+                {(() => {
+                  const rawLogo = cmsForm?.branding?.logoUrl;
+                  const logoStr = typeof rawLogo === 'object' && rawLogo !== null ? (rawLogo.dataUrl || '') : (rawLogo || '');
+                  const isCustom = logoStr && logoStr !== '/icon-192.png' && logoStr !== '/favicon.ico' && logoStr !== '/favicon.svg';
+                  const currentMode = cmsForm?.branding?.logoMode || (cmsForm?.branding?.showBrandText === false ? 'full_image' : !isCustom ? 'icon_and_text' : 'full_image');
+                  const isShowingBoth = currentMode === 'icon_and_text' && cmsForm?.branding?.showBrandText !== false;
+
+                  if (isCustom && isShowingBoth) {
+                    return (
+                      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                              Duplicate "Avora Library" text showing beside your logo?
+                            </p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                              Your uploaded logo already includes brand words. Switch to "Full Logo Image" mode to remove the duplicate side-by-side text.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateBrandingField('logoMode', 'full_image');
+                            updateBrandingField('showBrandText', false);
+                            updateCmsConfig({
+                              ...cmsForm,
+                              branding: {
+                                ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+                                logoMode: 'full_image',
+                                showBrandText: false
+                              }
+                            });
+                            setCmsSaveNotice(true);
+                            setTimeout(() => setCmsSaveNotice(false), 3500);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shrink-0 shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" /> Fix Duplicate Logo (Hide Side Text)
+                        </button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   {/* Left Column: Form Controls */}
                   <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
                       <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                         <h4 className="font-black text-sm">Brand Identity &amp; Logo Configuration</h4>
                         <p className="text-[11px] text-slate-400">
-                          Update the platform logo, brand name, and subtitle displayed across the navbar, footer, auth screens, and PWA icon.
+                          Configure how your logo and brand name appear across the navbar, footer, auth screens, and mobile web app.
                         </p>
                       </div>
 
-                      <div className="space-y-4 text-xs">
+                      {/* A. 3-Way Logo Display Mode Selector */}
+                      <div>
+                        <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-2">
+                          Logo Display Mode
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          {/* Option 1: Full Image */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateBrandingField('logoMode', 'full_image');
+                              updateBrandingField('showBrandText', false);
+                            }}
+                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                              (cmsForm?.branding?.logoMode === 'full_image' || (cmsForm?.branding?.showBrandText === false && cmsForm?.branding?.logoMode !== 'text_only'))
+                                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+                                : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-purple-500" /> Full Logo Image
+                              </span>
+                              {(cmsForm?.branding?.logoMode === 'full_image' || (cmsForm?.branding?.showBrandText === false && cmsForm?.branding?.logoMode !== 'text_only')) && (
+                                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-tight">
+                              Recommended. Hides duplicate side text if your logo image already contains the words "Avora Library".
+                            </p>
+                          </button>
+
+                          {/* Option 2: Icon + Text */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateBrandingField('logoMode', 'icon_and_text');
+                              updateBrandingField('showBrandText', true);
+                            }}
+                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                              cmsForm?.branding?.logoMode === 'icon_and_text' && cmsForm?.branding?.showBrandText !== false
+                                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+                                : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Icon + Text
+                              </span>
+                              {cmsForm?.branding?.logoMode === 'icon_and_text' && cmsForm?.branding?.showBrandText !== false && (
+                                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-tight">
+                              Square emblem on left + stylized HTML brand name text on right.
+                            </p>
+                          </button>
+
+                          {/* Option 3: Text Only */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateBrandingField('logoMode', 'text_only');
+                              updateBrandingField('showBrandText', true);
+                            }}
+                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                              cmsForm?.branding?.logoMode === 'text_only'
+                                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+                                : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-blue-500" /> Text Only
+                              </span>
+                              {cmsForm?.branding?.logoMode === 'text_only' && (
+                                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-tight">
+                              Pure typography headline without an icon image.
+                            </p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* B. Show Brand Text Beside Logo Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
                         <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Brand Name (Navbar Main Text)
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            Show Brand Text Beside Logo
+                          </p>
+                          <p className="text-[10.5px] text-slate-400">
+                            Turn OFF if your logo image already has words written on it to avoid two logos appearing side-by-side.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = cmsForm?.branding?.showBrandText === false ? true : false;
+                            updateBrandingField('showBrandText', nextVal);
+                            if (!nextVal) {
+                              updateBrandingField('logoMode', 'full_image');
+                            } else if (cmsForm?.branding?.logoMode === 'full_image') {
+                              updateBrandingField('logoMode', 'icon_and_text');
+                            }
+                          }}
+                          className={`w-12 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${
+                            cmsForm?.branding?.showBrandText === false ? 'bg-slate-300 dark:bg-slate-700' : 'bg-purple-600'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                            cmsForm?.branding?.showBrandText === false ? 'translate-x-0' : 'translate-x-6'
+                          }`} />
+                        </button>
+                      </div>
+
+                      {/* C. Official Presets */}
+                      <div>
+                        <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-2">
+                          1-Click Preset Logos
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setBrandLogoPreset('official_transparent')}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-brand-500" />
+                            Official Transparent Logo (/logo.png)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBrandLogoPreset('dark_theme')}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                            Dark Theme Full Logo (/logo-dark.png)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBrandLogoPreset('default_icon')}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                            Default Owl + Typography (/icon-192.png)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* D. Logo Upload & Background Tool */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs">
+                          Upload Custom Logo Image
+                        </label>
+                        
+                        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center flex-wrap">
+                          <label className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload New Logo (PNG / JPG / SVG)</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleLogoUpload} 
+                              className="hidden" 
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            disabled={isProcessingBg}
+                            onClick={() => handleMakeLogoTransparent('auto')}
+                            className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                            title="Removes solid black or white background box from your uploaded logo"
+                          >
+                            <Sparkles className="w-4 h-4 text-emerald-500" />
+                            <span>{isProcessingBg ? 'Making Transparent...' : '✨ Make Background Transparent'}</span>
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-400 text-[11px] mb-1">
+                            Or Custom Logo Image URL (PNG / SVG / HTTPS)
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              typeof cmsForm?.branding?.logoUrl === 'object'
+                                ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
+                                : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
+                            }
+                            onChange={(e) => updateBrandingField('logoUrl', e.target.value)}
+                            placeholder="/logo.png"
+                            className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* E. Brand Name & Subtitle Text Inputs */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-700 dark:text-slate-300">
+                            Brand Typography &amp; Headlines
+                          </span>
+                          {(cmsForm?.branding?.logoMode === 'full_image' || cmsForm?.branding?.showBrandText === false) && (
+                            <span className="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md font-bold">
+                              Hidden in Navbar (Full Image Mode Active)
+                            </span>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Brand Name (Main Title)
                           </label>
                           <input
                             type="text"
@@ -4408,8 +4744,8 @@ export default function AdminPanel() {
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Brand Subtitle (Orange Accent Text)
+                          <label className="block font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Brand Subtitle (Orange Sub-Text)
                           </label>
                           <input
                             type="text"
@@ -4421,7 +4757,7 @@ export default function AdminPanel() {
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          <label className="block font-semibold text-slate-500 dark:text-slate-400 mb-1">
                             Site Tagline / Headline
                           </label>
                           <input
@@ -4431,60 +4767,6 @@ export default function AdminPanel() {
                             placeholder="Serialized Stories & Community Reading"
                             className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-purple-500"
                           />
-                        </div>
-
-                        {/* Logo Upload & URL */}
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">
-                            Logo Icon / Emblem
-                          </label>
-                          
-                          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                            <label className="px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 font-bold text-xs border border-purple-200 dark:border-purple-800 flex items-center gap-2 cursor-pointer transition-all">
-                              <Upload className="w-4 h-4" />
-                              <span>Upload New Logo File</span>
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleLogoUpload} 
-                                className="hidden" 
-                              />
-                            </label>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateBrandingField('logoUrl', '/icon-192.png');
-                                updateCmsConfig({
-                                  ...cmsForm,
-                                  branding: {
-                                    ...(cmsForm?.branding || initialCmsConfig.branding || {}),
-                                    logoUrl: '/icon-192.png'
-                                  }
-                                });
-                              }}
-                              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-semibold cursor-pointer"
-                            >
-                              Reset to Default Owl Icon
-                            </button>
-                          </div>
-
-                          <div className="mt-3">
-                            <label className="block font-semibold text-slate-400 text-[11px] mb-1">
-                              Or Logo Image URL (PNG / SVG / HTTPS)
-                            </label>
-                            <input
-                              type="text"
-                              value={
-                                typeof cmsForm?.branding?.logoUrl === 'object'
-                                  ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
-                                  : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
-                              }
-                              onChange={(e) => updateBrandingField('logoUrl', e.target.value)}
-                              placeholder="/icon-192.png"
-                              className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-purple-500"
-                            />
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -4498,63 +4780,52 @@ export default function AdminPanel() {
                           <Eye className="w-3.5 h-3.5" /> Live Navbar Preview
                         </span>
                         <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full">
-                          Real-Time
+                          Real-Time Exact Match
+                        </span>
+                      </div>
+
+                      {/* Active Mode Indicator */}
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-[11px]">
+                        <span className="text-slate-400">Current Mode:</span>
+                        <span className="font-bold text-purple-400">
+                          {cmsForm?.branding?.logoMode === 'full_image' || (cmsForm?.branding?.showBrandText === false && cmsForm?.branding?.logoMode !== 'text_only')
+                            ? '🖼️ Full Logo Image (No extra text)'
+                            : cmsForm?.branding?.logoMode === 'text_only'
+                            ? '🔤 Text Only Typography'
+                            : '🔤+🖼️ Icon + Text'}
                         </span>
                       </div>
 
                       {/* Dark Mode Live Simulation */}
-                      <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <img 
-                            src={
-                              typeof cmsForm?.branding?.logoUrl === 'object'
-                                ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
-                                : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
-                            } 
-                            alt="Logo preview" 
-                            className="h-9 w-auto object-contain"
-                            onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
-                          />
-                          <div className="flex flex-col leading-none">
-                            <span className="font-brand font-black text-xl tracking-tight text-white">
-                              {cmsForm?.branding?.brandName || 'Avora'}
-                            </span>
-                            <span className="font-brand font-extrabold uppercase text-[10px] tracking-[0.24em] text-brand-400 mt-0.5">
-                              {cmsForm?.branding?.brandSubtitle || 'Library'}
-                            </span>
-                          </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">
+                          Dark Mode Navbar
                         </div>
-                        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">Dark Preview</span>
+                        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                          <BrandLogo branding={cmsForm?.branding} />
+                          <span className="text-[11px] text-slate-500 font-semibold hidden sm:inline">Dark Preview</span>
+                        </div>
                       </div>
 
                       {/* Light Mode Live Simulation */}
-                      <div className="bg-white text-slate-900 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <img 
-                            src={
-                              typeof cmsForm?.branding?.logoUrl === 'object'
-                                ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
-                                : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
-                            } 
-                            alt="Logo preview light" 
-                            className="h-9 w-auto object-contain"
-                            onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
-                          />
-                          <div className="flex flex-col leading-none">
-                            <span className="font-brand font-black text-xl tracking-tight text-slate-900">
-                              {cmsForm?.branding?.brandName || 'Avora'}
-                            </span>
-                            <span className="font-brand font-extrabold uppercase text-[10px] tracking-[0.24em] text-brand-600 mt-0.5">
-                              {cmsForm?.branding?.brandSubtitle || 'Library'}
-                            </span>
-                          </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">
+                          Light Mode Navbar
                         </div>
-                        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">Light Preview</span>
+                        <div className="bg-white text-slate-900 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                          <BrandLogo branding={cmsForm?.branding} />
+                          <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">Light Preview</span>
+                        </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-400 leading-relaxed italic">
-                        Click "Save CMS Changes" at top right to apply your updated brand logo and titles across the whole website live!
-                      </p>
+                      <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <p className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Changes preview instantly as you type or switch modes.
+                        </p>
+                        <p className="italic">
+                          Click "Save CMS Changes" button at the top right to permanently save your branding settings across the platform.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

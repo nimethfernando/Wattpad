@@ -668,6 +668,28 @@ export function AppProvider({ children }) {
     } else if (typeof rawLogo !== 'string' || !rawLogo.trim() || rawLogo === '[object Object]') {
       merged.logoUrl = '/icon-192.png';
     }
+
+    const isDefault = merged.logoUrl === '/icon-192.png' || merged.logoUrl === '/favicon.ico' || merged.logoUrl === '/favicon.svg';
+
+    // Auto-infer logoMode and showBrandText for custom logos to eliminate duplicate text
+    if (!merged.logoMode) {
+      if (merged.showBrandText === false) {
+        merged.logoMode = 'full_image';
+      } else if (merged.showBrandText === true) {
+        merged.logoMode = 'icon_and_text';
+      } else if (!isDefault) {
+        merged.logoMode = 'full_image';
+        merged.showBrandText = false;
+      } else {
+        merged.logoMode = 'icon_and_text';
+        merged.showBrandText = true;
+      }
+    } else if (merged.logoMode === 'full_image' && merged.showBrandText === undefined) {
+      merged.showBrandText = false;
+    } else if (merged.logoMode === 'icon_and_text' && merged.showBrandText === undefined) {
+      merged.showBrandText = true;
+    }
+
     return merged;
   };
 
