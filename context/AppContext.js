@@ -162,10 +162,15 @@ export function AppProvider({ children }) {
       return;
     }
 
-    // 1. Library
+    // 1. Library (purges tombstoned/deleted story IDs)
     try {
       const savedLib = localStorage.getItem(`avora_library_${userKey}`);
-      setLibrary(savedLib !== null ? JSON.parse(savedLib) : []);
+      const rawLib = savedLib !== null ? JSON.parse(savedLib) : [];
+      const savedDeleted = localStorage.getItem('avora_deleted_stories');
+      const delList = savedDeleted ? JSON.parse(savedDeleted) : ['test-story', '1791534786480'];
+      const delSet = new Set(Array.isArray(delList) ? delList.map(String) : []);
+      const cleanLib = Array.isArray(rawLib) ? rawLib.filter(id => !delSet.has(String(id))) : [];
+      setLibrary(cleanLib);
     } catch (e) {
       setLibrary([]);
     }
@@ -178,10 +183,15 @@ export function AppProvider({ children }) {
       setReadingProgress({});
     }
 
-    // 3. Wishlist
+    // 3. Wishlist (purges tombstoned/deleted story IDs)
     try {
       const savedWish = localStorage.getItem(`avora_wishlist_${userKey}`);
-      setWishlist(savedWish !== null ? JSON.parse(savedWish) : []);
+      const rawWish = savedWish !== null ? JSON.parse(savedWish) : [];
+      const savedDeleted = localStorage.getItem('avora_deleted_stories');
+      const delList = savedDeleted ? JSON.parse(savedDeleted) : ['test-story', '1791534786480'];
+      const delSet = new Set(Array.isArray(delList) ? delList.map(String) : []);
+      const cleanWish = Array.isArray(rawWish) ? rawWish.filter(id => !delSet.has(String(id))) : [];
+      setWishlist(cleanWish);
     } catch (e) {
       setWishlist([]);
     }
@@ -2469,6 +2479,29 @@ export function AppProvider({ children }) {
         s => String(s.id) !== String(storyId) && s.slug !== storyId && String(s.id) !== idStr && s.slug !== slugStr
       );
       return computeStoryRankings(updated);
+    });
+
+    // Remove deleted story from user library and wishlist immediately
+    setLibrary(prev => {
+      const updated = (prev || []).filter(id => String(id) !== String(storyId) && String(id) !== idStr);
+      if (typeof window !== 'undefined') {
+        try {
+          const userKey = user?.id || 'guest';
+          localStorage.setItem(`avora_library_${userKey}`, JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+
+    setWishlist(prev => {
+      const updated = (prev || []).filter(id => String(id) !== String(storyId) && String(id) !== idStr);
+      if (typeof window !== 'undefined') {
+        try {
+          const userKey = user?.id || 'guest';
+          localStorage.setItem(`avora_wishlist_${userKey}`, JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
     });
 
     if (target) addAuditLog("Story Deleted", target.title);

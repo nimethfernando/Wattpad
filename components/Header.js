@@ -116,7 +116,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
       {/* 0. Site-Wide Announcement Banner */}
       {announcementBanner?.active && !bannerDismissed && (
-        <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 pl-3.5 pr-10 sm:px-12 text-center relative flex items-center justify-center shadow-sm">
+        <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 pl-4 pr-12 sm:pr-14 sm:pl-12 text-center relative flex items-center justify-center shadow-sm">
           <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center leading-snug">
             <span>{t?.announcementText || announcementBanner.text}</span>
             {announcementBanner.linkUrl && (
@@ -131,7 +131,7 @@ export default function Header() {
           {announcementBanner.dismissible && (
             <button 
               onClick={() => setBannerDismissed(true)}
-              className="absolute right-1.5 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-black/15 active:scale-95 transition-all cursor-pointer z-10"
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-black/15 active:scale-95 transition-all cursor-pointer z-10"
               aria-label="Dismiss announcement banner"
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

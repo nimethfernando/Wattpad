@@ -64,29 +64,29 @@ export default function BrandLogo({ size = 'default', showText = true, className
     }
     // Default: Generously sized, bold, and readable on all screens
     if (baseSize === 'sm') return 'h-8 sm:h-9 max-w-[190px] w-auto';
-    if (baseSize === 'lg') return 'h-12 sm:h-14 md:h-16 lg:h-18 max-w-[280px] sm:max-w-[360px] md:max-w-[420px] w-auto';
-    return 'h-10 sm:h-11 md:h-12 max-w-[230px] sm:max-w-[280px] md:max-w-[320px] w-auto';
+    if (baseSize === 'lg') return 'h-13 sm:h-15 md:h-17 lg:h-19 max-w-[300px] sm:max-w-[380px] md:max-w-[440px] w-auto';
+    return 'h-[42px] sm:h-11 md:h-12 max-w-[250px] sm:max-w-[290px] md:max-w-[330px] w-auto';
   };
 
   const sizeMap = {
     sm: {
       icon: effectiveMode === 'full_image'
         ? getFullImageClass('sm')
-        : 'h-8 w-auto',
+        : 'h-8 sm:h-9 w-auto',
       title: 'text-lg sm:text-xl',
       subtitle: 'text-[9px] tracking-[0.22em] mt-0.5'
     },
     default: {
       icon: effectiveMode === 'full_image'
         ? getFullImageClass('default')
-        : 'h-9 sm:h-10 md:h-11 w-auto',
+        : 'h-[42px] sm:h-11 md:h-12 w-auto',
       title: 'text-xl sm:text-2xl md:text-3xl',
       subtitle: 'text-[10px] sm:text-[11px] tracking-[0.24em] mt-0.5'
     },
     lg: {
       icon: effectiveMode === 'full_image'
         ? getFullImageClass('lg')
-        : 'h-12 sm:h-14 md:h-16 w-auto',
+        : 'h-13 sm:h-15 md:h-17 w-auto',
       title: 'text-2xl sm:text-3xl md:text-4xl',
       subtitle: 'text-[12px] sm:text-[13px] tracking-[0.26em] mt-0.5'
     }
