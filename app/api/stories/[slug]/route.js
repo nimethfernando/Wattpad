@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { initialStories } from '@/lib/data';
 import { canUserAccessContent } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
-import { getStoryBySlugFromDb, saveStoryToDb, deleteStoryFromDb } from '@/lib/db';
+import { getStoryBySlugFromDb, saveStoryToDb, deleteStoryFromDb, getDeletedStoriesFromDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +23,20 @@ export async function GET(request, context) {
       return NextResponse.json({ success: false, error: 'Slug parameter is required' }, { status: 400 });
     }
 
+    const deletedSet = new Set(getDeletedStoriesFromDb());
+    if (deletedSet.has(String(slug))) {
+      return NextResponse.json({ success: false, error: 'Story not found' }, { status: 404 });
+    }
+
     // 1. Try DB first
     let story = await getStoryBySlugFromDb(slug).catch(() => null);
 
     // 2. Fall back to seed initialStories
     if (!story) {
       story = initialStories.find(s => s.slug === slug || String(s.id) === String(slug));
+      if (story && (deletedSet.has(String(story.id)) || deletedSet.has(String(story.slug)))) {
+        story = null;
+      }
     }
 
     if (!story) {
@@ -100,16 +108,19 @@ export async function PUT(request, context) {
 export async function DELETE(request, context) {
   try {
     const { slug } = await resolveRouteParams(context);
+    const { searchParams } = new URL(request.url);
+    const extraId = searchParams.get('id');
 
-    if (!slug) {
-      return NextResponse.json({ success: false, error: 'Slug is required for deletion' }, { status: 400 });
+    if (!slug && !extraId) {
+      return NextResponse.json({ success: false, error: 'Slug or ID is required for deletion' }, { status: 400 });
     }
 
-    await deleteStoryFromDb(slug);
+    const result = await deleteStoryFromDb(slug || extraId, extraId);
 
     return NextResponse.json({
       success: true,
-      message: `Story "${slug}" deleted successfully`
+      message: `Story "${slug || extraId}" deleted successfully`,
+      deletedStories: result?.deletedStories || []
     });
   } catch (error) {
     console.error('Error deleting story API:', error);

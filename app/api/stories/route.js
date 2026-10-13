@@ -3,7 +3,7 @@ import { initialStories, initialGenres } from '@/lib/data';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
 import { getServerUserContext } from '@/lib/serverAuth';
 import { computeStoryRankings } from '@/lib/rankingEngine';
-import { getStoriesFromDb, saveStoryToDb } from '@/lib/db';
+import { getStoriesFromDb, saveStoryToDb, getDeletedStoriesFromDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +15,10 @@ export async function GET(request) {
     const search = searchParams.get('search');
     const contentType = searchParams.get('type'); // 'story' | 'picture_book'
 
-    // Fetch persistent database stories
+    // Fetch persistent database stories & deleted story tombstones
     const dbStories = await getStoriesFromDb().catch(() => []);
+    const deletedStories = getDeletedStoriesFromDb();
+    const deletedSet = new Set(deletedStories);
 
     // Merge persistent database stories with seed dataset
     const storiesMap = new Map();
@@ -25,7 +27,14 @@ export async function GET(request) {
     // 2. Overlay & add DB stories (giving DB priority for updated reads/chapters)
     dbStories.forEach(s => storiesMap.set(String(s.slug || s.id), { ...storiesMap.get(String(s.slug || s.id)), ...s }));
 
-    const allStories = Array.from(storiesMap.values());
+    const allStories = Array.from(storiesMap.values()).filter(s => {
+      if (!s) return false;
+      const idStr = String(s.id || '');
+      const slugStr = String(s.slug || '');
+      const titleLower = String(s.title || '').trim().toLowerCase();
+      if (titleLower === 'test story' || slugStr === 'test-story' || idStr === '1791534786480') return false;
+      return !deletedSet.has(idStr) && !deletedSet.has(slugStr);
+    });
 
     // Core Backend Rule: Filter stories based on user's DOB and age policy
     let accessibleStories = filterStoriesForUser(allStories, user);
@@ -76,6 +85,7 @@ export async function GET(request) {
       },
       count: accessibleStories.length,
       stories: accessibleStories,
+      deletedStories,
       genres: accessibleGenres
     });
   } catch (error) {

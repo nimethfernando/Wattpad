@@ -902,25 +902,50 @@ export function AppProvider({ children }) {
         console.error("Could not load CMS config from localStorage", e);
       }
 
-      // 1. Sync Custom Stories from localStorage (Guarantee user-published books persist across refresh)
+      // 1. Load deleted story tombstones & Sync Custom Stories from localStorage
+      let deletedSet = new Set(['test-story', '1791534786480']);
+      try {
+        const savedDeleted = localStorage.getItem('avora_deleted_stories');
+        if (savedDeleted) {
+          const parsedDel = JSON.parse(savedDeleted);
+          if (Array.isArray(parsedDel)) {
+            parsedDel.forEach(d => deletedSet.add(String(d)));
+          }
+        }
+        localStorage.setItem('avora_deleted_stories', JSON.stringify(Array.from(deletedSet)));
+      } catch (e) {}
+
+      const isDeletedStory = (s, setRef = deletedSet) => {
+        if (!s) return true;
+        const idStr = String(s.id || '');
+        const slugStr = String(s.slug || '');
+        const titleLower = String(s.title || '').trim().toLowerCase();
+        if (titleLower === 'test story' || slugStr === 'test-story' || idStr === '1791534786480') return true;
+        return setRef.has(idStr) || setRef.has(slugStr);
+      };
+
       let localCustomStories = [];
       try {
         const savedCustomStories = localStorage.getItem('avora_custom_stories');
         if (savedCustomStories) {
           const custom = JSON.parse(savedCustomStories);
-          if (Array.isArray(custom) && custom.length > 0) {
-            localCustomStories = custom;
-            setStories(prev => {
-              const storyMap = new Map();
-              prev.forEach(s => storyMap.set(String(s.slug || s.id), s));
-              custom.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
-              return computeStoryRankings(Array.from(storyMap.values()));
-            });
+          if (Array.isArray(custom)) {
+            localCustomStories = custom.filter(s => !isDeletedStory(s, deletedSet));
+            if (localCustomStories.length !== custom.length) {
+              localStorage.setItem('avora_custom_stories', JSON.stringify(localCustomStories));
+            }
           }
         }
       } catch (e) {
         console.error("Could not load custom stories from localStorage", e);
       }
+
+      setStories(prev => {
+        const storyMap = new Map();
+        prev.filter(s => !isDeletedStory(s, deletedSet)).forEach(s => storyMap.set(String(s.slug || s.id), s));
+        localCustomStories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+        return computeStoryRankings(Array.from(storyMap.values()));
+      });
 
       // Sync story read counts from localStorage and dynamically re-rank
       try {
@@ -979,17 +1004,30 @@ export function AppProvider({ children }) {
       fetch('/api/stories')
         .then(res => res.json())
         .then(data => {
-          if (data?.success && Array.isArray(data.stories) && data.stories.length > 0) {
-            setStories(prev => {
-              const storyMap = new Map();
-              // Seed and existing state stories
-              prev.forEach(s => storyMap.set(String(s.slug || s.id), s));
-              // Overlay API stories
-              data.stories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
-              // Re-affirm local custom stories so API results NEVER wipe locally authored books
-              localCustomStories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
-              return computeStoryRankings(Array.from(storyMap.values()));
-            });
+          if (data?.success) {
+            if (Array.isArray(data.deletedStories)) {
+              data.deletedStories.forEach(d => deletedSet.add(String(d)));
+              try {
+                localStorage.setItem('avora_deleted_stories', JSON.stringify(Array.from(deletedSet)));
+              } catch (e) {}
+            }
+            localCustomStories = localCustomStories.filter(s => !isDeletedStory(s, deletedSet));
+            try {
+              localStorage.setItem('avora_custom_stories', JSON.stringify(localCustomStories));
+            } catch (e) {}
+
+            if (Array.isArray(data.stories)) {
+              setStories(prev => {
+                const storyMap = new Map();
+                // Seed and existing state stories (excluding deleted)
+                prev.filter(s => !isDeletedStory(s, deletedSet)).forEach(s => storyMap.set(String(s.slug || s.id), s));
+                // Overlay API stories (excluding deleted)
+                data.stories.filter(s => !isDeletedStory(s, deletedSet)).forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+                // Re-affirm local custom stories (excluding deleted)
+                localCustomStories.forEach(s => storyMap.set(String(s.slug || s.id), { ...storyMap.get(String(s.slug || s.id)), ...s }));
+                return computeStoryRankings(Array.from(storyMap.values()));
+              });
+            }
           }
         })
         .catch(err => {
@@ -2114,16 +2152,24 @@ export function AppProvider({ children }) {
     // 1. Synchronously save to localStorage FIRST so immediate refresh never loses the book
     if (typeof window !== 'undefined') {
       try {
+        const savedDeleted = localStorage.getItem('avora_deleted_stories');
+        if (savedDeleted) {
+          const delList = JSON.parse(savedDeleted);
+          if (Array.isArray(delList)) {
+            const nextDel = delList.filter(d => String(d) !== String(newStory.id) && String(d) !== String(newStory.slug));
+            localStorage.setItem('avora_deleted_stories', JSON.stringify(nextDel));
+          }
+        }
         const savedCustom = localStorage.getItem('avora_custom_stories');
         const list = savedCustom ? JSON.parse(savedCustom) : [];
-        const filtered = list.filter(s => s.id !== newStory.id && s.slug !== newStory.slug);
+        const filtered = list.filter(s => String(s.id) !== String(newStory.id) && s.slug !== newStory.slug);
         localStorage.setItem('avora_custom_stories', JSON.stringify([newStory, ...filtered]));
       } catch (e) {}
     }
 
     // 2. Optimistically update client state
     setStories(prev => {
-      const filtered = prev.filter(s => s.id !== newStory.id && s.slug !== newStory.slug);
+      const filtered = prev.filter(s => String(s.id) !== String(newStory.id) && s.slug !== newStory.slug);
       return computeStoryRankings([newStory, ...filtered]);
     });
     addAuditLog("Story Published", newStory.title);
@@ -2138,14 +2184,14 @@ export function AppProvider({ children }) {
       const data = await res.json();
       if (data?.success && data?.story) {
         setStories(prev => {
-          const replaced = prev.map(s => (s.id === newStory.id || s.slug === newStory.slug) ? { ...s, ...data.story } : s);
+          const replaced = prev.map(s => (String(s.id) === String(newStory.id) || s.slug === newStory.slug) ? { ...s, ...data.story } : s);
           return computeStoryRankings(replaced);
         });
         if (typeof window !== 'undefined') {
           try {
             const savedCustom = localStorage.getItem('avora_custom_stories');
             const list = savedCustom ? JSON.parse(savedCustom) : [];
-            const idx = list.findIndex(s => s.id === newStory.id || s.slug === newStory.slug);
+            const idx = list.findIndex(s => String(s.id) === String(newStory.id) || s.slug === newStory.slug);
             if (idx >= 0) {
               list[idx] = { ...list[idx], ...data.story };
             } else {
@@ -2162,12 +2208,12 @@ export function AppProvider({ children }) {
 
   const updateStory = async (updatedStory) => {
     setStories(prev => {
-      const updated = prev.map(s => (s.id === updatedStory.id || s.slug === updatedStory.slug) ? { ...s, ...updatedStory } : s);
+      const updated = prev.map(s => (String(s.id) === String(updatedStory.id) || s.slug === updatedStory.slug) ? { ...s, ...updatedStory } : s);
       if (typeof window !== 'undefined') {
         try {
           const savedCustom = localStorage.getItem('avora_custom_stories');
           const list = savedCustom ? JSON.parse(savedCustom) : [];
-          const idx = list.findIndex(cs => cs.id === updatedStory.id || cs.slug === updatedStory.slug);
+          const idx = list.findIndex(cs => String(cs.id) === String(updatedStory.id) || cs.slug === updatedStory.slug);
           if (idx >= 0) {
             list[idx] = { ...list[idx], ...updatedStory };
           } else {
@@ -2195,7 +2241,7 @@ export function AppProvider({ children }) {
 
     setStories(prev => {
       const updated = prev.map(s => {
-        if (s.id === storyId || s.slug === storyId) {
+        if (String(s.id) === String(storyId) || s.slug === storyId) {
           const existingChapters = s.chapters || [];
           const chapterNumber = chapterData.number || (existingChapters.length + 1);
           const newChap = {
@@ -2223,7 +2269,7 @@ export function AppProvider({ children }) {
         try {
           const savedCustom = localStorage.getItem('avora_custom_stories');
           const list = savedCustom ? JSON.parse(savedCustom) : [];
-          const idx = list.findIndex(cs => cs.id === storyId || cs.slug === storyId);
+          const idx = list.findIndex(cs => String(cs.id) === String(storyId) || cs.slug === storyId);
           if (idx >= 0) {
             list[idx] = updatedStoryToPersist;
           } else {
@@ -2248,7 +2294,7 @@ export function AppProvider({ children }) {
         const data = await res.json();
         if (data?.success && data?.story) {
           setStories(prev => {
-            const replaced = prev.map(s => (s.id === updatedStoryToPersist.id || s.slug === updatedStoryToPersist.slug) ? { ...s, ...data.story } : s);
+            const replaced = prev.map(s => (String(s.id) === String(updatedStoryToPersist.id) || s.slug === updatedStoryToPersist.slug) ? { ...s, ...data.story } : s);
             return computeStoryRankings(replaced);
           });
         }
@@ -2261,27 +2307,49 @@ export function AppProvider({ children }) {
   };
 
   const deleteStory = async (storyId) => {
-    const target = stories.find(s => s.id === storyId || s.slug === storyId);
-    setStories(prev => {
-      const updated = computeStoryRankings(prev.filter(s => s.id !== storyId && s.slug !== storyId));
-      if (typeof window !== 'undefined') {
-        try {
-          const savedCustom = localStorage.getItem('avora_custom_stories');
-          if (savedCustom) {
-            const list = JSON.parse(savedCustom);
-            localStorage.setItem('avora_custom_stories', JSON.stringify(list.filter(s => s.id !== storyId && s.slug !== storyId)));
+    const target = stories.find(s => String(s.id) === String(storyId) || s.slug === storyId);
+    const idStr = String(target?.id || storyId);
+    const slugStr = String(target?.slug || storyId);
+
+    if (typeof window !== 'undefined') {
+      try {
+        // 1. Record tombstone in avora_deleted_stories so it never resurfaces from seed or cache
+        const savedDeleted = localStorage.getItem('avora_deleted_stories');
+        const delList = savedDeleted ? JSON.parse(savedDeleted) : ['test-story', '1791534786480'];
+        const delSet = new Set(Array.isArray(delList) ? delList.map(String) : []);
+        delSet.add(String(storyId));
+        if (idStr) delSet.add(idStr);
+        if (slugStr) delSet.add(slugStr);
+        localStorage.setItem('avora_deleted_stories', JSON.stringify(Array.from(delSet)));
+
+        // 2. Remove from avora_custom_stories
+        const savedCustom = localStorage.getItem('avora_custom_stories');
+        if (savedCustom) {
+          const list = JSON.parse(savedCustom);
+          if (Array.isArray(list)) {
+            localStorage.setItem(
+              'avora_custom_stories',
+              JSON.stringify(list.filter(s => !delSet.has(String(s.id)) && !delSet.has(String(s.slug))))
+            );
           }
-        } catch (e) {}
-      }
-      return updated;
+        }
+      } catch (e) {}
+    }
+
+    setStories(prev => {
+      const updated = prev.filter(
+        s => String(s.id) !== String(storyId) && s.slug !== storyId && String(s.id) !== idStr && s.slug !== slugStr
+      );
+      return computeStoryRankings(updated);
     });
+
     if (target) addAuditLog("Story Deleted", target.title);
 
     // Persist deletion to backend database via API route
     const identifier = target?.slug || storyId;
     if (identifier) {
       try {
-        await fetch(`/api/stories/${encodeURIComponent(identifier)}`, {
+        await fetch(`/api/stories/${encodeURIComponent(identifier)}?id=${encodeURIComponent(idStr)}`, {
           method: 'DELETE'
         });
       } catch (err) {

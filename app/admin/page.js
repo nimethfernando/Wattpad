@@ -1347,45 +1347,57 @@ export default function AdminPanel() {
   };
 
   // Story Actions
-  const toggleFeatureStory = (storyId) => {
-    setStories(prev => prev.map(s => {
-      if (s.id === storyId) {
-        const nextState = !s.isEditorsPick;
-        addAuditLog(nextState ? "Story Featured" : "Story Unfeatured", s.title);
-        return { ...s, isEditorsPick: nextState };
-      }
-      return s;
-    }));
-  };
-
-  const toggleHouseOriginal = (storyId) => {
-    setStories(prev => prev.map(s => {
-      if (s.id === storyId) {
-        const nextState = !s.isOriginal;
-        addAuditLog(nextState ? "House Original Granted" : "House Original Revoked", s.title);
-        return { ...s, isOriginal: nextState };
-      }
-      return s;
-    }));
-  };
-
-  const removeStory = (storyId) => {
-    if (confirm('Are you sure you want to unpublish and delete this story?')) {
-      const target = stories.find(s => s.id === storyId);
-      if (target) addAuditLog("Story Deleted by Admin", target.title);
-      setStories(prev => prev.filter(s => s.id !== storyId));
+  const toggleFeatureStory = async (storyId) => {
+    const target = stories.find(s => String(s.id) === String(storyId) || s.slug === storyId);
+    if (!target) return;
+    const nextState = !target.isEditorsPick;
+    const updatedObj = { ...target, isEditorsPick: nextState };
+    addAuditLog(nextState ? "Story Featured" : "Story Unfeatured", target.title);
+    if (typeof updateStory === 'function') {
+      await updateStory(updatedObj);
+    } else {
+      setStories(prev => prev.map(s => String(s.id) === String(storyId) ? updatedObj : s));
     }
   };
 
-  const handleReassignAuthor = (e) => {
+  const toggleHouseOriginal = async (storyId) => {
+    const target = stories.find(s => String(s.id) === String(storyId) || s.slug === storyId);
+    if (!target) return;
+    const nextState = !target.isOriginal;
+    const updatedObj = { ...target, isOriginal: nextState };
+    addAuditLog(nextState ? "House Original Granted" : "House Original Revoked", target.title);
+    if (typeof updateStory === 'function') {
+      await updateStory(updatedObj);
+    } else {
+      setStories(prev => prev.map(s => String(s.id) === String(storyId) ? updatedObj : s));
+    }
+  };
+
+  const removeStory = async (storyId) => {
+    const target = stories.find(s => String(s.id) === String(storyId) || s.slug === storyId);
+    if (confirm(`Are you sure you want to unpublish and permanently delete "${target?.title || 'this story'}"?`)) {
+      if (typeof deleteStory === 'function') {
+        await deleteStory(storyId);
+      } else {
+        if (target) addAuditLog("Story Deleted by Admin", target.title);
+        setStories(prev => prev.filter(s => String(s.id) !== String(storyId) && s.slug !== storyId));
+      }
+    }
+  };
+
+  const handleReassignAuthor = async (e) => {
     e.preventDefault();
     if (!newAuthorName.trim() || !selectedStoryToReassign) return;
-    setStories(prev => prev.map(s => {
-      if (s.id === selectedStoryToReassign.id) {
-        return { ...s, author: newAuthorName.trim() };
-      }
-      return s;
-    }));
+    const updatedObj = {
+      ...selectedStoryToReassign,
+      author: newAuthorName.trim(),
+      authorUsername: newAuthorName.trim().toLowerCase().replace(/[^a-z0-9_]+/g, '')
+    };
+    if (typeof updateStory === 'function') {
+      await updateStory(updatedObj);
+    } else {
+      setStories(prev => prev.map(s => String(s.id) === String(selectedStoryToReassign.id) ? updatedObj : s));
+    }
     addAuditLog("Story Reassigned to Author", `${selectedStoryToReassign.title} → ${newAuthorName}`);
     setSelectedStoryToReassign(null);
     setNewAuthorName('');
