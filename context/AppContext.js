@@ -622,6 +622,17 @@ export function AppProvider({ children }) {
   // Notifications
   const [notifications, setNotifications] = useState([]);
 
+  const sanitizeBrandingConfig = (baseBranding, incomingBranding) => {
+    const merged = { ...(baseBranding || {}), ...(incomingBranding || {}) };
+    const rawLogo = merged.logoUrl;
+    if (rawLogo && typeof rawLogo === 'object' && typeof rawLogo.dataUrl === 'string') {
+      merged.logoUrl = rawLogo.dataUrl;
+    } else if (typeof rawLogo !== 'string' || !rawLogo.trim() || rawLogo === '[object Object]') {
+      merged.logoUrl = '/icon-192.png';
+    }
+    return merged;
+  };
+
   // CMS Content Management (Branding, Logo, PWA, QR Code, Footer Socials, Pages)
   const [cmsConfig, setCmsConfig] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -632,10 +643,7 @@ export function AppProvider({ children }) {
           return {
             ...initialCmsConfig,
             ...parsed,
-            branding: {
-              ...initialCmsConfig.branding,
-              ...(parsed.branding || {})
-            },
+            branding: sanitizeBrandingConfig(initialCmsConfig.branding, parsed.branding),
             pwaSection: {
               ...initialCmsConfig.pwaSection,
               ...(parsed.pwaSection || {})
@@ -885,18 +893,25 @@ export function AppProvider({ children }) {
         const savedCms = localStorage.getItem('avora_cms_config');
         if (savedCms) {
           const parsedCms = JSON.parse(savedCms);
-          setCmsConfig(prev => ({
-            ...prev,
-            ...parsedCms,
-            pwaSection: { ...prev.pwaSection, ...(parsedCms.pwaSection || {}) },
-            socialLinks: { ...prev.socialLinks, ...(parsedCms.socialLinks || {}) },
-            footerConfig: { ...prev.footerConfig, ...(parsedCms.footerConfig || {}) },
-            pagesContent: {
-              ...initialCmsConfig.pagesContent,
-              ...prev.pagesContent,
-              ...(parsedCms.pagesContent || {})
-            }
-          }));
+          setCmsConfig(prev => {
+            const next = {
+              ...prev,
+              ...parsedCms,
+              branding: sanitizeBrandingConfig(prev.branding || initialCmsConfig.branding, parsedCms.branding),
+              pwaSection: { ...prev.pwaSection, ...(parsedCms.pwaSection || {}) },
+              socialLinks: { ...prev.socialLinks, ...(parsedCms.socialLinks || {}) },
+              footerConfig: { ...prev.footerConfig, ...(parsedCms.footerConfig || {}) },
+              pagesContent: {
+                ...initialCmsConfig.pagesContent,
+                ...prev.pagesContent,
+                ...(parsedCms.pagesContent || {})
+              }
+            };
+            try {
+              localStorage.setItem('avora_cms_config', JSON.stringify(next));
+            } catch (err) {}
+            return next;
+          });
         }
       } catch (e) {
         console.error("Could not load CMS config from localStorage", e);
@@ -3384,7 +3399,7 @@ export function AppProvider({ children }) {
       const next = {
         ...prev,
         ...updates,
-        branding: updates.branding ? { ...prev.branding, ...updates.branding } : prev.branding,
+        branding: updates.branding ? sanitizeBrandingConfig(prev.branding, updates.branding) : sanitizeBrandingConfig(initialCmsConfig.branding, prev.branding),
         pwaSection: updates.pwaSection ? { ...prev.pwaSection, ...updates.pwaSection } : prev.pwaSection,
         socialLinks: updates.socialLinks ? { ...prev.socialLinks, ...updates.socialLinks } : prev.socialLinks,
         footerConfig: updates.footerConfig ? { ...prev.footerConfig, ...updates.footerConfig } : prev.footerConfig,

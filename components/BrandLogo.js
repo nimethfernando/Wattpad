@@ -5,7 +5,13 @@ export default function BrandLogo({ size = 'default', showText = true, className
   const app = useApp();
   const branding = app?.cmsConfig?.branding;
 
-  const logoSrc = branding?.logoUrl || '/icon-192.png';
+  const rawLogo = branding?.logoUrl;
+  const logoSrc =
+    typeof rawLogo === 'object' && rawLogo !== null
+      ? rawLogo.dataUrl || '/icon-192.png'
+      : typeof rawLogo === 'string' && rawLogo.trim() && !rawLogo.includes('[object Object]')
+      ? rawLogo.trim()
+      : '/icon-192.png';
   const brandName = branding?.brandName || 'Avora';
   const brandSubtitle = branding?.brandSubtitle || 'Library';
 
@@ -36,6 +42,10 @@ export default function BrandLogo({ size = 'default', showText = true, className
         src={logoSrc} 
         alt={`${brandName} ${brandSubtitle}`} 
         className={`${currentSize.icon} object-contain transition-transform group-hover:scale-105 shrink-0`} 
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = '/icon-192.png';
+        }}
       />
       {showText && (
         <div className="flex flex-col select-none leading-none justify-center">

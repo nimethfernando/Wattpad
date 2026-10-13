@@ -254,8 +254,11 @@ export default function AdminPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await processImageFile(file, 1200, 800, 0.85);
-      setBlogForm(prev => ({ ...prev, cover: dataUrl }));
+      const res = await processImageFile(file, 1200, 800, 0.85);
+      const dataUrl = typeof res === 'string' ? res : res?.dataUrl;
+      if (dataUrl) {
+        setBlogForm(prev => ({ ...prev, cover: dataUrl }));
+      }
     } catch (err) {
       alert("Failed to process cover image: " + err.message);
     }
@@ -310,8 +313,20 @@ export default function AdminPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await processImageFile(file, 400, 400, 0.9);
-      updateBrandingField('logoUrl', dataUrl);
+      const res = await processImageFile(file, 400, 400, 0.9);
+      const dataUrl = typeof res === 'string' ? res : res?.dataUrl;
+      if (dataUrl) {
+        updateBrandingField('logoUrl', dataUrl);
+        updateCmsConfig({
+          ...cmsForm,
+          branding: {
+            ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+            logoUrl: dataUrl
+          }
+        });
+        setCmsSaveNotice(true);
+        setTimeout(() => setCmsSaveNotice(false), 3500);
+      }
     } catch (err) {
       alert("Failed to process logo image: " + err.message);
     }
@@ -4175,7 +4190,16 @@ export default function AdminPanel() {
 
                             <button
                               type="button"
-                              onClick={() => updateBrandingField('logoUrl', '/icon-192.png')}
+                              onClick={() => {
+                                updateBrandingField('logoUrl', '/icon-192.png');
+                                updateCmsConfig({
+                                  ...cmsForm,
+                                  branding: {
+                                    ...(cmsForm?.branding || initialCmsConfig.branding || {}),
+                                    logoUrl: '/icon-192.png'
+                                  }
+                                });
+                              }}
                               className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-semibold cursor-pointer"
                             >
                               Reset to Default Owl Icon
@@ -4188,7 +4212,11 @@ export default function AdminPanel() {
                             </label>
                             <input
                               type="text"
-                              value={cmsForm?.branding?.logoUrl ?? '/icon-192.png'}
+                              value={
+                                typeof cmsForm?.branding?.logoUrl === 'object'
+                                  ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
+                                  : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
+                              }
                               onChange={(e) => updateBrandingField('logoUrl', e.target.value)}
                               placeholder="/icon-192.png"
                               className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-purple-500"
@@ -4215,7 +4243,11 @@ export default function AdminPanel() {
                       <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <img 
-                            src={cmsForm?.branding?.logoUrl || '/icon-192.png'} 
+                            src={
+                              typeof cmsForm?.branding?.logoUrl === 'object'
+                                ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
+                                : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
+                            } 
                             alt="Logo preview" 
                             className="h-9 w-auto object-contain"
                             onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
@@ -4236,7 +4268,11 @@ export default function AdminPanel() {
                       <div className="bg-white text-slate-900 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <img 
-                            src={cmsForm?.branding?.logoUrl || '/icon-192.png'} 
+                            src={
+                              typeof cmsForm?.branding?.logoUrl === 'object'
+                                ? (cmsForm.branding.logoUrl?.dataUrl || '/icon-192.png')
+                                : (cmsForm?.branding?.logoUrl && cmsForm.branding.logoUrl !== '[object Object]' ? cmsForm.branding.logoUrl : '/icon-192.png')
+                            } 
                             alt="Logo preview light" 
                             className="h-9 w-auto object-contain"
                             onError={(e) => { e.currentTarget.src = '/icon-192.png'; }}
