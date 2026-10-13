@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ReportModal from '@/components/ReportModal';
 import Pagination from '@/components/Pagination';
+import { DeletedPageGate, ManagedPageCustomSections } from '@/components/ManagedPageBanner';
 import { useApp } from '@/context/AppContext';
 import { 
   Users, 
@@ -24,7 +25,8 @@ import {
 } from 'lucide-react';
 
 export default function CommunityPage() {
-  const { communitySpaces, readingLists, setReadingLists, createReadingList, stories, user, t } = useApp();
+  const { communitySpaces, readingLists, setReadingLists, createReadingList, stories, user, t, cmsConfig } = useApp();
+  const content = cmsConfig?.pagesContent?.community || {};
   const [activeTab, setActiveTab] = useState('spaces'); // 'spaces' | 'lists' | 'badges'
 
   // Pagination states
@@ -35,6 +37,7 @@ export default function CommunityPage() {
   
   // Discussion thread creation state
   const [selectedSpace, setSelectedSpace] = useState(communitySpaces[0]);
+  const activeSpace = selectedSpace || communitySpaces[0];
   const [threads, setThreads] = useState([
     {
       id: 1,
@@ -76,7 +79,7 @@ export default function CommunityPage() {
     setThreads([
       {
         id: Date.now(),
-        spaceSlug: selectedSpace.slug,
+        spaceSlug: activeSpace?.slug || 'general',
         author: user?.name || "Community Member",
         title: newThreadTitle.trim(),
         content: newThreadContent.trim(),
@@ -117,18 +120,25 @@ export default function CommunityPage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
+      <DeletedPageGate pageKey="community" pageTitle="Community Hub">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Community Banner */}
         <div className="rounded-3xl bg-gradient-to-r from-brand-600 via-amber-600 to-rose-600 p-6 sm:p-12 text-white shadow-xl mb-8 sm:mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <Users className="w-3.5 h-3.5" /> Fandom Spaces & Discussion
-            </span>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">The Avora Library Community</h1>
-            <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-              Connect with fellow serialized readers, curate public reading lists, debate character theories in fandom spaces, and earn achievement badges.
-            </p>
+            {(content.badgeText ?? 'Fandom Spaces & Discussion') && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
+                <Users className="w-3.5 h-3.5" /> {content.badgeText ?? 'Fandom Spaces & Discussion'}
+              </span>
+            )}
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
+              {content.title ?? 'The Avora Library Community'}
+            </h1>
+            {(content.subtitle ?? 'Connect with fellow serialized readers, curate public reading lists, debate character theories in fandom spaces, and earn achievement badges.') && (
+              <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
+                {content.subtitle ?? 'Connect with fellow serialized readers, curate public reading lists, debate character theories in fandom spaces, and earn achievement badges.'}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 w-full sm:w-auto">
@@ -193,19 +203,19 @@ export default function CommunityPage() {
                     key={space.id}
                     onClick={() => setSelectedSpace(space)}
                     className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                      selectedSpace.id === space.id
+                      activeSpace?.id === space.id
                         ? 'bg-brand-500/10 border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-sm">{space.title}</h4>
-                      <span className="text-[11px] text-slate-400">{space.membersCount.toLocaleString()} members</span>
+                      <span className="text-[11px] text-slate-400">{(space.membersCount || 0).toLocaleString()} members</span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{space.description}</p>
                     <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
                       <span>Moderator: @{space.moderator}</span>
-                      <span>{space.threadsCount} threads</span>
+                      <span>{space.threadsCount || 0} threads</span>
                     </div>
                   </button>
                 ))}
@@ -215,7 +225,7 @@ export default function CommunityPage() {
             {/* Active Space Discussions Feed */}
             <div className="lg:col-span-8 space-y-4">
               <div className="flex items-center justify-between pb-2">
-                <h3 className="font-bold text-base">{selectedSpace.title} Threads</h3>
+                <h3 className="font-bold text-base">{activeSpace?.title || 'Community'} Threads</h3>
                 <span className="text-xs text-slate-400 font-semibold">{threads.length} active topics</span>
               </div>
 
@@ -385,7 +395,9 @@ export default function CommunityPage() {
           </div>
         )}
 
+        <ManagedPageCustomSections sections={content.sections} />
       </main>
+      </DeletedPageGate>
 
       {/* Start Discussion Modal */}
       {showNewThreadModal && (
@@ -395,7 +407,7 @@ export default function CommunityPage() {
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Space</label>
               <select 
-                value={selectedSpace.slug}
+                value={activeSpace?.slug || ''}
                 onChange={(e) => setSelectedSpace(communitySpaces.find(s => s.slug === e.target.value))}
                 className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
               >

@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { DeletedPageGate } from '@/components/ManagedPageBanner';
 import { useApp } from '@/context/AppContext';
-import { Feather, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { Feather, Sparkles } from 'lucide-react';
 
 export default function GuidelinesPage() {
   const { t, cmsConfig } = useApp();
@@ -11,78 +12,56 @@ export default function GuidelinesPage() {
     title: "Author & Community Guidelines",
     subtitle: "Rules and best practices for serialized fiction creators and readers.",
     content: "Ensure respectful interaction across paragraph discussions. Accurately categorize mature fiction. Respect copyright and original storytelling. Support fellow authors with constructive feedback and paragraph cheers.",
-    sections: [
-      {
-        heading: "1. The Power of Paragraph Hooks",
-        content: "On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!"
-      },
-      {
-        heading: "2. Chapter Release Cadence",
-        content: "Successful serialized authors publish on a consistent schedule (e.g. Every Tuesday and Friday). Keep individual chapters between 1,200 and 2,500 words for optimal mobile reading pacing."
-      },
-      {
-        heading: "3. Content Ratings & Safety",
-        content: "Always set the correct maturity rating when configuring your story. Graphic violence, strong sexual content, or distressing themes must be labeled as Mature (18+). Plagiarism or copying content from external platforms is strictly prohibited."
-      }
-    ]
+    sections: []
   };
 
-  const sections = guidelinesData.sections || [
-    {
-      heading: "1. The Power of Paragraph Hooks",
-      content: "On Avora Library, readers interact with individual paragraphs through inline comments. Craft dialogue beats, witty comebacks, and atmospheric descriptions that invite reader reaction. A single poignant sentence can generate hundreds of reader annotations!"
-    },
-    {
-      heading: "2. Chapter Release Cadence",
-      content: "Successful serialized authors publish on a consistent schedule (e.g. Every Tuesday and Friday). Keep individual chapters between 1,200 and 2,500 words for optimal mobile reading pacing."
-    },
-    {
-      heading: "3. Content Ratings & Safety",
-      content: "Always set the correct maturity rating when configuring your story. Graphic violence, strong sexual content, or distressing themes must be labeled as Mature (18+). Plagiarism or copying content from external platforms is strictly prohibited."
-    }
-  ];
+  const sections = guidelinesData.sections || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-12">
-        <div className="text-center space-y-2 mb-10">
-          <Feather className="w-10 h-10 text-brand-500 mx-auto" />
-          <h1 className="text-3xl sm:text-4xl font-black">{guidelinesData.title || `${t.guidelines} & Writer Resources`}</h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
-            {guidelinesData.subtitle || "How to craft serialized novels that build passionate audiences on Avora Library."}
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300 shadow-sm">
-          {guidelinesData.content && (
-            <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200/50 dark:border-brand-900/30 text-brand-900 dark:text-brand-200 leading-relaxed font-medium">
-              {guidelinesData.content}
-            </div>
-          )}
-
-          {sections.map((sec, idx) => (
-            <section key={idx} className="space-y-3">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-brand-500" /> {sec.heading}
-              </h3>
-              <p className="whitespace-pre-line">
-                {sec.content}
+      <DeletedPageGate pageKey="guidelines" title={guidelinesData.title || "Author & Community Guidelines"}>
+        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-12">
+          <div className="text-center space-y-2 mb-10">
+            <Feather className="w-10 h-10 text-brand-500 mx-auto" />
+            <h1 className="text-3xl sm:text-4xl font-black">{guidelinesData.title ?? `${t.guidelines} & Writer Resources`}</h1>
+            {guidelinesData.subtitle && (
+              <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
+                {guidelinesData.subtitle}
               </p>
-            </section>
-          ))}
-
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-            <Link 
-              href="/write" 
-              className="inline-block px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-md shadow-brand-500/25 transition-all"
-            >
-              Enter Author Studio & Start Writing
-            </Link>
+            )}
           </div>
-        </div>
-      </main>
+
+          <div className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300 shadow-sm">
+            {guidelinesData.content && (
+              <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200/50 dark:border-brand-900/30 text-brand-900 dark:text-brand-200 leading-relaxed font-medium">
+                {guidelinesData.content}
+              </div>
+            )}
+
+            {sections.map((sec, idx) => (
+              <section key={idx} className="space-y-3">
+                <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-brand-500" /> {sec.heading}
+                </h3>
+                <p className="whitespace-pre-line">
+                  {sec.content}
+                </p>
+              </section>
+            ))}
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+              <Link 
+                href="/write" 
+                className="inline-block px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-md shadow-brand-500/25 transition-all"
+              >
+                Enter Author Studio &amp; Start Writing
+              </Link>
+            </div>
+          </div>
+        </main>
+      </DeletedPageGate>
 
       <Footer />
     </div>

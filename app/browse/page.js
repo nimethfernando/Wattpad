@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
 import BookShowcaseView from '@/components/BookShowcaseView';
+import { DeletedPageGate, ManagedPageCustomSections } from '@/components/ManagedPageBanner';
 import { useApp } from '@/context/AppContext';
 import { 
   Filter, 
@@ -27,7 +28,8 @@ import {
 import { filterStoriesForUser, filterGenresForUser, isStoryForKids } from '@/lib/agePolicy';
 
 export default function BrowsePage() {
-  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t, translateGenre } = useApp();
+  const { stories, genres, library, addToLibrary, removeFromLibrary, isInLibrary, wishlist, toggleWishlist, isInWishlist, user, t, translateGenre, cmsConfig } = useApp();
+  const content = cmsConfig?.pagesContent?.browse || {};
 
   // Filters & Sorting state
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -217,15 +219,20 @@ export default function BrowsePage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
+      <DeletedPageGate pageKey="browse" pageTitle="Browse Library">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{t.browse} Library</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Explore thousands of serialized novels, filtered by age rating, mood, tropes, and length.
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              {content.title ?? `${t.browse} Library`}
+            </h1>
+            {(content.subtitle ?? 'Explore thousands of serialized novels, filtered by age rating, mood, tropes, and length.') && (
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {content.subtitle ?? 'Explore thousands of serialized novels, filtered by age rating, mood, tropes, and length.'}
+              </p>
+            )}
           </div>
 
           {/* Quick special toggles & View Mode */}
@@ -733,7 +740,9 @@ export default function BrowsePage() {
         </>
       )}
 
+        <ManagedPageCustomSections sections={content.sections} />
       </main>
+      </DeletedPageGate>
 
       <Footer />
     </div>

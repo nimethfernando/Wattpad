@@ -3,13 +3,16 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
+import { DeletedPageGate, ManagedPageCustomSections } from '@/components/ManagedPageBanner';
 import { useApp } from '@/context/AppContext';
 import { Trophy, Calendar, Award, CheckCircle, Clock, ArrowRight, Sparkles, Star } from 'lucide-react';
 
 export default function ContestsPage() {
-  const { contests, stories, user, t } = useApp();
+  const { contests, stories, user, t, cmsConfig } = useApp();
+  const content = cmsConfig?.pagesContent?.contests || {};
   const [activeTab, setActiveTab] = useState('open'); // 'open' | 'winners'
   const [selectedContest, setSelectedContest] = useState(contests[0]);
+  const activeContest = selectedContest || contests[0];
   const [submissionStoryId, setSubmissionStoryId] = useState(stories[0]?.id || '');
   const [submitted, setSubmitted] = useState(false);
 
@@ -29,18 +32,25 @@ export default function ContestsPage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
+      <DeletedPageGate pageKey="contests" pageTitle="Writing Contests">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Banner */}
         <div className="rounded-3xl bg-gradient-to-r from-amber-600 via-brand-600 to-purple-700 p-6 sm:p-12 text-white shadow-xl mb-8 sm:mb-10">
           <div className="max-w-2xl space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <Trophy className="w-3.5 h-3.5 text-amber-300" /> Avora Library Awards & Competitions
-            </span>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">The Watty-Style Annual Writing Contests</h1>
-            <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-              Submit your serialized novel to our annual competitions. Win cash grants, official badges, and editorial publishing consideration.
-            </p>
+            {(content.badgeText ?? 'Avora Library Awards & Competitions') && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
+                <Trophy className="w-3.5 h-3.5 text-amber-300" /> {content.badgeText ?? 'Avora Library Awards & Competitions'}
+              </span>
+            )}
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
+              {content.title ?? 'The Watty-Style Annual Writing Contests'}
+            </h1>
+            {(content.subtitle ?? 'Submit your serialized novel to our annual competitions. Win cash grants, official badges, and editorial publishing consideration.') && (
+              <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
+                {content.subtitle ?? 'Submit your serialized novel to our annual competitions. Win cash grants, official badges, and editorial publishing consideration.'}
+              </p>
+            )}
           </div>
         </div>
 
@@ -79,7 +89,7 @@ export default function ContestsPage() {
                 <div 
                   key={c.id} 
                   className={`bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 border transition-all ${
-                    selectedContest.id === c.id 
+                    activeContest?.id === c.id 
                       ? 'border-brand-500 shadow-xl' 
                       : 'border-slate-200 dark:border-slate-800'
                   }`}
@@ -87,7 +97,7 @@ export default function ContestsPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-600">
-                        {c.status.toUpperCase()}
+                        {(c.status || 'open').toUpperCase()}
                       </span>
                       <h2 className="text-xl sm:text-2xl font-black mt-2 text-slate-900 dark:text-white">{c.title}</h2>
                       <p className="text-xs text-slate-500 mt-0.5">{c.tagline}</p>
@@ -102,7 +112,7 @@ export default function ContestsPage() {
                     <div>
                       <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Categories</span>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {c.categories.map((cat, i) => (
+                        {(c.categories || []).map((cat, i) => (
                           <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold">
                             {cat}
                           </span>
@@ -117,7 +127,7 @@ export default function ContestsPage() {
                   </div>
 
                   <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs text-slate-400">{c.entriesCount} stories entered so far</span>
+                    <span className="text-xs text-slate-400">{c.entriesCount || 0} stories entered so far</span>
                     <button 
                       onClick={() => setSelectedContest(c)}
                       className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition-colors text-center cursor-pointer"
@@ -146,7 +156,7 @@ export default function ContestsPage() {
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4">
                 <h3 className="font-black text-base text-slate-900 dark:text-white">Submit Your Serial Novel</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Selected Contest: <strong className="text-slate-900 dark:text-white">{selectedContest.title}</strong>
+                  Selected Contest: <strong className="text-slate-900 dark:text-white">{activeContest?.title || 'None'}</strong>
                 </p>
 
                 {submitted && (
@@ -174,7 +184,7 @@ export default function ContestsPage() {
                   <div>
                     <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">Target Category</label>
                     <select className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-semibold outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer">
-                      {selectedContest.categories.map((cat, i) => (
+                      {(activeContest?.categories || []).map((cat, i) => (
                         <option key={i} value={cat} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-1">
                           {cat}
                         </option>
@@ -247,7 +257,9 @@ export default function ContestsPage() {
           </div>
         )}
 
+        <ManagedPageCustomSections sections={content.sections} />
       </main>
+      </DeletedPageGate>
 
       <Footer />
     </div>

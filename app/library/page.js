@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
+import { DeletedPageGate, ManagedPageCustomSections } from '@/components/ManagedPageBanner';
 import { useApp } from '@/context/AppContext';
 import { 
   BookMarked, 
@@ -35,8 +36,10 @@ export default function LibraryPage() {
     user, 
     openAuthModal, 
     t,
-    translateGenre
+    translateGenre,
+    cmsConfig
   } = useApp();
+  const content = cmsConfig?.pagesContent?.library || {};
 
   const [activeTab, setActiveTab] = useState('library'); // 'library' | 'wishlist' | 'lists' | 'archive'
   const [newListTitle, setNewListTitle] = useState('');
@@ -81,6 +84,7 @@ export default function LibraryPage() {
       <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
         <Header />
 
+        <DeletedPageGate pageKey="library" pageTitle="My Library">
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
           <div className="max-w-md w-full text-center bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6 animate-in fade-in duration-200">
             <div className="w-16 h-16 rounded-3xl bg-brand-500/10 text-brand-600 flex items-center justify-center mx-auto shadow-inner">
@@ -89,10 +93,10 @@ export default function LibraryPage() {
 
             <div className="space-y-2">
               <h1 className="text-2xl font-black text-slate-900 dark:text-white">
-                Personal Library & Bookshelf
+                {content.title ?? 'Personal Library & Bookshelf'}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Your private library, reading progress, and custom reading lists are securely tied to your personal account. Sign in to access your bookshelf or create a free account.
+                {content.subtitle ?? 'Your private library, reading progress, and custom reading lists are securely tied to your personal account. Sign in to access your bookshelf or create a free account.'}
               </p>
             </div>
 
@@ -114,6 +118,7 @@ export default function LibraryPage() {
             </div>
           </div>
         </main>
+        </DeletedPageGate>
 
         <Footer />
       </div>
@@ -124,18 +129,25 @@ export default function LibraryPage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header />
 
+      <DeletedPageGate pageKey="library" pageTitle="My Library">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Library Banner */}
         <div className="bg-gradient-to-r from-brand-600 via-amber-600 to-purple-700 rounded-3xl p-6 sm:p-10 text-white shadow-xl mb-8">
           <div className="max-w-2xl space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
-              <BookMarked className="w-3.5 h-3.5" /> Personal Bookshelf
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">My Library & Reading Lists</h1>
-            <p className="text-white/90 text-xs sm:text-sm">
-              Keep track of ongoing serials, resume right where you left off, and curate custom themed collections.
-            </p>
+            {(content.badgeText ?? 'Personal Bookshelf') && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md">
+                <BookMarked className="w-3.5 h-3.5" /> {content.badgeText ?? 'Personal Bookshelf'}
+              </span>
+            )}
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+              {content.title ?? 'My Library & Reading Lists'}
+            </h1>
+            {(content.subtitle ?? 'Keep track of ongoing serials, resume right where you left off, and curate custom themed collections.') && (
+              <p className="text-white/90 text-xs sm:text-sm">
+                {content.subtitle ?? 'Keep track of ongoing serials, resume right where you left off, and curate custom themed collections.'}
+              </p>
+            )}
           </div>
         </div>
 
@@ -526,7 +538,9 @@ export default function LibraryPage() {
           </div>
         )}
 
+        <ManagedPageCustomSections sections={content.sections} />
       </main>
+      </DeletedPageGate>
 
       {/* CREATE READING LIST MODAL */}
       {showCreateModal && (

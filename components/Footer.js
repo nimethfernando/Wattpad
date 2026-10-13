@@ -117,11 +117,17 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">{t.browse}</h4>
             <ul className="space-y-2">
-              <li><Link href="/browse?sort=trending" className="hover:text-brand-500">{t.trendingNow}</Link></li>
-              <li><Link href="/browse?filter=originals" className="hover:text-brand-500">{t.houseOriginals}</Link></li>
-              <li><Link href="/browse?filter=picks" className="hover:text-brand-500">{t.mustRead}</Link></li>
-              <li><Link href="/browse" className="hover:text-brand-500">{t.genreLibrary}</Link></li>
-              <li><Link href="/contests" className="hover:text-brand-500">{t.contests}</Link></li>
+              {!cmsConfig?.pagesContent?.browse?.deleted && (
+                <>
+                  <li><Link href="/browse?sort=trending" className="hover:text-brand-500">{t.trendingNow}</Link></li>
+                  <li><Link href="/browse?filter=originals" className="hover:text-brand-500">{t.houseOriginals}</Link></li>
+                  <li><Link href="/browse?filter=picks" className="hover:text-brand-500">{t.mustRead}</Link></li>
+                  <li><Link href="/browse" className="hover:text-brand-500">{t.genreLibrary}</Link></li>
+                </>
+              )}
+              {!cmsConfig?.pagesContent?.contests?.deleted && (
+                <li><Link href="/contests" className="hover:text-brand-500">{t.contests}</Link></li>
+              )}
             </ul>
           </div>
 
@@ -129,11 +135,19 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Creators & Fandom</h4>
             <ul className="space-y-2">
-              <li><Link href="/community" className="hover:text-brand-500">Fandom Spaces</Link></li>
+              {!cmsConfig?.pagesContent?.community?.deleted && (
+                <li><Link href="/community" className="hover:text-brand-500">Fandom Spaces</Link></li>
+              )}
               <li><Link href="/write" className="hover:text-brand-500">Author Studio</Link></li>
-              <li><Link href="/writers" className="hover:text-brand-500">Writer Hub</Link></li>
-              <li><Link href="/guidelines" className="hover:text-brand-500">{t.guidelines}</Link></li>
-              <li><Link href="/blog" className="hover:text-brand-500">{t.blog}</Link></li>
+              {!cmsConfig?.pagesContent?.writers?.deleted && (
+                <li><Link href="/writers" className="hover:text-brand-500">Writer Hub</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.guidelines?.deleted && (
+                <li><Link href="/guidelines" className="hover:text-brand-500">{t.guidelines}</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.blog?.deleted && (
+                <li><Link href="/blog" className="hover:text-brand-500">{t.blog}</Link></li>
+              )}
             </ul>
           </div>
 
@@ -141,27 +155,53 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="/about" className="hover:text-brand-500">About Avora Library</Link></li>
-              <li><Link href="/careers" className="hover:text-brand-500">Careers</Link></li>
-              <li><Link href="/press" className="hover:text-brand-500">Press Kit</Link></li>
-              <li><Link href="/partnerships" className="hover:text-brand-500">Brand Partnerships</Link></li>
-              <li><Link href="/contact" className="hover:text-brand-500">{t.contactUs}</Link></li>
+              {!cmsConfig?.pagesContent?.about?.deleted && (
+                <li><Link href="/about" className="hover:text-brand-500">{cmsConfig?.pagesContent?.about?.title || 'About Avora Library'}</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.careers?.deleted && (
+                <li><Link href="/careers" className="hover:text-brand-500">{cmsConfig?.pagesContent?.careers?.title || 'Careers'}</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.press?.deleted && (
+                <li><Link href="/press" className="hover:text-brand-500">{cmsConfig?.pagesContent?.press?.title || 'Press Kit'}</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.partnerships?.deleted && (
+                <li><Link href="/partnerships" className="hover:text-brand-500">{cmsConfig?.pagesContent?.partnerships?.title || 'Brand Partnerships'}</Link></li>
+              )}
+              {!cmsConfig?.pagesContent?.contact?.deleted && (
+                <li><Link href="/contact" className="hover:text-brand-500">{cmsConfig?.pagesContent?.contact?.title || t.contactUs}</Link></li>
+              )}
             </ul>
           </div>
 
           {/* Col 4: Legal & Policies */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Legal & Policies</h4>
-            <ul className="space-y-2">
-              <li><Link href="/terms" className="hover:text-brand-500">{t.terms}</Link></li>
-              <li><Link href="/privacy" className="hover:text-brand-500">{t.privacy}</Link></li>
-              <li><Link href="/dmca" className="hover:text-brand-500">{t.dmca}</Link></li>
-              <li><Link href="/content-policy" className="hover:text-brand-500">Content Policy</Link></li>
-              <li><Link href="/accessibility" className="hover:text-brand-500">Accessibility</Link></li>
-              <li><Link href="/payment-policy" className="hover:text-brand-500">Payment Policy</Link></li>
-              <li><Link href="/help" className="hover:text-brand-500">{t.helpCenter}</Link></li>
-            </ul>
-          </div>
+          {footerConfig.showLegalLinks !== false && (
+            <div className="space-y-3">
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Legal & Policies</h4>
+              <ul className="space-y-2">
+                {!cmsConfig?.pagesContent?.terms?.deleted && (
+                  <li><Link href="/terms" className="hover:text-brand-500">{cmsConfig?.pagesContent?.terms?.title || t.terms}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.privacy?.deleted && (
+                  <li><Link href="/privacy" className="hover:text-brand-500">{cmsConfig?.pagesContent?.privacy?.title || t.privacy}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.dmca?.deleted && (
+                  <li><Link href="/dmca" className="hover:text-brand-500">{cmsConfig?.pagesContent?.dmca?.title || t.dmca}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.contentPolicy?.deleted && (
+                  <li><Link href="/content-policy" className="hover:text-brand-500">{cmsConfig?.pagesContent?.contentPolicy?.title || 'Content Policy'}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.accessibility?.deleted && (
+                  <li><Link href="/accessibility" className="hover:text-brand-500">{cmsConfig?.pagesContent?.accessibility?.title || 'Accessibility'}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.paymentPolicy?.deleted && (
+                  <li><Link href="/payment-policy" className="hover:text-brand-500">{cmsConfig?.pagesContent?.paymentPolicy?.title || 'Payment Policy'}</Link></li>
+                )}
+                {!cmsConfig?.pagesContent?.help?.deleted && (
+                  <li><Link href="/help" className="hover:text-brand-500">{cmsConfig?.pagesContent?.help?.title || t.helpCenter}</Link></li>
+                )}
+              </ul>
+            </div>
+          )}
 
         </div>
 

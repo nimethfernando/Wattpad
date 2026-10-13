@@ -71,7 +71,26 @@ export function AppProvider({ children }) {
   const [stories, setStories] = useState(() => computeStoryRankings(initialStories));
   const [genres, setGenres] = useState(initialGenres);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
-  const [contests, setContests] = useState(initialContests);
+  const [contests, setContestsState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_contests');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return initialContests;
+  });
+  const setContests = (updater) => {
+    setContestsState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_contests', JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+  };
   const [blogPosts, setBlogPosts] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -81,7 +100,26 @@ export function AppProvider({ children }) {
     }
     return initialBlogPosts;
   });
-  const [communitySpaces, setCommunitySpaces] = useState(initialCommunitySpaces);
+  const [communitySpaces, setCommunitySpacesState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('avora_community_spaces');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return initialCommunitySpaces;
+  });
+  const setCommunitySpaces = (updater) => {
+    setCommunitySpacesState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_community_spaces', JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+  };
   const [readerReactions, setReaderReactions] = useState(initialReaderReactions);
 
   // Social & Community State
@@ -3420,6 +3458,60 @@ export function AppProvider({ children }) {
     addAuditLog("CMS Content Updated", "Website content, logo branding, PWA banner, or social links modified");
   };
 
+  const togglePageDeleted = (pageKey, forceDeleted) => {
+    if (!pageKey) return;
+    setCmsConfig(prev => {
+      const currentPage = prev?.pagesContent?.[pageKey] || initialCmsConfig.pagesContent?.[pageKey] || {};
+      const nextDeleted = typeof forceDeleted === 'boolean' ? forceDeleted : !currentPage.deleted;
+      const next = {
+        ...prev,
+        pagesContent: {
+          ...(initialCmsConfig.pagesContent || {}),
+          ...(prev?.pagesContent || {}),
+          [pageKey]: {
+            ...(initialCmsConfig.pagesContent?.[pageKey] || {}),
+            ...currentPage,
+            deleted: nextDeleted
+          }
+        }
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_cms_config', JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+    addAuditLog(
+      forceDeleted === false ? "Website Page Restored" : "Website Page Deleted / Unpublished",
+      `Page key: ${pageKey}`
+    );
+  };
+
+  const resetSinglePage = (pageKey) => {
+    if (!pageKey || !initialCmsConfig.pagesContent?.[pageKey]) return;
+    setCmsConfig(prev => {
+      const next = {
+        ...prev,
+        pagesContent: {
+          ...(initialCmsConfig.pagesContent || {}),
+          ...(prev?.pagesContent || {}),
+          [pageKey]: {
+            ...initialCmsConfig.pagesContent[pageKey],
+            deleted: false
+          }
+        }
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('avora_cms_config', JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+    addAuditLog("Website Page Reset to Default", `Page key: ${pageKey}`);
+  };
+
   // Blog Articles CRUD Management
   const createBlogPost = (newPost) => {
     const post = {
@@ -3761,6 +3853,7 @@ export function AppProvider({ children }) {
       setContests,
       blogPosts,
       communitySpaces,
+      setCommunitySpaces,
       readerReactions,
       followingAuthors,
       followAuthor,
@@ -3872,6 +3965,8 @@ export function AppProvider({ children }) {
       setCmsConfig,
       updateCmsConfig,
       resetCmsConfig,
+      togglePageDeleted,
+      resetSinglePage,
       blogPosts,
       setBlogPosts,
       createBlogPost,

@@ -47,7 +47,8 @@ export default function Header() {
     bannerDismissed,
     setBannerDismissed,
     toggleExperienceMode,
-    openParentalGateModal
+    openParentalGateModal,
+    cmsConfig
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -147,33 +148,41 @@ export default function Header() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-3 lg:gap-3.5 xl:gap-5 text-xs lg:text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-              <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
-            </Link>
-            {user ? (
-              <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-                <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
-                {library.length > 0 && (
-                  <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
-                    {library.length}
-                  </span>
-                )}
+            {!cmsConfig?.pagesContent?.browse?.deleted && (
+              <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+                <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
               </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openAuthModal('login', 'Sign in to access your personal library and reading lists.')}
-                className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
-              >
-                <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
-              </button>
             )}
-            <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
-              <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
-            </Link>
-            <Link href="/contests" className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
-              <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
-            </Link>
+            {!cmsConfig?.pagesContent?.library?.deleted && (
+              user ? (
+                <Link href="/library" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+                  <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
+                  {library.length > 0 && (
+                    <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-brand-500 text-white">
+                      {library.length}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login', 'Sign in to access your personal library and reading lists.')}
+                  className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                >
+                  <BookMarked className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.library || 'Library'}
+                </button>
+              )
+            )}
+            {!cmsConfig?.pagesContent?.community?.deleted && (
+              <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+                <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
+              </Link>
+            )}
+            {!cmsConfig?.pagesContent?.contests?.deleted && (
+              <Link href="/contests" className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+                <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
+              </Link>
+            )}
             <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
               <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
             </Link>
