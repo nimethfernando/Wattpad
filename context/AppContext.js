@@ -690,6 +690,10 @@ export function AppProvider({ children }) {
       merged.showBrandText = true;
     }
 
+    if (!merged.logoSize) {
+      merged.logoSize = 'default';
+    }
+
     return merged;
   };
 

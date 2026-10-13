@@ -69,7 +69,7 @@ export default function Footer() {
           {/* Brand & Language Column */}
           <div className="col-span-2 space-y-4">
             <Link href="/" className="flex items-center group py-1" title="Avora Library">
-              <BrandLogo />
+              <BrandLogo size="lg" />
             </Link>
             <p className="max-w-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {footerConfig.tagline}

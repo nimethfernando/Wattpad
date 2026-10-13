@@ -116,33 +116,35 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
       {/* 0. Site-Wide Announcement Banner */}
       {announcementBanner?.active && !bannerDismissed && (
-        <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 px-4 text-center relative flex items-center justify-center gap-2 shadow-sm">
-          <span>{t?.announcementText || announcementBanner.text}</span>
-          {announcementBanner.linkUrl && (
-            <Link 
-              href={announcementBanner.linkUrl} 
-              className="underline font-bold hover:text-white/80 transition-colors ml-1"
-            >
-              {t?.announcementLink || announcementBanner.linkText || 'Learn More →'}
-            </Link>
-          )}
+        <div className="bg-gradient-to-r from-brand-600 via-amber-500 to-brand-600 text-white text-xs font-semibold py-2 pl-3.5 pr-10 sm:px-12 text-center relative flex items-center justify-center shadow-sm">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center leading-snug">
+            <span>{t?.announcementText || announcementBanner.text}</span>
+            {announcementBanner.linkUrl && (
+              <Link 
+                href={announcementBanner.linkUrl} 
+                className="inline-flex items-center font-bold underline hover:text-white/80 transition-colors shrink-0 whitespace-nowrap bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-md"
+              >
+                {t?.announcementLink || announcementBanner.linkText || 'Learn More →'}
+              </Link>
+            )}
+          </div>
           {announcementBanner.dismissible && (
             <button 
               onClick={() => setBannerDismissed(true)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/80 hover:text-white cursor-pointer"
+              className="absolute right-1.5 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-black/15 active:scale-95 transition-all cursor-pointer z-10"
               aria-label="Dismiss announcement banner"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           )}
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
         
         {/* Brand Logo & Nav */}
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
-          <Link href="/" className="flex items-center group shrink-0 py-1" title="Avora Library">
+          <Link href="/" className="flex items-center group shrink-0 py-0.5" title="Avora Library">
             <BrandLogo />
           </Link>
 

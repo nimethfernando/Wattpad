@@ -4652,6 +4652,53 @@ export default function AdminPanel() {
                         </button>
                       </div>
 
+                      {/* B2. Logo Size Selector */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs">
+                            Logo Display Size / Scale
+                          </label>
+                          <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                            {cmsForm?.branding?.logoSize === 'xlarge'
+                              ? 'Extra Large (+50% Scale)'
+                              : cmsForm?.branding?.logoSize === 'large'
+                              ? 'Large (+25% Scale)'
+                              : cmsForm?.branding?.logoSize === 'compact'
+                              ? 'Compact Scale'
+                              : 'Standard / Regular (Default)'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {[
+                            { id: 'compact', label: 'Compact', desc: 'Smaller icon/emblem' },
+                            { id: 'default', label: 'Standard', desc: 'Balanced default' },
+                            { id: 'large', label: 'Large', desc: '+25% larger & bolder' },
+                            { id: 'xlarge', label: 'Extra Large', desc: '+50% high visibility' }
+                          ].map(opt => {
+                            const isSelected = (cmsForm?.branding?.logoSize || 'default') === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => updateBrandingField('logoSize', opt.id)}
+                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+                                    : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                              >
+                                <span className="block font-bold text-xs text-slate-900 dark:text-white">
+                                  {opt.label}
+                                </span>
+                                <span className="block text-[10px] text-slate-400">
+                                  {opt.desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       {/* C. Official Presets */}
                       <div>
                         <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-2">

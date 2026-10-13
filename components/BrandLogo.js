@@ -43,29 +43,52 @@ export default function BrandLogo({ size = 'default', showText = true, className
     branding?.showBrandText !== false &&
     hasTextContent;
 
-  // Size mapping for icon and typography
-  // In full_image mode, allow natural horizontal proportions so combined logos look balanced and crisp!
+  // Size mapping for icon and typography with support for customizable logoSize ('compact' | 'default' | 'large' | 'xlarge')
+  const logoScale = branding?.logoSize || 'default';
+
+  const getFullImageClass = (baseSize) => {
+    if (logoScale === 'xlarge') {
+      if (baseSize === 'sm') return 'h-9 sm:h-10 max-w-[210px] w-auto';
+      if (baseSize === 'lg') return 'h-16 sm:h-18 md:h-20 lg:h-22 max-w-[360px] sm:max-w-[440px] w-auto';
+      return 'h-12 sm:h-13 md:h-14 lg:h-15 max-w-[260px] sm:max-w-[320px] md:max-w-[360px] w-auto';
+    }
+    if (logoScale === 'large') {
+      if (baseSize === 'sm') return 'h-8.5 sm:h-9.5 max-w-[200px] w-auto';
+      if (baseSize === 'lg') return 'h-14 sm:h-16 md:h-18 max-w-[320px] sm:max-w-[400px] w-auto';
+      return 'h-11 sm:h-12 md:h-13 max-w-[250px] sm:max-w-[300px] md:max-w-[340px] w-auto';
+    }
+    if (logoScale === 'compact') {
+      if (baseSize === 'sm') return 'h-7 max-w-[160px] w-auto';
+      if (baseSize === 'lg') return 'h-10 sm:h-12 max-w-[260px] w-auto';
+      return 'h-8 sm:h-9 max-w-[200px] w-auto';
+    }
+    // Default: Generously sized, bold, and readable on all screens
+    if (baseSize === 'sm') return 'h-8 sm:h-9 max-w-[190px] w-auto';
+    if (baseSize === 'lg') return 'h-12 sm:h-14 md:h-16 lg:h-18 max-w-[280px] sm:max-w-[360px] md:max-w-[420px] w-auto';
+    return 'h-10 sm:h-11 md:h-12 max-w-[230px] sm:max-w-[280px] md:max-w-[320px] w-auto';
+  };
+
   const sizeMap = {
     sm: {
       icon: effectiveMode === 'full_image'
-        ? 'h-7 sm:h-8 max-w-[170px] w-auto'
-        : 'h-7 w-auto',
-      title: 'text-lg',
-      subtitle: 'text-[8.5px] tracking-[0.22em] mt-0.5'
+        ? getFullImageClass('sm')
+        : 'h-8 w-auto',
+      title: 'text-lg sm:text-xl',
+      subtitle: 'text-[9px] tracking-[0.22em] mt-0.5'
     },
     default: {
       icon: effectiveMode === 'full_image'
-        ? 'h-8 sm:h-9 md:h-10 max-w-[220px] sm:max-w-[260px] w-auto'
-        : 'h-8 sm:h-9 md:h-10 w-auto',
-      title: 'text-xl sm:text-2xl',
-      subtitle: 'text-[9.5px] sm:text-[10px] tracking-[0.24em] mt-0.5'
+        ? getFullImageClass('default')
+        : 'h-9 sm:h-10 md:h-11 w-auto',
+      title: 'text-xl sm:text-2xl md:text-3xl',
+      subtitle: 'text-[10px] sm:text-[11px] tracking-[0.24em] mt-0.5'
     },
     lg: {
       icon: effectiveMode === 'full_image'
-        ? 'h-10 sm:h-12 md:h-14 max-w-[300px] sm:max-w-[360px] w-auto'
-        : 'h-10 sm:h-12 w-auto',
-      title: 'text-2xl sm:text-3xl',
-      subtitle: 'text-[11px] sm:text-[12px] tracking-[0.26em] mt-0.5'
+        ? getFullImageClass('lg')
+        : 'h-12 sm:h-14 md:h-16 w-auto',
+      title: 'text-2xl sm:text-3xl md:text-4xl',
+      subtitle: 'text-[12px] sm:text-[13px] tracking-[0.26em] mt-0.5'
     }
   };
 
