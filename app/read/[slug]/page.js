@@ -512,6 +512,7 @@ export default function ReaderPage() {
       topNav: 'border-white/10 bg-slate-900/90 text-slate-100',
       activeThemePill: 'bg-white/20 text-white font-bold',
       drawerCard: 'bg-slate-900 border-white/10 text-slate-100',
+      pageBtn: 'bg-slate-800 hover:bg-slate-750 text-slate-100 border border-slate-700',
     },
     sepia: {
       chapterPill: 'bg-brand-500/15 text-brand-700 border border-brand-600/30 font-black',
@@ -531,6 +532,7 @@ export default function ReaderPage() {
       topNav: 'border-[#e5dac2] bg-[#f2ebd9]/95 text-[#2b1d0c]',
       activeThemePill: 'bg-[#edd9af] text-[#2b1d0c] font-black shadow-xs',
       drawerCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
+      pageBtn: 'bg-[#ebdcb9] hover:bg-[#edd9af] text-[#2b1d0c] border border-[#d6be8c]',
     },
     light: {
       chapterPill: 'bg-brand-500/10 text-brand-600 border border-brand-500/30 font-black',
@@ -550,6 +552,7 @@ export default function ReaderPage() {
       topNav: 'border-slate-200 bg-white/95 text-slate-900',
       activeThemePill: 'bg-slate-200 text-slate-900 font-bold',
       drawerCard: 'bg-white border-slate-200 text-slate-900',
+      pageBtn: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200',
     }
   };
   const tStyles = themeStyles[readerTheme] || themeStyles.sepia;
@@ -734,11 +737,11 @@ export default function ReaderPage() {
                 </p>
 
                 {/* Page Navigation Controls */}
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className={`flex items-center justify-between pt-4 border-t ${tStyles.divider}`}>
                   <button
                     onClick={() => handlePageChange(Math.max(0, activePageIndex - 1), 'prev')}
                     disabled={activePageIndex === 0}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-30 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl disabled:opacity-30 font-bold text-xs transition-all cursor-pointer ${tStyles.pageBtn}`}
                   >
                     <ChevronLeft className="w-4 h-4" /> Previous Page
                   </button>
@@ -1276,7 +1279,7 @@ export default function ReaderPage() {
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className={`w-full rounded-t-3xl p-6 border-t space-y-5 animate-in slide-in-from-bottom duration-200 ${
+            className={`w-full rounded-t-3xl p-6 border-t space-y-5 animate-in slide-in-from-bottom duration-200 shadow-2xl ${
               readerTheme === 'dark' 
                 ? 'bg-slate-900 text-slate-100 border-slate-800' 
                 : readerTheme === 'sepia' 
@@ -1284,86 +1287,187 @@ export default function ReaderPage() {
                 : 'bg-white text-slate-900 border-slate-200'
             }`}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            {/* Header */}
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              readerTheme === 'sepia' 
+                ? 'border-[#ebdcb9]' 
+                : readerTheme === 'dark' 
+                ? 'border-slate-800' 
+                : 'border-slate-100'
+            }`}>
               <h3 className="font-black text-sm">Reading Appearance</h3>
-              <button onClick={() => setShowAppearanceModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button 
+                onClick={() => setShowAppearanceModal(false)} 
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  readerTheme === 'sepia'
+                    ? 'text-[#7a5c3d] hover:text-[#2b1d0c] hover:bg-black/5'
+                    : readerTheme === 'dark'
+                    ? 'text-slate-400 hover:text-white hover:bg-white/10'
+                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                }`}
+                aria-label="Close appearance menu"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Theme Mode Selector */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Theme</label>
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2.5 ${
+                readerTheme === 'sepia' ? 'text-[#8a6845]' : readerTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>Theme</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
+                  type="button"
                   onClick={() => setReaderTheme('light')}
                   className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
-                    readerTheme === 'light' ? 'bg-white text-slate-900 border-slate-400 shadow-sm' : 'bg-slate-100 text-slate-600 border-transparent'
+                    readerTheme === 'light' 
+                      ? 'bg-white text-slate-900 border-brand-500 ring-2 ring-brand-500/30 shadow-md font-black' 
+                      : 'bg-white/80 text-slate-700 border-slate-200 hover:bg-white'
                   }`}
                 >
-                  <Sun className="w-4 h-4" /> Light
+                  <Sun className="w-4 h-4 text-amber-500" /> Light
                 </button>
                 <button
+                  type="button"
                   onClick={() => setReaderTheme('sepia')}
                   className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
-                    readerTheme === 'sepia' ? 'bg-[#f4ecd8] text-amber-950 border-amber-400 shadow-sm' : 'bg-[#fbf7ee] text-amber-800 border-transparent'
+                    readerTheme === 'sepia' 
+                      ? 'bg-[#f4ecd8] text-[#2b1d0c] border-brand-500 ring-2 ring-brand-500/30 shadow-md font-black' 
+                      : 'bg-[#fbf7ee] text-amber-900 border-[#ebdcb9] hover:bg-[#f4ecd8]'
                   }`}
                 >
                   ☕ Sepia
                 </button>
                 <button
+                  type="button"
                   onClick={() => setReaderTheme('dark')}
                   className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
-                    readerTheme === 'dark' ? 'bg-slate-800 text-white border-slate-600 shadow-sm' : 'bg-slate-900 text-slate-400 border-transparent'
+                    readerTheme === 'dark' 
+                      ? 'bg-slate-800 text-white border-brand-500 ring-2 ring-brand-500/30 shadow-md font-black' 
+                      : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
                   }`}
                 >
-                  <Moon className="w-4 h-4" /> Dark
+                  <Moon className="w-4 h-4 text-indigo-400" /> Dark
                 </button>
               </div>
             </div>
 
             {/* Font Size Stepper */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Font Size</label>
-                <span className="text-xs font-mono font-bold">{fontSize}px</span>
+              <div className="flex justify-between items-center mb-2.5">
+                <label className={`text-xs font-bold uppercase tracking-wider ${
+                  readerTheme === 'sepia' ? 'text-[#8a6845]' : readerTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>Font Size</label>
+                <span className={`text-xs font-mono font-black px-2.5 py-0.5 rounded-md ${
+                  readerTheme === 'sepia'
+                    ? 'bg-[#f0e6cf] text-[#2b1d0c] border border-[#dfcc9e]'
+                    : readerTheme === 'dark'
+                    ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                    : 'bg-slate-100 text-slate-800 border border-slate-200'
+                }`}>{fontSize}px</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <button
+                  type="button"
                   onClick={() => setFontSize(Math.max(14, fontSize - 2))}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-sm cursor-pointer"
+                  className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all cursor-pointer active:scale-[0.98] ${
+                    readerTheme === 'dark'
+                      ? 'bg-slate-800 hover:bg-slate-750 text-slate-100 border-slate-700 hover:border-slate-600'
+                      : readerTheme === 'sepia'
+                      ? 'bg-[#f0e6cf] hover:bg-[#ebdcbb] text-[#2b1d0c] border-[#dfcc9e] hover:border-[#cfbc99]'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  A- Smaller
+                  <span className="font-mono text-sm font-black">A-</span>
+                  <span>Smaller</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFontSize(Math.min(26, fontSize + 2))}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-sm cursor-pointer"
+                  className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all cursor-pointer active:scale-[0.98] ${
+                    readerTheme === 'dark'
+                      ? 'bg-slate-800 hover:bg-slate-750 text-slate-100 border-slate-700 hover:border-slate-600'
+                      : readerTheme === 'sepia'
+                      ? 'bg-[#f0e6cf] hover:bg-[#ebdcbb] text-[#2b1d0c] border-[#dfcc9e] hover:border-[#cfbc99]'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  A+ Larger
+                  <span className="font-mono text-sm font-black">A+</span>
+                  <span>Larger</span>
                 </button>
               </div>
             </div>
 
             {/* Typeface Switcher */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Typeface</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2.5 ${
+                readerTheme === 'sepia' ? 'text-[#8a6845]' : readerTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>Typeface</label>
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
+                  type="button"
                   onClick={() => setFontFamily('serif')}
-                  className={`py-2.5 rounded-xl font-serif text-sm font-bold border transition-all cursor-pointer ${
-                    fontFamily === 'serif' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-100 dark:bg-slate-800 border-transparent'
+                  className={`py-3 px-3 rounded-xl font-serif text-xs sm:text-sm font-bold border transition-all cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    fontFamily === 'serif' 
+                      ? 'bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/30 font-black' 
+                      : readerTheme === 'dark'
+                      ? 'bg-slate-800 hover:bg-slate-750 text-slate-100 border-slate-700 hover:border-slate-600'
+                      : readerTheme === 'sepia'
+                      ? 'bg-[#f0e6cf] hover:bg-[#ebdcbb] text-[#2b1d0c] border-[#dfcc9e] hover:border-[#cfbc99]'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  Serif (Book)
+                  <span className="font-serif text-sm font-bold">Aa</span>
+                  <span>Serif (Book)</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFontFamily('sans')}
-                  className={`py-2.5 rounded-xl font-sans text-sm font-bold border transition-all cursor-pointer ${
-                    fontFamily === 'sans' ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-100 dark:bg-slate-800 border-transparent'
+                  className={`py-3 px-3 rounded-xl font-sans text-xs sm:text-sm font-bold border transition-all cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    fontFamily === 'sans' 
+                      ? 'bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/30 font-black' 
+                      : readerTheme === 'dark'
+                      ? 'bg-slate-800 hover:bg-slate-750 text-slate-100 border-slate-700 hover:border-slate-600'
+                      : readerTheme === 'sepia'
+                      ? 'bg-[#f0e6cf] hover:bg-[#ebdcbb] text-[#2b1d0c] border-[#dfcc9e] hover:border-[#cfbc99]'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  Sans-Serif (Clean)
+                  <span className="font-sans text-sm font-bold">Aa</span>
+                  <span>Sans-Serif (Clean)</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Line Spacing Switcher */}
+            <div>
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-2.5 ${
+                readerTheme === 'sepia' ? 'text-[#8a6845]' : readerTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>Line Spacing</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'leading-normal', label: 'Compact' },
+                  { id: 'leading-relaxed', label: 'Standard' },
+                  { id: 'leading-loose', label: 'Spacious' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setLineSpacing(item.id)}
+                    className={`py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      lineSpacing === item.id
+                        ? 'bg-brand-500 text-white border-brand-500 shadow-md font-black'
+                        : readerTheme === 'dark'
+                        ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-750'
+                        : readerTheme === 'sepia'
+                        ? 'bg-[#f0e6cf] text-[#2b1d0c] border-[#dfcc9e] hover:bg-[#ebdcbb]'
+                        : 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
