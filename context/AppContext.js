@@ -659,14 +659,23 @@ export function AppProvider({ children }) {
     return initialCmsConfig;
   });
 
-  // Theme Syncing to HTML class
+  // Theme Syncing to HTML class (respects both explicit theme state and system prefers-color-scheme)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const root = document.documentElement;
-      if (theme === 'dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
+      const mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+      const applyTheme = () => {
+        const isDark = theme === 'dark' || (mql && mql.matches);
+        if (isDark) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      };
+      applyTheme();
+      if (mql && mql.addEventListener) {
+        mql.addEventListener('change', applyTheme);
+        return () => mql.removeEventListener('change', applyTheme);
       }
     }
   }, [theme]);

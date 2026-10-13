@@ -45,7 +45,13 @@ option {
 
 .dark input,
 .dark textarea,
-.dark select {
+.dark select,
+html.dark input,
+html.dark textarea,
+html.dark select,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
   color: #f8fafc !important;
 }
 
@@ -57,11 +63,14 @@ html.dark option,
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder {
+.dark textarea::placeholder,
+html.dark input::placeholder,
+html.dark textarea::placeholder {
   color: #94a3b8 !important;
 }
 
-.dark input[type="date"]::-webkit-calendar-picker-indicator {
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
@@ -72,6 +81,55 @@ html.dark option,
 .dark input[type="date"]::-webkit-datetime-edit-day-field,
 .dark input[type="date"]::-webkit-datetime-edit-year-field {
   color: #f8fafc !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --bg-color: #090d16;
+    --text-color: #f1f5f9;
+    color-scheme: dark;
+  }
+
+  html:not(.light) input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+  html:not(.light) textarea,
+  html:not(.light) select {
+    color: #f8fafc !important;
+  }
+
+  html:not(.light) option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+  }
+
+  html:not(.light) input::placeholder,
+  html:not(.light) textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  html:not(.light) input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  html:not(.light) input[type="date"]::-webkit-datetime-edit,
+  html:not(.light) input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  html:not(.light) input[type="date"]::-webkit-datetime-edit-text,
+  html:not(.light) input[type="date"]::-webkit-datetime-edit-month-field,
+  html:not(.light) input[type="date"]::-webkit-datetime-edit-day-field,
+  html:not(.light) input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #f8fafc !important;
+  }
+}
+
+.light-reader input,
+.light-reader textarea,
+.light-reader select,
+.sepia-reader input,
+.sepia-reader textarea,
+.sepia-reader select,
+.cream-reader input,
+.cream-reader textarea,
+.cream-reader select {
+  color: #0f172a !important;
 }
 
 body {

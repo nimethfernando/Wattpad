@@ -4346,7 +4346,7 @@ export default function AdminPanel() {
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">PWA Install Banner Display</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">PWA Install Banner Display</h4>
                           <p className="text-[11px] text-slate-400">Control visibility of the "Read Anywhere on Mobile" card on the homepage</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -4374,57 +4374,57 @@ export default function AdminPanel() {
 
                       <div className="space-y-3 text-xs">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Badge Text</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Badge Text</label>
                           <input
                             type="text"
                             value={cmsForm?.pwaSection?.badgeText || ''}
                             onChange={(e) => updatePwaField('badgeText', e.target.value)}
                             placeholder="e.g. Progressive Web App (PWA)"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Headline Title</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Headline Title</label>
                           <input
                             type="text"
                             value={cmsForm?.pwaSection?.title || ''}
                             onChange={(e) => updatePwaField('title', e.target.value)}
                             placeholder="e.g. Read Anywhere on Mobile"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Description Paragraph</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Description Paragraph</label>
                           <textarea
                             rows={3}
                             value={cmsForm?.pwaSection?.description || ''}
                             onChange={(e) => updatePwaField('description', e.target.value)}
                             placeholder="Detailed explanation of the PWA install features..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Button Text</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Button Text</label>
                             <input
                               type="text"
                               value={cmsForm?.pwaSection?.buttonText || ''}
                               onChange={(e) => updatePwaField('buttonText', e.target.value)}
                               placeholder="e.g. Install Web App"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Custom Button Redirect URL (Optional)</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Custom Button Redirect URL (Optional)</label>
                             <input
                               type="text"
                               value={cmsForm?.pwaSection?.buttonUrl || ''}
                               onChange={(e) => updatePwaField('buttonUrl', e.target.value)}
                               placeholder="Leave blank for native PWA prompt"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
                         </div>
@@ -4434,7 +4434,7 @@ export default function AdminPanel() {
                     {/* Card 2: QR Code Configuration */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                       <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
-                        <h4 className="font-black text-sm flex items-center gap-2">
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2">
                           <QrCode className="w-4 h-4 text-purple-600" />
                           QR Code Generator &amp; Image Settings
                         </h4>
@@ -4443,7 +4443,7 @@ export default function AdminPanel() {
 
                       <div className="space-y-4 text-xs">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1.5">QR Code Source Mode</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1.5">QR Code Source Mode</label>
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
@@ -4472,13 +4472,13 @@ export default function AdminPanel() {
 
                         {cmsForm?.pwaSection?.qrCodeType !== 'custom_image' ? (
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Target Web URL (Encoded in QR Code)</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Target Web URL (Encoded in QR Code)</label>
                             <input
                               type="url"
                               value={cmsForm?.pwaSection?.qrTargetUrl || ''}
                               onChange={(e) => updatePwaField('qrTargetUrl', e.target.value)}
                               placeholder="https://avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                             <p className="text-[10px] text-slate-400 mt-1">
                               When readers scan with iOS or Android camera, they will immediately land on this URL.
@@ -4486,13 +4486,13 @@ export default function AdminPanel() {
                           </div>
                         ) : (
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Custom QR Code Image URL</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Custom QR Code Image URL</label>
                             <input
                               type="url"
                               value={cmsForm?.pwaSection?.qrCodeImageUrl || ''}
                               onChange={(e) => updatePwaField('qrCodeImageUrl', e.target.value)}
                               placeholder="https://yourdomain.com/custom-qr.png"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono text-[11px] font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                             <p className="text-[10px] text-slate-400 mt-1">
                               Provide a direct link to a hosted image of your branded or pre-generated QR code.
@@ -4502,23 +4502,23 @@ export default function AdminPanel() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">QR Box Top Label</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">QR Box Top Label</label>
                             <input
                               type="text"
                               value={cmsForm?.pwaSection?.qrCodeLabel || ''}
                               onChange={(e) => updatePwaField('qrCodeLabel', e.target.value)}
                               placeholder="Scan QR with Phone"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">QR Box Sublabel</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">QR Box Sublabel</label>
                             <input
                               type="text"
                               value={cmsForm?.pwaSection?.qrCodeSublabel || ''}
                               onChange={(e) => updatePwaField('qrCodeSublabel', e.target.value)}
                               placeholder="Instant mobile web app"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                             />
                           </div>
                         </div>
@@ -4611,7 +4611,7 @@ export default function AdminPanel() {
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div>
-                      <h4 className="font-black text-sm">Footer Social Media Bar</h4>
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">Footer Social Media Bar</h4>
                       <p className="text-[11px] text-slate-400">Toggle individual platforms on or off, and update their destination links</p>
                     </div>
                     <button
@@ -4636,7 +4636,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center font-black text-xs">
                             IG
                           </span>
-                          <span className="font-black text-xs">Instagram</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">Instagram</span>
                         </div>
                         <button
                           type="button"
@@ -4657,7 +4657,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.instagram?.url || ''}
                           onChange={(e) => updateSocialChannel('instagram', 'url', e.target.value)}
                           placeholder="https://instagram.com/yourprofile"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.instagram?.url && (
@@ -4679,7 +4679,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-black text-xs">
                             𝕏
                           </span>
-                          <span className="font-black text-xs">X (Twitter)</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">X (Twitter)</span>
                         </div>
                         <button
                           type="button"
@@ -4700,7 +4700,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.x?.url || ''}
                           onChange={(e) => updateSocialChannel('x', 'url', e.target.value)}
                           placeholder="https://x.com/yourhandle"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.x?.url && (
@@ -4722,7 +4722,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs">
                             FB
                           </span>
-                          <span className="font-black text-xs">Facebook</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">Facebook</span>
                         </div>
                         <button
                           type="button"
@@ -4743,7 +4743,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.facebook?.url || ''}
                           onChange={(e) => updateSocialChannel('facebook', 'url', e.target.value)}
                           placeholder="https://facebook.com/yourpage"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.facebook?.url && (
@@ -4765,7 +4765,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-black text-xs">
                             TT
                           </span>
-                          <span className="font-black text-xs">TikTok</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">TikTok</span>
                         </div>
                         <button
                           type="button"
@@ -4786,7 +4786,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.tiktok?.url || ''}
                           onChange={(e) => updateSocialChannel('tiktok', 'url', e.target.value)}
                           placeholder="https://tiktok.com/@youraccount"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.tiktok?.url && (
@@ -4808,7 +4808,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-xs">
                             DC
                           </span>
-                          <span className="font-black text-xs">Discord</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">Discord</span>
                         </div>
                         <button
                           type="button"
@@ -4829,7 +4829,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.discord?.url || ''}
                           onChange={(e) => updateSocialChannel('discord', 'url', e.target.value)}
                           placeholder="https://discord.gg/yourinvite"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.discord?.url && (
@@ -4851,7 +4851,7 @@ export default function AdminPanel() {
                           <span className="w-7 h-7 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-xs">
                             YT
                           </span>
-                          <span className="font-black text-xs">YouTube</span>
+                          <span className="font-black text-xs text-slate-900 dark:text-white">YouTube</span>
                         </div>
                         <button
                           type="button"
@@ -4872,7 +4872,7 @@ export default function AdminPanel() {
                           value={cmsForm?.socialLinks?.youtube?.url || ''}
                           onChange={(e) => updateSocialChannel('youtube', 'url', e.target.value)}
                           placeholder="https://youtube.com/@yourchannel"
-                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
+                          className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] outline-none border border-slate-200 dark:border-slate-700"
                         />
                       </div>
                       {cmsForm?.socialLinks?.youtube?.url && (
@@ -4892,30 +4892,30 @@ export default function AdminPanel() {
                 {/* Footer Tagline & Legal Information Card */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <h4 className="font-black text-sm">Footer Branding, Tagline &amp; Copyright</h4>
+                    <h4 className="font-black text-sm text-slate-900 dark:text-white">Footer Branding, Tagline &amp; Copyright</h4>
                     <p className="text-[11px] text-slate-400">Customize the statement shown below the logo and platform legal notice</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
                     <div>
-                      <label className="block font-bold text-slate-400 mb-1">Footer Tagline</label>
+                      <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Footer Tagline</label>
                       <textarea
                         rows={2}
                         value={cmsForm?.footerConfig?.tagline || ''}
                         onChange={(e) => updateFooterField('tagline', e.target.value)}
                         placeholder="Platform mission tagline..."
-                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-bold text-slate-400 mb-1">Copyright Notice</label>
+                      <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Copyright Notice</label>
                       <input
                         type="text"
                         value={cmsForm?.footerConfig?.copyrightText || ''}
                         onChange={(e) => updateFooterField('copyrightText', e.target.value)}
                         placeholder="© 2026 Avora Library Platform. All original rights reserved."
-                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
 
@@ -5069,7 +5069,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">About Us Page Content</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">About Us Page Content</h4>
                           <p className="text-[11px] text-slate-400">Live at /about</p>
                         </div>
                         <Link href="/about" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5079,22 +5079,22 @@ export default function AdminPanel() {
 
                       <div className="space-y-3">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.about?.title || ''}
                             onChange={(e) => updatePageField('about', 'title', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none focus:ring-2 focus:ring-emerald-500"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none focus:ring-2 focus:ring-emerald-500"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Page Subtitle</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Subtitle</label>
                           <textarea
                             rows={2}
                             value={cmsForm?.pagesContent?.about?.subtitle || ''}
                             onChange={(e) => updatePageField('about', 'subtitle', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                           />
                         </div>
 
@@ -5106,7 +5106,7 @@ export default function AdminPanel() {
                               type="text"
                               value={cmsForm?.pagesContent?.about?.missionTitle || ''}
                               onChange={(e) => updatePageField('about', 'missionTitle', e.target.value)}
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700"
                             />
                           </div>
                           <div>
@@ -5115,7 +5115,7 @@ export default function AdminPanel() {
                               rows={3}
                               value={cmsForm?.pagesContent?.about?.missionContent || ''}
                               onChange={(e) => updatePageField('about', 'missionContent', e.target.value)}
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         </div>
@@ -5128,7 +5128,7 @@ export default function AdminPanel() {
                               type="text"
                               value={cmsForm?.pagesContent?.about?.pwaTitle || ''}
                               onChange={(e) => updatePageField('about', 'pwaTitle', e.target.value)}
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700"
                             />
                           </div>
                           <div>
@@ -5137,7 +5137,7 @@ export default function AdminPanel() {
                               rows={3}
                               value={cmsForm?.pagesContent?.about?.pwaContent || ''}
                               onChange={(e) => updatePageField('about', 'pwaContent', e.target.value)}
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         </div>
@@ -5150,7 +5150,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Writer Hub &amp; Author FAQ Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Writer Hub &amp; Author FAQ Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /writers</p>
                         </div>
                         <Link href="/writers" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5160,57 +5160,57 @@ export default function AdminPanel() {
 
                       <div className="space-y-3">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Badge Text</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Badge Text</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.writers?.badge || ''}
                             onChange={(e) => updatePageField('writers', 'badge', e.target.value)}
                             placeholder="Avora Library Writer Resources & Hub"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Hero Headline</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Hero Headline</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.writers?.headline || ''}
                             onChange={(e) => updatePageField('writers', 'headline', e.target.value)}
                             placeholder="Turn Your Serial Fiction Into a Global Phenomenon"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Hero Subheadline</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Hero Subheadline</label>
                           <textarea
                             rows={3}
                             value={cmsForm?.pagesContent?.writers?.subheadline || ''}
                             onChange={(e) => updatePageField('writers', 'subheadline', e.target.value)}
                             placeholder="Everything you need to write, publish, and monetize serialized stories..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Stat Badge Title</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Stat Badge Title</label>
                             <input
                               type="text"
                               value={cmsForm?.pagesContent?.writers?.statTitle || ''}
                               onChange={(e) => updatePageField('writers', 'statTitle', e.target.value)}
                               placeholder="100% Free"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Stat Badge Subtitle</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Stat Badge Subtitle</label>
                             <input
                               type="text"
                               value={cmsForm?.pagesContent?.writers?.statSubtitle || ''}
                               onChange={(e) => updatePageField('writers', 'statSubtitle', e.target.value)}
                               placeholder="Keep all your copyright"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
@@ -5238,7 +5238,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.writers?.faqTitle || ''}
                               onChange={(e) => updatePageField('writers', 'faqTitle', e.target.value)}
                               placeholder="Author Frequently Asked Questions"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700"
                             />
                           </div>
 
@@ -5260,14 +5260,14 @@ export default function AdminPanel() {
                                   value={faq.q || ''}
                                   onChange={(e) => updateFaqItem('writers', idx, 'q', e.target.value)}
                                   placeholder="Question (e.g. Do I keep rights to my stories?)"
-                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 font-bold outline-none text-xs"
+                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold outline-none text-xs"
                                 />
                                 <textarea
                                   rows={2}
                                   value={faq.a || ''}
                                   onChange={(e) => updateFaqItem('writers', idx, 'a', e.target.value)}
                                   placeholder="Answer details..."
-                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 font-medium outline-none text-xs leading-relaxed"
+                                  className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none text-xs leading-relaxed"
                                 />
                               </div>
                             ))}
@@ -5282,7 +5282,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Careers &amp; Job Openings Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Careers &amp; Job Openings Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /careers</p>
                         </div>
                         <Link href="/careers" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5293,35 +5293,35 @@ export default function AdminPanel() {
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                             <input
                               type="text"
                               value={cmsForm?.pagesContent?.careers?.title || ''}
                               onChange={(e) => updatePageField('careers', 'title', e.target.value)}
                               placeholder="Careers at Avora Library"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Careers Inquiries Email</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Careers Inquiries Email</label>
                             <input
                               type="email"
                               value={cmsForm?.pagesContent?.careers?.contactEmail || ''}
                               onChange={(e) => updatePageField('careers', 'contactEmail', e.target.value)}
                               placeholder="careers@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Subtitle</label>
                           <textarea
                             rows={2}
                             value={cmsForm?.pagesContent?.careers?.subtitle || ''}
                             onChange={(e) => updatePageField('careers', 'subtitle', e.target.value)}
                             placeholder="Join our mission to empower the next generation of serialized writers..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
@@ -5360,7 +5360,7 @@ export default function AdminPanel() {
                                     value={job.title || ''}
                                     onChange={(e) => updateOpeningItem(idx, 'title', e.target.value)}
                                     placeholder="e.g. Senior Editorial Curator"
-                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                                   />
                                 </div>
                                 <div>
@@ -5370,7 +5370,7 @@ export default function AdminPanel() {
                                     value={job.department || ''}
                                     onChange={(e) => updateOpeningItem(idx, 'department', e.target.value)}
                                     placeholder="e.g. Editorial & Content"
-                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                                   />
                                 </div>
                               </div>
@@ -5382,7 +5382,7 @@ export default function AdminPanel() {
                                     value={job.type || ''}
                                     onChange={(e) => updateOpeningItem(idx, 'type', e.target.value)}
                                     placeholder="e.g. Remote • Full-time"
-                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                                   />
                                 </div>
                                 <div>
@@ -5392,7 +5392,7 @@ export default function AdminPanel() {
                                     value={job.applyEmail || ''}
                                     onChange={(e) => updateOpeningItem(idx, 'applyEmail', e.target.value)}
                                     placeholder="careers@avoralibrary.com"
-                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                    className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                                   />
                                 </div>
                               </div>
@@ -5408,7 +5408,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Press &amp; Media Kit Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Press &amp; Media Kit Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /press</p>
                         </div>
                         <Link href="/press" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5419,46 +5419,46 @@ export default function AdminPanel() {
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                             <input
                               type="text"
                               value={cmsForm?.pagesContent?.press?.title || ''}
                               onChange={(e) => updatePageField('press', 'title', e.target.value)}
                               placeholder="Press & Media Kit"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Press Inquiries Email</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Press Inquiries Email</label>
                             <input
                               type="email"
                               value={cmsForm?.pagesContent?.press?.pressEmail || ''}
                               onChange={(e) => updatePageField('press', 'pressEmail', e.target.value)}
                               placeholder="press@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Subtitle</label>
                           <textarea
                             rows={2}
                             value={cmsForm?.pagesContent?.press?.subtitle || ''}
                             onChange={(e) => updatePageField('press', 'subtitle', e.target.value)}
                             placeholder="Official announcements, brand assets, and media contact info."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Press Statement / Media Kit Details</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Press Statement / Media Kit Details</label>
                           <textarea
                             rows={4}
                             value={cmsForm?.pagesContent?.press?.content || ''}
                             onChange={(e) => updatePageField('press', 'content', e.target.value)}
                             placeholder="For press inquiries, author interviews, or brand assets..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
                       </div>
@@ -5470,7 +5470,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Brand Partnerships Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Brand Partnerships Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /partnerships</p>
                         </div>
                         <Link href="/partnerships" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5481,46 +5481,46 @@ export default function AdminPanel() {
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                             <input
                               type="text"
                               value={cmsForm?.pagesContent?.partnerships?.title || ''}
                               onChange={(e) => updatePageField('partnerships', 'title', e.target.value)}
                               placeholder="Brand Partnerships"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block font-bold text-slate-400 mb-1">Partnerships Inquiries Email</label>
+                            <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Partnerships Inquiries Email</label>
                             <input
                               type="email"
                               value={cmsForm?.pagesContent?.partnerships?.partnerEmail || ''}
                               onChange={(e) => updatePageField('partnerships', 'partnerEmail', e.target.value)}
                               placeholder="partnerships@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Subtitle</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Subtitle</label>
                           <textarea
                             rows={2}
                             value={cmsForm?.pagesContent?.partnerships?.subtitle || ''}
                             onChange={(e) => updatePageField('partnerships', 'subtitle', e.target.value)}
                             placeholder="Collaborate with Avora Library on writing contests, literary sponsorships, and adaptations."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Partnerships Overview Content</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Partnerships Overview Content</label>
                           <textarea
                             rows={4}
                             value={cmsForm?.pagesContent?.partnerships?.content || ''}
                             onChange={(e) => updatePageField('partnerships', 'content', e.target.value)}
                             placeholder="Connect with an engaged global audience of serialized readers and creators..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
                       </div>
@@ -5532,7 +5532,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Terms of Service Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Terms of Service Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /terms</p>
                         </div>
                         <Link href="/terms" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5542,22 +5542,22 @@ export default function AdminPanel() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.terms?.title || ''}
                             onChange={(e) => updatePageField('terms', 'title', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Last Updated Date</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.terms?.lastUpdated || ''}
                             onChange={(e) => updatePageField('terms', 'lastUpdated', e.target.value)}
                             placeholder="e.g. March 2026"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -5591,14 +5591,14 @@ export default function AdminPanel() {
                               value={sec.heading || ''}
                               onChange={(e) => updateSectionItem('terms', idx, 'heading', e.target.value)}
                               placeholder="Clause Heading (e.g. 1. Acceptance of Terms)"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700"
                             />
                             <textarea
                               rows={3}
                               value={sec.content || ''}
                               onChange={(e) => updateSectionItem('terms', idx, 'content', e.target.value)}
                               placeholder="Clause content details..."
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         ))}
@@ -5611,7 +5611,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Privacy Policy Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Privacy Policy Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /privacy</p>
                         </div>
                         <Link href="/privacy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5621,22 +5621,22 @@ export default function AdminPanel() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Page Title</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Page Title</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.privacy?.title || ''}
                             onChange={(e) => updatePageField('privacy', 'title', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block font-bold text-slate-400 mb-1">Last Updated Date</label>
+                          <label className="block font-bold text-slate-600 dark:text-slate-300 mb-1">Last Updated Date</label>
                           <input
                             type="text"
                             value={cmsForm?.pagesContent?.privacy?.lastUpdated || ''}
                             onChange={(e) => updatePageField('privacy', 'lastUpdated', e.target.value)}
                             placeholder="e.g. March 2026"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -5670,14 +5670,14 @@ export default function AdminPanel() {
                               value={sec.heading || ''}
                               onChange={(e) => updateSectionItem('privacy', idx, 'heading', e.target.value)}
                               placeholder="Clause Heading (e.g. 1. Information We Collect)"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700"
                             />
                             <textarea
                               rows={3}
                               value={sec.content || ''}
                               onChange={(e) => updateSectionItem('privacy', idx, 'content', e.target.value)}
                               placeholder="Clause content details..."
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         ))}
@@ -5690,7 +5690,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">DMCA Copyright Policy Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">DMCA Copyright Policy Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /dmca</p>
                         </div>
                         <Link href="/dmca" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5707,7 +5707,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.dmca?.title || ''}
                               onChange={(e) => updatePageField('dmca', 'title', e.target.value)}
                               placeholder="DMCA Policy"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
@@ -5717,7 +5717,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.dmca?.agentEmail || ''}
                               onChange={(e) => updatePageField('dmca', 'agentEmail', e.target.value)}
                               placeholder="copyright@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
@@ -5729,7 +5729,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.dmca?.subjectLine || ''}
                             onChange={(e) => updatePageField('dmca', 'subjectLine', e.target.value)}
                             placeholder="DMCA Notice - [Story Title]"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -5740,7 +5740,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.dmca?.intro || ''}
                             onChange={(e) => updatePageField('dmca', 'intro', e.target.value)}
                             placeholder="Avora Library respects intellectual property rights..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
@@ -5751,7 +5751,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.dmca?.requirementsTitle || ''}
                             onChange={(e) => updatePageField('dmca', 'requirementsTitle', e.target.value)}
                             placeholder="Notice Requirements"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -5778,7 +5778,7 @@ export default function AdminPanel() {
                                 value={req || ''}
                                 onChange={(e) => updateListItem('dmca', 'requirements', idx, e.target.value)}
                                 placeholder="Requirement description..."
-                                className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
                               />
                               <button
                                 type="button"
@@ -5800,7 +5800,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Content &amp; Safety Policy Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Content &amp; Safety Policy Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /content-policy</p>
                         </div>
                         <Link href="/content-policy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5816,7 +5816,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.contentPolicy?.title || ''}
                             onChange={(e) => updatePageField('contentPolicy', 'title', e.target.value)}
                             placeholder="Content & Safety Policy"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                         <div>
@@ -5826,7 +5826,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.contentPolicy?.lastUpdated || ''}
                             onChange={(e) => updatePageField('contentPolicy', 'lastUpdated', e.target.value)}
                             placeholder="e.g. March 2026"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -5860,14 +5860,14 @@ export default function AdminPanel() {
                               value={sec.heading || ''}
                               onChange={(e) => updateSectionItem('contentPolicy', idx, 'heading', e.target.value)}
                               placeholder="Section Heading (e.g. Prohibited Content)"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700"
                             />
                             <textarea
                               rows={3}
                               value={sec.content || ''}
                               onChange={(e) => updateSectionItem('contentPolicy', idx, 'content', e.target.value)}
                               placeholder="Section details..."
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         ))}
@@ -5880,7 +5880,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Accessibility Statement Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Accessibility Statement Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /accessibility</p>
                         </div>
                         <Link href="/accessibility" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5896,7 +5896,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.accessibility?.title || ''}
                             onChange={(e) => updatePageField('accessibility', 'title', e.target.value)}
                             placeholder="Accessibility Statement"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                         <div>
@@ -5906,7 +5906,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.accessibility?.lastUpdated || ''}
                             onChange={(e) => updatePageField('accessibility', 'lastUpdated', e.target.value)}
                             placeholder="e.g. March 2026"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -5918,7 +5918,7 @@ export default function AdminPanel() {
                           value={cmsForm?.pagesContent?.accessibility?.intro || ''}
                           onChange={(e) => updatePageField('accessibility', 'intro', e.target.value)}
                           placeholder="Avora Library is committed to digital accessibility..."
-                          className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                          className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                         />
                       </div>
 
@@ -5945,7 +5945,7 @@ export default function AdminPanel() {
                               value={feat || ''}
                               onChange={(e) => updateListItem('accessibility', 'features', idx, e.target.value)}
                               placeholder="Feature description..."
-                              className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                              className="flex-1 p-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs"
                             />
                             <button
                               type="button"
@@ -5966,7 +5966,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Payment Policy Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Payment Policy Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /payment-policy</p>
                         </div>
                         <Link href="/payment-policy" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -5982,7 +5982,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.paymentPolicy?.title || ''}
                             onChange={(e) => updatePageField('paymentPolicy', 'title', e.target.value)}
                             placeholder="Payment Policy"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                         <div>
@@ -5992,7 +5992,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.paymentPolicy?.lastUpdated || ''}
                             onChange={(e) => updatePageField('paymentPolicy', 'lastUpdated', e.target.value)}
                             placeholder="e.g. March 2026"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -6026,14 +6026,14 @@ export default function AdminPanel() {
                               value={sec.heading || ''}
                               onChange={(e) => updateSectionItem('paymentPolicy', idx, 'heading', e.target.value)}
                               placeholder="Heading (e.g. 100% Free Reading)"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700"
                             />
                             <textarea
                               rows={3}
                               value={sec.content || ''}
                               onChange={(e) => updateSectionItem('paymentPolicy', idx, 'content', e.target.value)}
                               placeholder="Clause content details..."
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 leading-relaxed"
                             />
                           </div>
                         ))}
@@ -6046,7 +6046,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Help Center &amp; FAQ Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Help Center &amp; FAQ Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /help</p>
                         </div>
                         <Link href="/help" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -6062,7 +6062,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.help?.title || ''}
                             onChange={(e) => updatePageField('help', 'title', e.target.value)}
                             placeholder="Help Center & FAQ"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -6073,7 +6073,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.help?.subtitle || ''}
                             onChange={(e) => updatePageField('help', 'subtitle', e.target.value)}
                             placeholder="Answers to common questions about reading, author tools, and PWA setup."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
@@ -6109,14 +6109,14 @@ export default function AdminPanel() {
                                 value={faq.q || ''}
                                 onChange={(e) => updateFaqItem('help', idx, 'q', e.target.value)}
                                 placeholder="Question (e.g. How do inline paragraph comments work?)"
-                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                               />
                               <textarea
                                 rows={3}
                                 value={faq.a || ''}
                                 onChange={(e) => updateFaqItem('help', idx, 'a', e.target.value)}
                                 placeholder="Answer details..."
-                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
                               />
                             </div>
                           ))}
@@ -6132,7 +6132,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.help?.supportHeading || ''}
                               onChange={(e) => updatePageField('help', 'supportHeading', e.target.value)}
                               placeholder="Still need assistance?"
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                             />
                           </div>
                           <div>
@@ -6142,7 +6142,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.help?.supportText || ''}
                               onChange={(e) => updatePageField('help', 'supportText', e.target.value)}
                               placeholder="Our support desk is available to assist authors and readers..."
-                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                              className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
                             />
                           </div>
                         </div>
@@ -6155,7 +6155,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Author &amp; Community Guidelines</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Author &amp; Community Guidelines</h4>
                           <p className="text-[11px] text-slate-400">Live at /guidelines</p>
                         </div>
                         <Link href="/guidelines" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -6170,7 +6170,7 @@ export default function AdminPanel() {
                             type="text"
                             value={cmsForm?.pagesContent?.guidelines?.title || ''}
                             onChange={(e) => updatePageField('guidelines', 'title', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -6180,7 +6180,7 @@ export default function AdminPanel() {
                             type="text"
                             value={cmsForm?.pagesContent?.guidelines?.subtitle || ''}
                             onChange={(e) => updatePageField('guidelines', 'subtitle', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -6190,7 +6190,7 @@ export default function AdminPanel() {
                             rows={3}
                             value={cmsForm?.pagesContent?.guidelines?.content || ''}
                             onChange={(e) => updatePageField('guidelines', 'content', e.target.value)}
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
 
@@ -6226,14 +6226,14 @@ export default function AdminPanel() {
                                 value={sec.heading || ''}
                                 onChange={(e) => updateSectionItem('guidelines', idx, 'heading', e.target.value)}
                                 placeholder="Heading (e.g. 1. The Power of Paragraph Hooks)"
-                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none border border-slate-200 dark:border-slate-700 text-xs"
                               />
                               <textarea
                                 rows={3}
                                 value={sec.content || ''}
                                 onChange={(e) => updateSectionItem('guidelines', idx, 'content', e.target.value)}
                                 placeholder="Section guidance details..."
-                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
+                                className="w-full p-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none border border-slate-200 dark:border-slate-700 text-xs leading-relaxed"
                               />
                             </div>
                           ))}
@@ -6247,7 +6247,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Contact Us Page</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Contact Us Page</h4>
                           <p className="text-[11px] text-slate-400">Live at /contact</p>
                         </div>
                         <Link href="/contact" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -6263,7 +6263,7 @@ export default function AdminPanel() {
                               type="text"
                               value={cmsForm?.pagesContent?.contact?.title || ''}
                               onChange={(e) => updatePageField('contact', 'title', e.target.value)}
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
@@ -6272,7 +6272,7 @@ export default function AdminPanel() {
                               type="text"
                               value={cmsForm?.pagesContent?.contact?.subtitle || ''}
                               onChange={(e) => updatePageField('contact', 'subtitle', e.target.value)}
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
@@ -6285,7 +6285,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.contact?.supportEmail || ''}
                               onChange={(e) => updatePageField('contact', 'supportEmail', e.target.value)}
                               placeholder="support@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
@@ -6295,7 +6295,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.contact?.pressEmail || ''}
                               onChange={(e) => updatePageField('contact', 'pressEmail', e.target.value)}
                               placeholder="press@avoralibrary.com"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
@@ -6307,7 +6307,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.contact?.officeAddress || ''}
                             onChange={(e) => updatePageField('contact', 'officeAddress', e.target.value)}
                             placeholder="Avora Library Inc., 100 Storyteller Way, San Francisco, CA"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
                       </div>
@@ -6319,7 +6319,7 @@ export default function AdminPanel() {
                     <div className="space-y-4 text-xs">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                         <div>
-                          <h4 className="font-black text-sm">Homepage Hero Section</h4>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">Homepage Hero Section</h4>
                           <p className="text-[11px] text-slate-400">Live at / (Public Landing)</p>
                         </div>
                         <Link href="/" target="_blank" className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1">
@@ -6335,7 +6335,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.hero?.badge || ''}
                             onChange={(e) => updatePageField('hero', 'badge', e.target.value)}
                             placeholder="Original Serialized Fiction & Community"
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                           />
                         </div>
 
@@ -6347,7 +6347,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.hero?.titlePrefix || ''}
                               onChange={(e) => updatePageField('hero', 'titlePrefix', e.target.value)}
                               placeholder="Stories That"
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                           <div>
@@ -6357,7 +6357,7 @@ export default function AdminPanel() {
                               value={cmsForm?.pagesContent?.hero?.titleHighlight || ''}
                               onChange={(e) => updatePageField('hero', 'titleHighlight', e.target.value)}
                               placeholder="Capture Your Imagination."
-                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-semibold outline-none"
+                              className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold outline-none"
                             />
                           </div>
                         </div>
@@ -6369,7 +6369,7 @@ export default function AdminPanel() {
                             value={cmsForm?.pagesContent?.hero?.subtitle || ''}
                             onChange={(e) => updatePageField('hero', 'subtitle', e.target.value)}
                             placeholder="Platform description..."
-                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-medium outline-none leading-relaxed"
+                            className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium outline-none leading-relaxed"
                           />
                         </div>
                       </div>
