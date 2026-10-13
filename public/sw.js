@@ -1,10 +1,11 @@
 // Avora Library Production-Grade Service Worker
 // Offline Reading, Network-First for dynamic data & Strict API/Admin exclusions
-const CACHE_NAME = 'avora-library-v4';
+const CACHE_NAME = 'avora-library-v5';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/browse'
+  '/browse',
+  '/admin'
 ];
 
 self.addEventListener('install', (event) => {
@@ -41,8 +42,8 @@ self.addEventListener('fetch', (event) => {
   // 2. Strict Bypass: Non-GET requests (POST, PUT, DELETE, PATCH) must never be intercepted
   if (request.method !== 'GET') return;
 
-  // 3. Strict Bypass: Admin panel, Dynamic API routes & Auth endpoints MUST ALWAYS go straight to network
-  if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/api/')) return;
+  // 3. Strict Bypass: Dynamic API routes & Auth endpoints MUST ALWAYS go straight to network
+  if (url.pathname.startsWith('/api/')) return;
 
   // 4. Strict Bypass: Next.js dev server HMR & internal telemetry
   if (url.pathname.includes('/_next/webpack-hmr') || url.pathname.includes('__nextjs_')) return;
