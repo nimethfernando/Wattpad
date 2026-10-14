@@ -87,6 +87,7 @@ export async function POST(request) {
       type: mode === 'subscribe' ? 'subscription' : (mode === 'coins' ? 'coins' : 'donation'),
       plan: metadata.plan || paymentDetails.notes?.plan || null,
       amount: amountInInr,
+      usdAmount: metadata.amountInUsd ? Number(metadata.amountInUsd) : Number((amountInInr / 85).toFixed(2)),
       currency: 'INR',
       authorPayout,
       platformCommission,

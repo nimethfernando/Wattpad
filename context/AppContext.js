@@ -2723,7 +2723,7 @@ export function AppProvider({ children }) {
     setPaymentModalOpen(true);
   };
 
-  const addTransaction = ({ type, amount, currency = 'INR', plan = null, cardBrand = 'upi', cardLast4 = 'UPI', paymentMethod = 'Razorpay (UPI / Card)', razorpayPaymentId = '', razorpayOrderId = '', author, authorUsername, storyTitle, donorName, message }) => {
+  const addTransaction = ({ type, amount, usdAmount = null, currency = 'INR', plan = null, cardBrand = 'card', cardLast4 = 'Card', paymentMethod = 'Credit / Debit Card (Razorpay)', razorpayPaymentId = '', razorpayOrderId = '', author, authorUsername, storyTitle, donorName, message }) => {
     const totalAmount = Number(amount) || 0;
     const isDonation = type === 'donation' || type === 'tip';
     // 90% goes directly to the author, 10% platform commission
@@ -2739,13 +2739,14 @@ export function AppProvider({ children }) {
       type,
       plan,
       amount: totalAmount,
+      usdAmount: usdAmount ? Number(usdAmount) : Number((totalAmount / 85).toFixed(2)),
       currency,
       authorPayout,
       platformCommission,
       revenueSplit: isDonation ? '90% Author / 10% Platform' : '100% Platform VIP',
       cardBrand,
       cardLast4,
-      paymentMethod: paymentMethod || 'Razorpay Gateway',
+      paymentMethod: paymentMethod || 'Credit / Debit Card (Razorpay)',
       user: donorName || user?.name || "Anonymous Reader",
       author: author || (isDonation ? "Author" : "Platform"),
       authorUsername: authorUsername || (isDonation ? "author" : "avoralibrary"),
@@ -2770,15 +2771,17 @@ export function AppProvider({ children }) {
 
   const subscribe = (plan, paymentDetails) => {
     const isAnnual = String(plan).toLowerCase().includes('annual');
-    const amount = isAnnual ? 2499 : 299;
+    const amount = isAnnual ? 2549 : 339;
+    const usdAmount = isAnnual ? 29.99 : 3.99;
     addTransaction({
       type: 'subscription',
       amount,
+      usdAmount,
       currency: 'INR',
       plan,
-      cardBrand: paymentDetails?.brand || paymentDetails?.cardBrand || 'upi',
-      cardLast4: paymentDetails?.last4 || paymentDetails?.cardLast4 || 'UPI',
-      paymentMethod: paymentDetails?.paymentMethod || 'Razorpay UPI / Cards',
+      cardBrand: paymentDetails?.brand || paymentDetails?.cardBrand || 'card',
+      cardLast4: paymentDetails?.last4 || paymentDetails?.cardLast4 || 'Card',
+      paymentMethod: paymentDetails?.paymentMethod || 'Credit / Debit Card (Razorpay)',
       razorpayPaymentId: paymentDetails?.razorpayPaymentId || '',
       razorpayOrderId: paymentDetails?.razorpayOrderId || '',
       author: 'Platform',
@@ -2789,7 +2792,7 @@ export function AppProvider({ children }) {
       active: true,
       plan,
       renewDate: new Date(Date.now() + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      paymentMethod: paymentDetails?.paymentMethod || 'Razorpay UPI',
+      paymentMethod: paymentDetails?.paymentMethod || 'Credit / Debit Card (Razorpay)',
       razorpayPaymentId: paymentDetails?.razorpayPaymentId || ''
     });
   };

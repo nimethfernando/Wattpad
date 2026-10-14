@@ -365,13 +365,13 @@ export default function SettingsPage() {
                   onClick={() => openPaymentModal({ type: 'subscribe', plan: 'monthly' })}
                   className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer"
                 >
-                  Upgrade to Monthly VIP (₹299/mo)
+                  Upgrade to Monthly VIP ($3.99/mo)
                 </button>
                 <button
                   onClick={() => openPaymentModal({ type: 'subscribe', plan: 'annual' })}
                   className="px-6 py-2.5 rounded-full border border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-bold text-xs transition-all cursor-pointer"
                 >
-                  Annual Pass (₹2,499/yr • Save 30%)
+                  Annual Pass ($29.99/yr • Save 37%)
                 </button>
               </div>
             </div>

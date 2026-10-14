@@ -7,7 +7,8 @@ export async function POST(request) {
     const {
       mode = 'donate', // 'donate' | 'subscribe' | 'coins'
       plan = 'monthly', // 'monthly' | 'annual'
-      amount, // In INR (e.g. 50, 100, 299, 2499)
+      amount, // In INR (e.g. 85, 255, 339, 2549)
+      amountInUsd, // In USD (e.g. 1, 3, 3.99, 29.99)
       currency = 'INR',
       donorName = 'Reader',
       donorEmail,
@@ -35,12 +36,12 @@ export async function POST(request) {
     let finalInr = 0;
     if (mode === 'subscribe') {
       const isAnnual = String(plan).toLowerCase().includes('annual');
-      finalInr = isAnnual ? 2499 : 299; // ₹2,499/year or ₹299/month
+      finalInr = Number(amount) || (isAnnual ? 2549 : 339); // $29.99/yr ≈ ₹2,549 or $3.99/mo ≈ ₹339
     } else if (mode === 'coins') {
       finalInr = Number(amount) || 99; // Default ₹99
     } else {
       // Tip Author (mode === 'donate')
-      finalInr = Math.max(10, Number(amount) || 100); // Minimum ₹10 tip
+      finalInr = Math.max(10, Number(amount) || 85); // Minimum ₹10 tip (default $1 ≈ ₹85)
     }
 
     // Razorpay amounts are strictly in paise (1 INR = 100 paise)
@@ -48,6 +49,8 @@ export async function POST(request) {
 
     // Create unique receipt identifier (max 40 chars for Razorpay)
     const receiptId = `rcpt_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+
+    const calculatedUsd = amountInUsd ? Number(amountInUsd).toFixed(2) : (finalInr / 85).toFixed(2);
 
     const orderOptions = {
       amount: amountInPaise,
@@ -57,6 +60,9 @@ export async function POST(request) {
         platform: 'Avora Library',
         mode,
         plan: mode === 'subscribe' ? plan : '',
+        amountInUsd: calculatedUsd,
+        amountInInr: String(finalInr),
+        paymentInstrument: 'card_only',
         author: mode === 'subscribe' ? 'Avora Platform' : author,
         authorUsername: mode === 'subscribe' ? 'avoralibrary' : authorUsername,
         storyTitle: mode === 'subscribe' ? 'Avora VIP Membership' : storyTitle,

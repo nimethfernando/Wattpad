@@ -35,17 +35,20 @@ export default function PaymentModal() {
   const targetAuthor = paymentModalData?.author || 'Author';
   const targetStory = paymentModalData?.story || null;
 
-  // Tip / Donation State (in INR)
-  const [selectedInrAmount, setSelectedInrAmount] = useState(100);
-  const [customInrAmount, setCustomInrAmount] = useState('');
+  // Currency Conversion Config (1 USD ≈ 85 INR base exchange rate)
+  const USD_TO_INR_RATE = 85;
+
+  // Tip / Donation State (in USD)
+  const [selectedUsdAmount, setSelectedUsdAmount] = useState(3);
+  const [customUsdAmount, setCustomUsdAmount] = useState('');
   const [donorMessage, setDonorMessage] = useState('');
 
-  // Subscription Plan State (in INR)
+  // Subscription Plan State (in USD)
   const getInitialPlan = (p) => {
     if (p === 'annual' || String(p).toLowerCase().includes('annual')) {
-      return 'Annual VIP (₹2,499/yr)';
+      return 'Annual VIP ($29.99/yr)';
     }
-    return 'Monthly VIP (₹299/mo)';
+    return 'Monthly VIP ($3.99/mo)';
   };
 
   const [selectedPlan, setSelectedPlan] = useState(getInitialPlan(paymentModalData?.plan));
@@ -64,19 +67,25 @@ export default function PaymentModal() {
 
   if (!paymentModalOpen) return null;
 
-  const finalInrAmount = mode === 'donate'
-    ? (customInrAmount ? Number(customInrAmount) : selectedInrAmount)
-    : (selectedPlan.includes('Annual') ? 2499 : 299);
+  // Dollar amount displayed on website
+  const finalUsdAmount = mode === 'donate'
+    ? (customUsdAmount ? Math.max(1, Number(customUsdAmount)) : selectedUsdAmount)
+    : (selectedPlan.includes('Annual') ? 29.99 : 3.99);
 
-  // Author 90/10 Split
-  const authorShare = Number((finalInrAmount * 0.90).toFixed(2));
-  const platformFee = Number((finalInrAmount * 0.10).toFixed(2));
+  // Converted INR amount actually charged by Razorpay
+  const finalInrAmount = Math.max(10, Math.round(finalUsdAmount * USD_TO_INR_RATE));
+
+  // Author 90/10 Split in USD & INR
+  const authorShareUsd = Number((finalUsdAmount * 0.90).toFixed(2));
+  const platformFeeUsd = Number((finalUsdAmount * 0.10).toFixed(2));
+  const authorShareInr = Math.round(finalInrAmount * 0.90);
+  const platformFeeInr = Math.round(finalInrAmount * 0.10);
 
   /**
-   * Production Razorpay Checkout Handler
+   * Production Razorpay Checkout Handler (Restricted to Credit & Debit Cards)
    * 1. Dynamically loads official checkout.js
-   * 2. Calls /api/razorpay/create-order to create server-side order
-   * 3. Launches official Razorpay modal (UPI, Cards, NetBanking, Wallets)
+   * 2. Calls /api/razorpay/create-order to create server-side order in INR (converted from USD)
+   * 3. Launches official Razorpay modal strictly with Debit & Credit card options
    * 4. Cryptographically verifies HMAC signature via /api/razorpay/verify-payment
    */
   const handleRazorpayCheckout = async (e) => {
@@ -92,7 +101,7 @@ export default function PaymentModal() {
         throw new Error('Unable to connect to Razorpay payment network. Please check your internet connection.');
       }
 
-      // 2. Request order from backend
+      // 2. Request order from backend (charged in INR converted from USD)
       const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,6 +109,7 @@ export default function PaymentModal() {
           mode,
           plan: mode === 'subscribe' ? selectedPlan : null,
           amount: finalInrAmount,
+          amountInUsd: finalUsdAmount,
           currency: 'INR',
           donorName: user?.name || 'Reader',
           donorEmail: user?.email || '',
@@ -120,15 +130,15 @@ export default function PaymentModal() {
         throw new Error(orderData.error || 'Failed to initialize secure payment order.');
       }
 
-      // 3. Configure Razorpay Standard Checkout
+      // 3. Configure Razorpay Standard Checkout (Restricted to Credit & Debit Cards Only)
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'Avora Library',
         description: mode === 'subscribe' 
-          ? `VIP Membership • ${selectedPlan}` 
-          : `Author Tip for ${targetAuthor}`,
+          ? `VIP Membership • ${selectedPlan} (~₹${finalInrAmount.toLocaleString('en-IN')})` 
+          : `Author Tip ($${finalUsdAmount.toFixed(2)} USD ~₹${finalInrAmount.toLocaleString('en-IN')}) for ${targetAuthor}`,
         image: 'https://www.avoralibrary.com/tab-icon.png',
         order_id: orderData.orderId,
         prefill: {
@@ -136,7 +146,12 @@ export default function PaymentModal() {
           email: user?.email || '',
           contact: user?.phone || ''
         },
-        notes: orderData.notes || {},
+        notes: {
+          ...(orderData.notes || {}),
+          amountInUsd: String(finalUsdAmount),
+          amountInInr: String(finalInrAmount),
+          payment_type: 'card_only'
+        },
         theme: {
           color: '#f97316' // Avora brand orange
         },
@@ -144,6 +159,33 @@ export default function PaymentModal() {
           confirm_close: true,
           ondismiss: () => {
             setIsProcessing(false);
+          }
+        },
+        // Restrict payment instruments strictly to Credit & Debit Cards
+        method: {
+          card: true,
+          upi: false,
+          netbanking: false,
+          wallet: false,
+          paylater: false,
+          emi: false
+        },
+        config: {
+          display: {
+            blocks: {
+              cards: {
+                name: "Debit & Credit Cards",
+                instruments: [
+                  {
+                    method: "card"
+                  }
+                ]
+              }
+            },
+            sequence: ["block.cards"],
+            preferences: {
+              show_default_blocks: false
+            }
           }
         },
         handler: async (response) => {
@@ -160,6 +202,7 @@ export default function PaymentModal() {
                   mode,
                   plan: mode === 'subscribe' ? selectedPlan : null,
                   amount: finalInrAmount,
+                  amountInUsd: finalUsdAmount,
                   donorName: user?.name || 'Reader',
                   author: targetAuthor,
                   authorUsername: paymentModalData?.authorUsername || 'author',
@@ -180,9 +223,9 @@ export default function PaymentModal() {
             // 5. Update local platform state
             if (mode === 'subscribe') {
               subscribe(selectedPlan, {
-                brand: verifiedTx.methodType || 'upi',
-                last4: verifiedTx.cardLast4 || 'UPI',
-                paymentMethod: verifiedTx.paymentMethod,
+                brand: verifiedTx.cardBrand || verifiedTx.methodType || 'card',
+                last4: verifiedTx.cardLast4 || 'Card',
+                paymentMethod: verifiedTx.paymentMethod || 'Credit / Debit Card',
                 razorpayPaymentId: verifiedTx.razorpayPaymentId,
                 razorpayOrderId: verifiedTx.razorpayOrderId
               });
@@ -191,11 +234,12 @@ export default function PaymentModal() {
             const receipt = addTransaction({
               type: mode === 'subscribe' ? 'subscription' : 'donation',
               amount: finalInrAmount,
+              usdAmount: finalUsdAmount,
               currency: 'INR',
               plan: mode === 'subscribe' ? selectedPlan : null,
-              cardBrand: verifiedTx.methodType || 'upi',
-              cardLast4: verifiedTx.cardLast4 || 'UPI',
-              paymentMethod: verifiedTx.paymentMethod,
+              cardBrand: verifiedTx.cardBrand || verifiedTx.methodType || 'card',
+              cardLast4: verifiedTx.cardLast4 || 'Card',
+              paymentMethod: verifiedTx.paymentMethod || 'Credit / Debit Card (Razorpay)',
               razorpayPaymentId: verifiedTx.razorpayPaymentId,
               razorpayOrderId: verifiedTx.razorpayOrderId,
               author: mode === 'subscribe' ? 'Avora Platform' : targetAuthor,
@@ -208,8 +252,9 @@ export default function PaymentModal() {
             setIsProcessing(false);
             setSuccessReceipt({
               ...receipt,
+              usdAmount: finalUsdAmount,
               razorpayPaymentId: verifiedTx.razorpayPaymentId,
-              paymentMethod: verifiedTx.paymentMethod
+              paymentMethod: verifiedTx.paymentMethod || 'Credit / Debit Card (Razorpay)'
             });
           } catch (verifyErr) {
             console.error('Verification error:', verifyErr);
@@ -297,10 +342,15 @@ export default function PaymentModal() {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Amount Paid</span>
-                <span className="text-lg font-black text-brand-600 dark:text-brand-400">
-                  ₹{finalInrAmount.toLocaleString('en-IN')} INR
-                </span>
+                <span className="text-slate-400">Amount Charged</span>
+                <div className="text-right">
+                  <span className="text-lg font-black text-brand-600 dark:text-brand-400">
+                    ${finalUsdAmount.toFixed(2)} USD
+                  </span>
+                  <span className="text-[11px] text-slate-400 block font-mono">
+                    (₹{finalInrAmount.toLocaleString('en-IN')} INR deducted)
+                  </span>
+                </div>
               </div>
               
               {mode !== 'subscribe' && (
@@ -311,12 +361,12 @@ export default function PaymentModal() {
                       Author Payout (90%)
                     </span>
                     <span className="font-black text-emerald-700 dark:text-emerald-300">
-                      ₹{authorShare.toLocaleString('en-IN')} INR
+                      ${authorShareUsd.toFixed(2)} USD <span className="font-normal text-[11px] opacity-80">(₹{authorShareInr.toLocaleString('en-IN')})</span>
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
                     <span>Platform Infrastructure (10%)</span>
-                    <span>₹{platformFee.toLocaleString('en-IN')} INR</span>
+                    <span>${platformFeeUsd.toFixed(2)} USD <span className="opacity-80">(₹{platformFeeInr.toLocaleString('en-IN')})</span></span>
                   </div>
                 </div>
               )}
@@ -324,7 +374,7 @@ export default function PaymentModal() {
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Payment Gateway</span>
                 <span className="font-bold text-slate-700 dark:text-slate-200">
-                  {successReceipt.paymentMethod || 'Razorpay UPI / Cards'}
+                  {successReceipt.paymentMethod || 'Credit / Debit Card (Razorpay)'}
                 </span>
               </div>
 
@@ -391,50 +441,63 @@ export default function PaymentModal() {
               </div>
             )}
 
-            {/* Mode 1: Tip Author Amount Selection (INR) */}
+            {/* Mode 1: Tip Author Amount Selection (USD with INR conversion) */}
             {mode === 'donate' && (
               <div className="space-y-4">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Select Tip Amount (INR ₹)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Select Tip Amount ($ USD)
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    1 USD ≈ ₹{USD_TO_INR_RATE} INR
+                  </span>
+                </div>
                 
-                {/* INR Presets */}
+                {/* USD Presets */}
                 <div className="grid grid-cols-4 gap-2">
-                  {[50, 100, 250, 500].map(amt => (
+                  {[1, 3, 5, 10].map(amt => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => {
-                        setSelectedInrAmount(amt);
-                        setCustomInrAmount('');
+                        setSelectedUsdAmount(amt);
+                        setCustomUsdAmount('');
                         if (errorMessage) setErrorMessage('');
                       }}
-                      className={`py-3 rounded-2xl font-black text-sm transition-all cursor-pointer ${
-                        selectedInrAmount === amt && !customInrAmount
+                      className={`py-3 px-2 rounded-2xl font-black text-xs sm:text-sm transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                        selectedUsdAmount === amt && !customUsdAmount
                           ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 ring-2 ring-brand-500'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
-                      ₹{amt}
+                      <span>${amt}</span>
+                      <span className={`text-[9px] font-normal ${selectedUsdAmount === amt && !customUsdAmount ? 'text-white/80' : 'text-slate-400'}`}>
+                        ~₹{amt * USD_TO_INR_RATE}
+                      </span>
                     </button>
                   ))}
                 </div>
 
-                {/* Custom INR Input */}
+                {/* Custom USD Input */}
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
                   <input
                     type="number"
-                    min="10"
-                    step="5"
-                    placeholder="Enter custom amount in ₹ (e.g. 150)"
-                    value={customInrAmount}
+                    min="1"
+                    step="0.5"
+                    placeholder="Enter custom amount in $ (e.g. 7)"
+                    value={customUsdAmount}
                     onChange={(e) => {
-                      setCustomInrAmount(e.target.value);
+                      setCustomUsdAmount(e.target.value);
                       if (errorMessage) setErrorMessage('');
                     }}
-                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl pl-8 pr-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl pl-8 pr-28 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-brand-500"
                   />
+                  {customUsdAmount && (
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-brand-600 dark:text-brand-400">
+                      ≈ ₹{Math.round(Number(customUsdAmount) * USD_TO_INR_RATE)} INR
+                    </span>
+                  )}
                 </div>
 
                 {/* Author Encouragement Message */}
@@ -465,26 +528,26 @@ export default function PaymentModal() {
                   <div className="flex justify-between text-slate-600 dark:text-slate-300">
                     <span>Direct Author Earnings (90%):</span>
                     <span className="font-extrabold text-emerald-700 dark:text-emerald-300">
-                      ₹{authorShare.toLocaleString('en-IN')} INR
+                      ${authorShareUsd.toFixed(2)} USD <span className="font-normal text-[10px] opacity-80">(₹{authorShareInr.toLocaleString('en-IN')})</span>
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-500 text-[10px]">
                     <span>Platform Servers &amp; Processing (10%):</span>
                     <span className="font-semibold">
-                      ₹{platformFee.toLocaleString('en-IN')} INR
+                      ${platformFeeUsd.toFixed(2)} USD <span className="font-normal opacity-80">(₹{platformFeeInr.toLocaleString('en-IN')})</span>
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Mode 2: VIP Membership Plans (INR) */}
+            {/* Mode 2: VIP Membership Plans (USD with INR conversion) */}
             {mode === 'subscribe' && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   {/* Monthly Pass */}
                   <div
-                    onClick={() => setSelectedPlan('Monthly VIP (₹299/mo)')}
+                    onClick={() => setSelectedPlan('Monthly VIP ($3.99/mo)')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                       selectedPlan.includes('Monthly')
                         ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
@@ -496,14 +559,16 @@ export default function PaymentModal() {
                       {selectedPlan.includes('Monthly') && <Check className="w-4 h-4 text-brand-500" />}
                     </div>
                     <p className="text-xl font-black text-slate-900 dark:text-white">
-                      ₹299<span className="text-xs text-slate-400 font-normal">/mo</span>
+                      $3.99<span className="text-xs text-slate-400 font-normal">/mo</span>
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">Full ad-free access</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      ≈ ₹{Math.round(3.99 * USD_TO_INR_RATE)} INR charged
+                    </p>
                   </div>
 
                   {/* Annual Pass */}
                   <div
-                    onClick={() => setSelectedPlan('Annual VIP (₹2,499/yr)')}
+                    onClick={() => setSelectedPlan('Annual VIP ($29.99/yr)')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative ${
                       selectedPlan.includes('Annual')
                         ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-sm'
@@ -511,16 +576,18 @@ export default function PaymentModal() {
                     }`}
                   >
                     <span className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-brand-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-                      Save 30%
+                      Save 37%
                     </span>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Annual Pass</span>
                       {selectedPlan.includes('Annual') && <Check className="w-4 h-4 text-brand-500" />}
                     </div>
                     <p className="text-xl font-black text-slate-900 dark:text-white">
-                      ₹2,499<span className="text-xs text-slate-400 font-normal">/yr</span>
+                      $29.99<span className="text-xs text-slate-400 font-normal">/yr</span>
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">₹208/month equivalent</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      $2.50/mo equivalent • ≈ ₹{Math.round(29.99 * USD_TO_INR_RATE)} INR
+                    </p>
                   </div>
                 </div>
 
@@ -534,7 +601,7 @@ export default function PaymentModal() {
               </div>
             )}
 
-            {/* Supported Payment Channels Banner (India & International) */}
+            {/* Supported Payment Channels Banner (Debit & Credit Cards Only) */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
@@ -544,23 +611,31 @@ export default function PaymentModal() {
                 <span className="text-[10px] font-mono text-slate-400">Powered by Razorpay</span>
               </div>
 
-              {/* Payment Methods Badges */}
-              <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
-                  <Smartphone className="w-4 h-4 text-emerald-500" />
-                  <span>UPI / QR Code</span>
-                  <span className="text-[9px] text-slate-400 font-normal">GPay, PhonePe, Paytm</span>
+              {/* Debit & Credit Cards Only Banner */}
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      Debit &amp; Credit Cards
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                      RuPay, Visa, Mastercard, American Express, Maestro
+                    </p>
+                  </div>
                 </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
-                  <CreditCard className="w-4 h-4 text-blue-500" />
-                  <span>Debit &amp; Credit Cards</span>
-                  <span className="text-[9px] text-slate-400 font-normal">RuPay, Visa, Master</span>
-                </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1">
-                  <Building className="w-4 h-4 text-purple-500" />
-                  <span>Net Banking</span>
-                  <span className="text-[9px] text-slate-400 font-normal">SBI, HDFC, ICICI, 50+</span>
-                </div>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold shrink-0 whitespace-nowrap">
+                  Cards Only
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                <span>Deducted in INR (~₹{USD_TO_INR_RATE}/$1) via bank card conversion</span>
+                <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                  <Lock className="w-3 h-3" /> 3D Secure OTP
+                </span>
               </div>
             </div>
 
@@ -574,11 +649,11 @@ export default function PaymentModal() {
                 {isProcessing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Connecting to Razorpay Secure Gateway...</span>
+                    <span>Connecting to Razorpay Card Gateway...</span>
                   </>
                 ) : (
                   <>
-                    <span>Pay ₹{finalInrAmount.toLocaleString('en-IN')} with Razorpay</span>
+                    <span>Pay ${finalUsdAmount.toFixed(2)} USD (~₹{finalInrAmount.toLocaleString('en-IN')}) with Card</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
