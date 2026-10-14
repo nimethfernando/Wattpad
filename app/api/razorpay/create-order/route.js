@@ -25,7 +25,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Razorpay gateway is not configured on the server. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.',
+          error: 'Razorpay keys are not yet configured on Vercel. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your Vercel project Settings > Environment Variables.',
           isConfigured: false
         },
         { status: 503 }

@@ -434,7 +434,7 @@ export default function PaymentModal() {
                   <span>{errorMessage}</span>
                   {configMissing && (
                     <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                      To accept live Indian payments, add <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_ID</code> and <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_SECRET</code> in your production <code className="font-mono">.env</code> file.
+                      To accept card payments, add <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_ID</code> and <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200 font-mono">RAZORPAY_KEY_SECRET</code> in your Vercel Project <strong>Settings &gt; Environment Variables</strong> (and in local <code className="font-mono">.env</code>).
                     </p>
                   )}
                 </div>
