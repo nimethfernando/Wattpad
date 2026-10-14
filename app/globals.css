@@ -559,3 +559,73 @@ html.dark .fixed .dark\:bg-slate-900 h6,
 .dark .fixed .dark\:bg-slate-900 h6 {
   color: #f8fafc !important;
 }
+
+/* Reader Theme Specific Protection: Sepia & Light inputs, selects & textareas must never inherit white text */
+.comment-drawer.theme-sepia input,
+.comment-drawer.theme-sepia textarea,
+.comment-drawer.theme-sepia select,
+.sepia-reader input,
+.sepia-reader textarea,
+.sepia-reader select,
+html.dark .comment-drawer.theme-sepia input,
+html.dark .comment-drawer.theme-sepia textarea,
+html.dark .comment-drawer.theme-sepia select,
+html.dark .sepia-reader input,
+html.dark .sepia-reader textarea,
+html.dark .sepia-reader select {
+  color: #2b1d0c !important;
+}
+
+.comment-drawer.theme-sepia select option,
+.sepia-reader select option,
+html.dark .comment-drawer.theme-sepia select option,
+html.dark .sepia-reader select option {
+  background-color: #faf5eb !important;
+  color: #2b1d0c !important;
+}
+
+.comment-drawer.theme-sepia input::placeholder,
+.comment-drawer.theme-sepia textarea::placeholder,
+.sepia-reader input::placeholder,
+.sepia-reader textarea::placeholder,
+html.dark .comment-drawer.theme-sepia input::placeholder,
+html.dark .comment-drawer.theme-sepia textarea::placeholder,
+html.dark .sepia-reader input::placeholder,
+html.dark .sepia-reader textarea::placeholder {
+  color: #8a7258 !important;
+}
+
+.comment-drawer.theme-light input,
+.comment-drawer.theme-light textarea,
+.comment-drawer.theme-light select,
+.light-reader input,
+.light-reader textarea,
+.light-reader select,
+html.dark .comment-drawer.theme-light input,
+html.dark .comment-drawer.theme-light textarea,
+html.dark .comment-drawer.theme-light select,
+html.dark .light-reader input,
+html.dark .light-reader textarea,
+html.dark .light-reader select {
+  color: #0f172a !important;
+}
+
+.comment-drawer.theme-light select option,
+.light-reader select option,
+html.dark .comment-drawer.theme-light select option,
+html.dark .light-reader select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.comment-drawer.theme-light input::placeholder,
+.comment-drawer.theme-light textarea::placeholder,
+.light-reader input::placeholder,
+.light-reader textarea::placeholder,
+html.dark .comment-drawer.theme-light input::placeholder,
+html.dark .comment-drawer.theme-light textarea::placeholder,
+html.dark .light-reader input::placeholder,
+html.dark .light-reader textarea::placeholder {
+  color: #64748b !important;
+}
+

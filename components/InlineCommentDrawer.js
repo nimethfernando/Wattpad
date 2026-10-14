@@ -201,7 +201,7 @@ export default function InlineCommentDrawer({
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity"
         aria-hidden="true"
       />
-      <aside className={`comment-drawer fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-2xl border-l flex flex-col transition-transform animate-slide-left ${
+      <aside className={`comment-drawer theme-${readerTheme} fixed inset-y-0 right-0 w-full sm:w-96 z-50 shadow-2xl border-l flex flex-col transition-transform animate-slide-left ${
         readerTheme === 'dark'
           ? 'bg-slate-900 text-slate-100 border-slate-800'
           : readerTheme === 'sepia'
@@ -209,7 +209,13 @@ export default function InlineCommentDrawer({
           : 'bg-white text-slate-900 border-slate-200'
       }`}>
       {/* Drawer Header */}
-      <div className="p-4 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
+      <div className={`p-4 border-b flex items-center justify-between ${
+        readerTheme === 'sepia'
+          ? 'border-[#ebdcb9] bg-[#f4ecd8]/60'
+          : readerTheme === 'dark'
+          ? 'border-slate-800 bg-slate-900'
+          : 'border-slate-100 bg-slate-50/80'
+      }`}>
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-brand-500" />
           <h3 className="font-extrabold text-sm text-current">
@@ -220,20 +226,31 @@ export default function InlineCommentDrawer({
           <select 
             value={commentSort}
             onChange={(e) => setCommentSort(e.target.value)}
-            className={`text-xs font-bold px-2 py-1.5 rounded-lg outline-none cursor-pointer border ${
+            style={{
+              color: readerTheme === 'sepia' ? '#2b1d0c' : readerTheme === 'dark' ? '#f8fafc' : '#0f172a',
+              backgroundColor: readerTheme === 'sepia' ? '#edd9af' : readerTheme === 'dark' ? '#1e293b' : '#f1f5f9'
+            }}
+            className={`text-xs font-black px-3 py-1.5 rounded-xl outline-none cursor-pointer border shadow-xs transition-colors ${
               readerTheme === 'dark'
-                ? 'bg-slate-800 text-slate-200 border-slate-700'
+                ? 'border-slate-700 hover:border-slate-600'
                 : readerTheme === 'sepia'
-                ? 'bg-[#f4ecd8] text-[#2b1d0c] border-[#ebdcb9]'
-                : 'bg-slate-100 text-slate-800 border-slate-200'
+                ? 'border-[#cfbc99] hover:border-[#bfa780]'
+                : 'border-slate-300 hover:border-slate-400'
             }`}
           >
-            <option value="newest">Newest</option>
-            <option value="likes">Most Liked</option>
+            <option value="newest" style={{ color: '#2b1d0c', backgroundColor: '#faf5eb' }}>Newest</option>
+            <option value="likes" style={{ color: '#2b1d0c', backgroundColor: '#faf5eb' }}>Most Liked</option>
           </select>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              readerTheme === 'sepia'
+                ? 'text-[#7a5c3d] hover:text-[#2b1d0c] hover:bg-black/5'
+                : readerTheme === 'dark'
+                ? 'text-slate-400 hover:text-white hover:bg-white/10'
+                : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            }`}
+            aria-label="Close comment drawer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -254,10 +271,28 @@ export default function InlineCommentDrawer({
       {/* Comments List Stream */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
         {sortedComments.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 space-y-2">
-            <Sparkles className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-            <p className="font-semibold text-slate-600 dark:text-slate-300">No comments on this paragraph yet.</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Be the first reader to react to this line!</p>
+          <div className="text-center py-16 space-y-3">
+            <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center shadow-xs ${
+              readerTheme === 'sepia'
+                ? 'bg-[#edd9af]/80 text-[#7a5833]'
+                : readerTheme === 'dark'
+                ? 'bg-slate-800 text-slate-300'
+                : 'bg-slate-100 text-slate-600'
+            }`}>
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <p className={`font-black text-sm ${
+                readerTheme === 'sepia' ? 'text-[#3d2a14]' : readerTheme === 'dark' ? 'text-slate-100' : 'text-slate-800'
+              }`}>
+                No comments on this paragraph yet.
+              </p>
+              <p className={`text-xs ${
+                readerTheme === 'sepia' ? 'text-[#7a5f42]' : readerTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                Be the first reader to react to this line!
+              </p>
+            </div>
           </div>
         ) : (
           sortedComments.map(c => {
@@ -301,12 +336,16 @@ export default function InlineCommentDrawer({
                       value={editCommentText}
                       onChange={(e) => setEditCommentText(e.target.value)}
                       rows={3}
-                      className={`w-full p-2.5 rounded-xl border text-xs outline-none resize-none focus:ring-2 focus:ring-brand-500/30 ${
+                      style={{
+                        color: readerTheme === 'sepia' ? '#2b1d0c' : readerTheme === 'dark' ? '#f8fafc' : '#0f172a',
+                        backgroundColor: readerTheme === 'sepia' ? '#ffffff' : readerTheme === 'dark' ? '#1e293b' : '#ffffff'
+                      }}
+                      className={`w-full p-2.5 rounded-xl border text-xs outline-none resize-none focus:ring-2 focus:ring-brand-500/30 shadow-xs ${
                         readerTheme === 'dark'
-                          ? 'bg-slate-800 text-white border-slate-700'
+                          ? 'border-slate-700'
                           : readerTheme === 'sepia'
-                          ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
-                          : 'bg-white text-slate-900 border-slate-200'
+                          ? 'border-[#cfbc99]'
+                          : 'border-slate-300'
                       }`}
                       autoFocus
                     />
@@ -440,12 +479,16 @@ export default function InlineCommentDrawer({
                                 type="text"
                                 value={editReplyText}
                                 onChange={(e) => setEditReplyText(e.target.value)}
+                                style={{
+                                  color: readerTheme === 'sepia' ? '#2b1d0c' : readerTheme === 'dark' ? '#f8fafc' : '#0f172a',
+                                  backgroundColor: readerTheme === 'sepia' ? '#ffffff' : readerTheme === 'dark' ? '#1e293b' : '#ffffff'
+                                }}
                                 className={`w-full p-2 rounded-lg border text-xs outline-none ${
                                   readerTheme === 'dark'
-                                    ? 'bg-slate-800 text-white border-slate-700'
+                                    ? 'border-slate-700'
                                     : readerTheme === 'sepia'
-                                    ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
-                                    : 'bg-white text-slate-900 border-slate-200'
+                                    ? 'border-[#cfbc99]'
+                                    : 'border-slate-300'
                                 }`}
                                 autoFocus
                               />
@@ -529,12 +572,16 @@ export default function InlineCommentDrawer({
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       placeholder="Write a reply..."
+                      style={{
+                        color: readerTheme === 'sepia' ? '#2b1d0c' : readerTheme === 'dark' ? '#f8fafc' : '#0f172a',
+                        backgroundColor: readerTheme === 'sepia' ? '#ffffff' : readerTheme === 'dark' ? '#1e293b' : '#ffffff'
+                      }}
                       className={`flex-1 p-2 rounded-lg border text-xs outline-none ${
                         readerTheme === 'dark'
-                          ? 'bg-slate-800 text-white border-slate-700'
+                          ? 'border-slate-700 placeholder:text-slate-500'
                           : readerTheme === 'sepia'
-                          ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9]'
-                          : 'bg-white text-slate-900 border-slate-200'
+                          ? 'border-[#cfbc99] placeholder:text-[#8a7258]'
+                          : 'border-slate-300 placeholder:text-slate-400'
                       }`}
                       onKeyDown={(e) => e.key === 'Enter' && handleReplySubmit(c.id)}
                     />
@@ -553,28 +600,41 @@ export default function InlineCommentDrawer({
       </div>
 
       {/* Post Comment Input Bar */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-black/10 dark:border-white/10 flex items-center gap-2">
-        <input 
-          type="text"
-          value={commentInput}
-          onChange={(e) => setCommentInput(e.target.value)}
-          placeholder={user ? "React or review this line..." : "Sign in to react..."}
-          className={`flex-1 p-2.5 rounded-full border text-xs outline-none px-4 ${
-            readerTheme === 'dark'
-              ? 'bg-slate-800 text-white border-slate-700 placeholder:text-slate-500'
-              : readerTheme === 'sepia'
-              ? 'bg-[#fffaf0] text-[#2b1d0c] border-[#ebdcb9] placeholder:text-[#8a7258]'
-              : 'bg-slate-100 text-slate-900 border-slate-200 placeholder:text-slate-400'
-          }`}
-        />
-        <button 
-          type="submit"
-          className="p-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-105 cursor-pointer"
-          title="Send Reaction"
-        >
-          <Send className="w-4 h-4" />
-        </button>
-      </form>
+      <div className={`p-3.5 sm:p-4 border-t shadow-lg ${
+        readerTheme === 'sepia'
+          ? 'bg-[#f4ecd8] border-[#ebdcb9]'
+          : readerTheme === 'dark'
+          ? 'bg-slate-900 border-slate-800'
+          : 'bg-slate-100/90 border-slate-200'
+      }`}>
+        <form onSubmit={handleSubmit} className="flex items-center gap-2.5">
+          <input 
+            type="text"
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+            placeholder={user ? "React or review this line..." : "Sign in to react..."}
+            style={{
+              color: readerTheme === 'sepia' ? '#2b1d0c' : readerTheme === 'dark' ? '#f8fafc' : '#0f172a',
+              backgroundColor: readerTheme === 'sepia' ? '#ffffff' : readerTheme === 'dark' ? '#1e293b' : '#ffffff'
+            }}
+            className={`flex-1 py-3 px-4 rounded-full border text-xs sm:text-sm font-medium outline-none shadow-sm transition-all focus:ring-2 focus:ring-brand-500/30 ${
+              readerTheme === 'dark'
+                ? 'border-slate-700 focus:border-brand-500 placeholder:text-slate-500'
+                : readerTheme === 'sepia'
+                ? 'border-[#cfbc99] focus:border-brand-600 placeholder:text-[#8a7258]'
+                : 'border-slate-300 focus:border-brand-500 placeholder:text-slate-400'
+            }`}
+          />
+          <button 
+            type="submit"
+            disabled={!commentInput.trim()}
+            className="p-3 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white shadow-md shadow-brand-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+            title="Send Reaction"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
     </aside>
     </>
   );
