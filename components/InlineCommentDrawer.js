@@ -258,14 +258,16 @@ export default function InlineCommentDrawer({
       </div>
 
       {/* Highlighted Paragraph Quotation */}
-      <div className={`p-3 text-xs sm:text-sm italic border-b line-clamp-3 ${
+      <div className={`px-4 py-3 sm:py-3.5 text-xs sm:text-sm border-b max-h-48 sm:max-h-56 overflow-y-auto transition-colors ${
         readerTheme === 'dark'
           ? 'bg-slate-800/60 text-slate-200 border-slate-800'
           : readerTheme === 'sepia'
           ? 'bg-[#f4ecd8] text-[#3d2a14] border-[#ebdcb9]'
           : 'bg-slate-50 text-slate-700 border-slate-200'
       }`}>
-        "{paragraph.text}"
+        <p className="italic leading-relaxed break-words">
+          "{paragraph.text?.trim() || paragraph.text}"
+        </p>
       </div>
 
       {/* Comments List Stream */}
