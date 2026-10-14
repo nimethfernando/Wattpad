@@ -95,12 +95,12 @@ export default function BrandLogo({ size = 'default', showText = true, className
   const currentSize = sizeMap[size] || sizeMap.default;
 
   return (
-    <div className={`flex items-center gap-2 sm:gap-2.5 ${className}`}>
+    <div className={`flex items-center gap-2 sm:gap-2.5 max-w-full ${className}`}>
       {shouldRenderImage && (
         <img 
           src={logoSrc} 
           alt={`${brandName} ${brandSubtitle}`.trim() || 'Avora Library'} 
-          className={`${currentSize.icon} object-contain transition-transform group-hover:scale-105 shrink-0`} 
+          className={`${currentSize.icon} object-contain transition-transform group-hover:scale-105 shrink-0 max-w-full`} 
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = '/icon-192.png';
@@ -108,7 +108,7 @@ export default function BrandLogo({ size = 'default', showText = true, className
         />
       )}
       {shouldRenderText && (
-        <div className="flex flex-col select-none leading-none justify-center">
+        <div className="flex flex-col select-none leading-none justify-center min-w-0">
           {brandName && (
             <span className={`font-brand font-black ${currentSize.title} tracking-tight text-slate-900 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors`}>
               {brandName}

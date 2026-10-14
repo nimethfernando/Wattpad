@@ -64,12 +64,12 @@ export default function Footer() {
   return (
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
           
           {/* Brand & Language Column */}
-          <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center group py-1" title="Avora Library">
-              <BrandLogo size="lg" />
+          <div className="col-span-2 md:col-span-3 lg:col-span-2 space-y-4 pr-0 lg:pr-4">
+            <Link href="/" className="inline-flex items-center group py-1 max-w-full" title="Avora Library">
+              <BrandLogo size="default" />
             </Link>
             <p className="max-w-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {footerConfig.tagline}
