@@ -175,6 +175,7 @@ export default function BrowsePage() {
       if (specialFilter === 'originals' && !story.isOriginal) return false;
       if (specialFilter === 'picks' && !story.isEditorsPick) return false;
       if (specialFilter === 'kids' && !isStoryForKids(story)) return false;
+      if (specialFilter === 'pdf' && story.contentType !== 'pdf' && !story.pdfUrl) return false;
       if (searchFilter.trim() !== '') {
         const q = searchFilter.toLowerCase();
         const matchTitle = story.title.toLowerCase().includes(q);
@@ -306,6 +307,16 @@ export default function BrowsePage() {
               }`}
             >
               🧒 Kids &amp; Family Section (3+ / 7+)
+            </button>
+            <button
+              onClick={() => { setSpecialFilter('pdf'); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                specialFilter === 'pdf' 
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 font-black' 
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500'
+              }`}
+            >
+              📄 Printable Worksheets (PDF)
             </button>
           </div>
         </div>
@@ -642,6 +653,11 @@ export default function BrowsePage() {
                         {story.contentType === 'picture_book' && (
                           <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
                             🎨 Picture Book
+                          </span>
+                        )}
+                        {(story.contentType === 'pdf' || story.pdfUrl) && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                            📄 PDF Worksheet
                           </span>
                         )}
                         {story.ranking && (

@@ -49,7 +49,8 @@ import {
   Upload,
   FileUp,
   Camera,
-  ShieldAlert
+  ShieldAlert,
+  GraduationCap
 } from 'lucide-react';
 import { AGE_RATINGS, AGE_THRESHOLDS } from '@/lib/agePolicy';
 
@@ -1323,6 +1324,27 @@ export default function AuthorStudio() {
   const [coverUploadTab, setCoverUploadTab] = useState('device'); // 'device' | 'presets' | 'url'
   const [deviceCoverInfo, setDeviceCoverInfo] = useState(null); // { name, sizeKb }
 
+  // PDF Assignment & Worksheet State
+  const [pdfUrl, setPdfUrl] = useState('/assignments/montessori-level-3-assignment-oct-21-23.pdf');
+  const [gradeLevel, setGradeLevel] = useState('Montessori Level III (Ages 4-7)');
+  const [schoolName, setSchoolName] = useState("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+  const [pdfPageCount, setPdfPageCount] = useState(8);
+  const [pdfFileName, setPdfFileName] = useState('');
+
+  const handlePdfFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfFileName(file.name);
+    if (!storyTitle) {
+      setStoryTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' '));
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPdfUrl(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleDeviceCoverUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1455,6 +1477,11 @@ export default function AuthorStudio() {
       return;
     }
 
+    if (contentType === 'pdf' && (!storyTitle.trim() || !pdfUrl.trim())) {
+      alert('Please provide an Assignment Title and select or upload a PDF worksheet.');
+      return;
+    }
+
     const slug = storyTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
     const minAge = AGE_THRESHOLDS[ageRating] || 13;
@@ -1487,6 +1514,28 @@ export default function AuthorStudio() {
           pages: []
         };
       });
+    } else if (contentType === 'pdf') {
+      publishedChapters = [
+        {
+          id: Date.now() + 1,
+          number: 1,
+          title: storyTitle || "Assignment & Worksheet",
+          publishedAt: new Date().toISOString().split('T')[0],
+          reads: 1,
+          votes: 1,
+          contentType: 'pdf',
+          pdfUrl: pdfUrl,
+          pageCount: Number(pdfPageCount) || 8,
+          paragraphs: [
+            {
+              id: 1,
+              text: storyDescription || "Official printable assignment worksheet for kids.",
+              comments: []
+            }
+          ],
+          pages: []
+        }
+      ];
     } else {
       publishedChapters = [
         {
@@ -1520,6 +1569,11 @@ export default function AuthorStudio() {
       minAge,
       contentType,
       targetAudience,
+      pdfUrl: contentType === 'pdf' ? pdfUrl : undefined,
+      gradeLevel: contentType === 'pdf' ? gradeLevel : undefined,
+      school: contentType === 'pdf' ? schoolName : undefined,
+      pageCount: contentType === 'pdf' ? Number(pdfPageCount) || 8 : undefined,
+      subjects: contentType === 'pdf' ? tagsInput.split(',').map(s => s.trim()).filter(Boolean) : undefined,
       isOriginal: user?.role === 'admin',
       isEditorsPick: false,
       isTrending: true,
@@ -2089,8 +2143,168 @@ export default function AuthorStudio() {
                     )}
                   </div>
 
-                  {/* Content Canvas: Picture Book vs Novel */}
-                  {contentType === 'story' ? (
+                  {/* Content Canvas: PDF Worksheet vs Text Novel vs Picture Book */}
+                  {contentType === 'pdf' ? (
+                    /* Dedicated Kids PDF Assignment & Worksheet Studio Canvas */
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+                            📄 Printable Kids PDF Assignment Studio
+                          </span>
+                          <p className="text-xs text-slate-500">Select verified Montessori templates or upload any PDF worksheet from your device.</p>
+                        </div>
+                      </div>
+
+                      {/* Quick Montessori Presets */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-2">Verified School Presets (The Loharu Montessori Children's House)</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPdfUrl('/assignments/montessori-level-3-assignment-oct-21-23.pdf');
+                              setStoryTitle('Montessori Level-III: Home Assignment (Oct 21–23, 2026)');
+                              setGradeLevel('Montessori Level III (Ages 4-7)');
+                              setSchoolName("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+                              setPdfPageCount(8);
+                              setTagsInput('montessori, english, hindi, arithmetic, evs');
+                              setStoryDescription("Official Level-III Montessori home assignment covering English Revision, Conjunctions ('and'), Hindi (वचन व और का प्रयोग), Arithmetic (Addition facts & Ordinals), and EVS (Body Parts).");
+                            }}
+                            className={`p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                              pdfUrl === '/assignments/montessori-level-3-assignment-oct-21-23.pdf'
+                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                            }`}
+                          >
+                            <p className="font-extrabold line-clamp-1">Level-III (Oct 21–23)</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">8 Pages • Full Homework</p>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPdfUrl('/assignments/montessori-level-3-assignment-oct-12-16.pdf');
+                              setStoryTitle('Montessori Level-III: Home Assignment (Oct 12–16, 2026)');
+                              setGradeLevel('Montessori Level III (Ages 4-7)');
+                              setSchoolName("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+                              setPdfPageCount(8);
+                              setTagsInput('montessori, phonics, genders, has-have, hindi, evs');
+                              setStoryDescription("Comprehensive Level-III Montessori home assignment covering Phonics ('f'/'ph'/'ugh'), Genders, Has/Have, Hindi matras, and Summer Fruits & Parts of Face.");
+                            }}
+                            className={`p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                              pdfUrl === '/assignments/montessori-level-3-assignment-oct-12-16.pdf'
+                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                            }`}
+                          >
+                            <p className="font-extrabold line-clamp-1">Level-III (Oct 12–16)</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">8 Pages • Phonics & Math</p>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPdfUrl('/assignments/kids-phonics-reading-cards-ng-sound.pdf');
+                              setStoryTitle("Kids Phonics & Reading Cards: 'ng' Sound & Hindi Matras");
+                              setGradeLevel('Kindergarten & Early Primary (Ages 3-6)');
+                              setSchoolName("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+                              setPdfPageCount(2);
+                              setTagsInput('phonics, reading-cards, hindi-matras, vocabulary');
+                              setStoryDescription("Illustrated early reading cards featuring the 'ng' phonics sound (ring, king, sing, wing) and Hindi word-building flashcards.");
+                            }}
+                            className={`p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                              pdfUrl === '/assignments/kids-phonics-reading-cards-ng-sound.pdf'
+                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                            }`}
+                          >
+                            <p className="font-extrabold line-clamp-1">Phonics Reading Cards</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">2 Pages • 'ng' Sound Cards</p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Device PDF Upload / Custom File Input */}
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-700 space-y-3">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Upload Custom PDF from Your Device
+                        </label>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <label className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm transition-all">
+                            <Upload className="w-4 h-4" />
+                            <span>Select PDF File</span>
+                            <input 
+                              type="file" 
+                              accept="application/pdf" 
+                              onChange={handlePdfFileUpload}
+                              className="hidden" 
+                            />
+                          </label>
+                          {pdfFileName && (
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              ✓ {pdfFileName} loaded
+                            </span>
+                          )}
+                          <span className="text-[11px] text-slate-400">or enter a direct PDF URL below:</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={pdfUrl}
+                          onChange={(e) => setPdfUrl(e.target.value)}
+                          placeholder="e.g. /assignments/your-worksheet.pdf or https://..."
+                          className="w-full text-xs px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-brand-500"
+                        />
+                      </div>
+
+                      {/* Worksheet Curriculum Metadata */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">Grade / Age Group</label>
+                          <input
+                            type="text"
+                            value={gradeLevel}
+                            onChange={(e) => setGradeLevel(e.target.value)}
+                            placeholder="e.g. Montessori Level III (Ages 4-7)"
+                            className="w-full text-xs px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">School / Institution</label>
+                          <input
+                            type="text"
+                            value={schoolName}
+                            onChange={(e) => setSchoolName(e.target.value)}
+                            placeholder="e.g. The Loharu Montessori Children's House"
+                            className="w-full text-xs px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">Total Worksheet Pages</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={pdfPageCount}
+                            onChange={(e) => setPdfPageCount(e.target.value)}
+                            className="w-full text-xs px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Live Interactive PDF Viewer Preview */}
+                      <div className="space-y-2 pt-2">
+                        <label className="block text-xs font-bold text-slate-500">Live Assignment Preview</label>
+                        <div className="w-full h-96 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
+                          <iframe
+                            src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                            className="w-full h-full border-0"
+                            title="PDF Preview"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : contentType === 'story' ? (
                     /* Text Novel Canvas with Auto-Save */
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -2253,31 +2467,49 @@ export default function AuthorStudio() {
 
                 {/* Content Format Selector */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">Story Format</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">Story / Material Format</label>
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setContentType('story')}
-                      className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl text-[11px] font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                         contentType === 'story'
                           ? 'bg-brand-500 text-white border-brand-500 shadow-sm'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
-                      <FileText className="w-4 h-4" />
+                      <FileText className="w-3.5 h-3.5" />
                       <span>Text Novel</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setContentType('picture_book')}
-                      className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl text-[11px] font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                         contentType === 'picture_book'
                           ? 'bg-brand-500 text-white border-brand-500 shadow-sm'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
-                      <ImageIcon className="w-4 h-4" />
+                      <ImageIcon className="w-3.5 h-3.5" />
                       <span>Picture Book</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setContentType('pdf');
+                        setSelectedGenre('kids-assignments');
+                        setAgeRating('3+');
+                        if (!storyTitle) setStoryTitle("Montessori Level-III: Home Assignment");
+                        if (!tagsInput || tagsInput.includes('magic')) setTagsInput('montessori, english, hindi, math, evs');
+                      }}
+                      className={`p-2 rounded-xl text-[11px] font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                        contentType === 'pdf'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <FileUp className="w-3.5 h-3.5" />
+                      <span>PDF Worksheet</span>
                     </button>
                   </div>
                 </div>

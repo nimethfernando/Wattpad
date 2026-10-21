@@ -24,7 +24,9 @@ import {
   BookMarked,
   Sparkles,
   ChevronDown,
-  Lock
+  Lock,
+  Download,
+  FileText
 } from 'lucide-react';
 import { canUserAccessContent, filterStoriesForUser } from '@/lib/agePolicy';
 
@@ -363,6 +365,18 @@ export default function StoryDetailPage() {
                   </span>
                 )}
 
+                {(story.contentType === 'pdf' || story.pdfUrl) && (
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    📄 Kids PDF Worksheet
+                  </span>
+                )}
+
+                {story.gradeLevel && (story.contentType === 'pdf' || story.pdfUrl) && (
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    🎓 {story.gradeLevel}
+                  </span>
+                )}
+
                 {story.status === 'completed' && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                     ✓ Completed
@@ -468,6 +482,27 @@ export default function StoryDetailPage() {
                   </Link>
                 ))}
               </div>
+
+              {/* Kids Assignment School & Curriculum Banner */}
+              {(story.contentType === 'pdf' || story.pdfUrl) && (
+                <div className="mt-4 p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-500/20 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                  {story.school && (
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">
+                      🏫 <strong>Institution:</strong> {story.school}
+                    </p>
+                  )}
+                  {story.subjects && story.subjects.length > 0 && (
+                    <p className="flex items-center gap-1.5 flex-wrap">
+                      <strong className="text-slate-600 dark:text-slate-400">Curriculum Subjects:</strong>
+                      {story.subjects.map((s, idx) => (
+                        <span key={idx} className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded font-bold text-[11px] border border-emerald-500/20">
+                          {s}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Read & Wattpad-style Library CTA Buttons */}
@@ -477,11 +512,26 @@ export default function StoryDetailPage() {
                 href={`/read/${story.slug}`} 
                 className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
               >
-                <BookOpen className="w-4 h-4" /> 
-                {savedProgress 
-                  ? `${t?.continueReading || 'Continue Reading'} (Ch. ${currentChapter.number})` 
-                  : (t?.startReading || 'Start Reading Chapter 1')}
+                {story.contentType === 'pdf' ? <FileText className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
+                {story.contentType === 'pdf'
+                  ? 'View & Study Worksheet'
+                  : savedProgress 
+                    ? `${t?.continueReading || 'Continue Reading'} (Ch. ${currentChapter.number})` 
+                    : (t?.startReading || 'Start Reading Chapter 1')}
               </Link>
+
+              {/* Direct Download PDF Button for Kids Worksheets */}
+              {(story.contentType === 'pdf' || story.pdfUrl) && (
+                <a
+                  href={story.pdfUrl || story.chapters?.[0]?.pdfUrl}
+                  download
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
+                  title="Download printable assignment PDF"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download PDF</span>
+                </a>
+              )}
 
               {/* Add to Library Toggle Button & Reading List Popover Group */}
               <div className="flex items-center gap-2 w-full sm:w-auto">

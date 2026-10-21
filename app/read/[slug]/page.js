@@ -28,7 +28,12 @@ import {
   Check,
   Plus,
   ImageIcon,
-  Eye
+  Eye,
+  Download,
+  Printer,
+  ExternalLink,
+  FileText,
+  GraduationCap
 } from 'lucide-react';
 import { canUserAccessContent } from '@/lib/agePolicy';
 
@@ -107,6 +112,14 @@ export default function ReaderPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const chapter = story?.chapters?.[currentChapterIndex] || story?.chapters?.[0];
+
+  const isPdfContent = Boolean(
+    story?.contentType === 'pdf' || 
+    chapter?.contentType === 'pdf' || 
+    story?.pdfUrl || 
+    chapter?.pdfUrl
+  );
+  const currentPdfUrl = chapter?.pdfUrl || story?.pdfUrl || '/assignments/montessori-level-3-assignment-oct-21-23.pdf';
 
   // Reader Customization State
   const [readerTheme, setReaderTheme] = useState('sepia'); // 'light' | 'dark' | 'sepia'
@@ -688,27 +701,163 @@ export default function ReaderPage() {
         <header className="mb-10 text-center space-y-3">
           <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
             <span className={`text-xs sm:text-sm uppercase font-black tracking-wider px-3.5 py-1 rounded-full ${tStyles.chapterPill}`}>
-              Chapter {chapter.number}
+              {isPdfContent ? '📄 Kids PDF Assignment' : `Chapter ${chapter.number}`}
             </span>
+            {isPdfContent && story.gradeLevel && (
+              <span className="text-xs sm:text-sm font-extrabold px-3.5 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 flex items-center gap-1">
+                <GraduationCap className="w-3.5 h-3.5 text-amber-500" /> {story.gradeLevel}
+              </span>
+            )}
             {story.ranking && (
               <span className={`text-xs sm:text-sm font-black px-3.5 py-1 rounded-full shadow-xs flex items-center gap-1.5 ${tStyles.rankingPill}`}>
                 <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in {story.ranking.tag}</span>
               </span>
             )}
             <span className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 px-3.5 py-1 rounded-full shadow-xs ${tStyles.readsPill}`}>
-              <Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()} reads
+              <Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()} {isPdfContent ? 'views' : 'reads'}
             </span>
           </div>
           <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight pt-1 ${tStyles.h1}`}>
             {chapter.title}
           </h1>
           <p className={`text-xs sm:text-sm font-medium ${tStyles.meta}`}>
-            By <strong className={`font-bold ${tStyles.author}`}>{story.author}</strong> • Published {chapter.publishedAt}
+            {isPdfContent ? 'Curated for learners by ' : 'By '}
+            <strong className={`font-bold ${tStyles.author}`}>{story.author}</strong> • Published {chapter.publishedAt}
           </p>
         </header>
 
-        {/* 2A. ILLUSTRATED PICTURE BOOK / VISUAL STORY VIEWER */}
-        {chapter.pages && chapter.pages.length > 0 ? (
+        {/* 2A. KIDS PDF ASSIGNMENT & WORKSHEET VIEWER */}
+        {isPdfContent ? (
+          <div className="space-y-6">
+            {/* Assignment Information & Action Toolbar Card */}
+            <div className="bg-gradient-to-br from-brand-500/10 via-amber-500/5 to-emerald-500/10 dark:from-brand-950/40 dark:via-slate-900 dark:to-emerald-950/40 border border-brand-500/20 dark:border-brand-500/30 rounded-3xl p-5 sm:p-7 shadow-lg">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500 text-white font-extrabold text-xs shadow-sm">
+                      <FileText className="w-3.5 h-3.5" /> Printable Kids Assignment
+                    </span>
+                    {story.gradeLevel && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-200 font-bold text-xs border border-amber-500/30">
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-500" /> {story.gradeLevel}
+                      </span>
+                    )}
+                    <span className="px-2.5 py-1 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
+                      {story.pageCount || chapter.pageCount || 8} Pages Worksheet
+                    </span>
+                  </div>
+
+                  {story.school && (
+                    <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      🏫 {story.school}
+                    </p>
+                  )}
+
+                  {story.subjects && story.subjects.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Curriculum:</span>
+                      {story.subjects.map((sub, i) => (
+                        <span key={i} className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
+                          {sub}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 1-Click Action Buttons */}
+                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+                  <a
+                    href={currentPdfUrl}
+                    download
+                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+                    title="Download complete PDF worksheet to print or view offline"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        const w = window.open(currentPdfUrl, '_blank');
+                        if (w) {
+                          w.focus();
+                          setTimeout(() => { try { w.print(); } catch (e) {} }, 600);
+                        }
+                      }
+                    }}
+                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+                    title="Print assignment worksheet"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Worksheet</span>
+                  </button>
+
+                  <a
+                    href={currentPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 rounded-2xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
+                    title="Open PDF in Fullscreen / New Tab"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Embedded PDF Interactive Canvas */}
+            <div className="bg-slate-900/5 dark:bg-slate-900/60 rounded-3xl p-2 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+              <div className="relative w-full rounded-2xl overflow-hidden bg-white shadow-inner">
+                <iframe
+                  src={`${currentPdfUrl}#toolbar=1&navpanes=0`}
+                  className="w-full h-[650px] sm:h-[820px] md:h-[950px] border-0 rounded-2xl bg-white"
+                  title={chapter.title || story.title}
+                />
+              </div>
+
+              {/* Mobile View Assistance Note */}
+              <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3">
+                <span>💡 <strong>Tip for Parents:</strong> If preview doesn't fit on your mobile screen, tap <strong>Download PDF</strong> or <strong>Open Fullscreen</strong> to zoom & print freely.</span>
+                <a
+                  href={currentPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-bold shrink-0 text-amber-800 dark:text-amber-300"
+                >
+                  Open Fullscreen ↗
+                </a>
+              </div>
+            </div>
+
+            {/* Parent & Teacher Study Guide Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📘</span> Parent & Teacher Study Guide
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <p className="font-bold text-slate-900 dark:text-white mb-1">✍️ English Revision & Phonics</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Practice Singular/Plural, Antonyms, and 'and' conjunctions. Read phonics flashcards aloud.</p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <p className="font-bold text-slate-900 dark:text-white mb-1">🇮🇳 Hindi वचन व मात्रा अभ्यास</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">एक/अनेक (वचन बदलो), 'और' का प्रयोग तथा हिंदी वाचन कार्ड का शुद्ध उच्चारण के साथ अभ्यास करें।</p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <p className="font-bold text-slate-900 dark:text-white mb-1">🔢 Arithmetic Addition & Ordinals</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Addition facts to 10 and ordinal numbers (1st to 10th). Encourage kids to solve step-by-step.</p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <p className="font-bold text-slate-900 dark:text-white mb-1">🌿 EVS & Body Parts</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Learn body parts, senses, and write short self-check answers to reinforce real-world awareness.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : chapter.pages && chapter.pages.length > 0 ? (
           <div className="space-y-6">
             <div 
               key={pageFlipKey}
