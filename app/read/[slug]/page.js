@@ -33,7 +33,10 @@ import {
   Printer,
   ExternalLink,
   FileText,
-  GraduationCap
+  GraduationCap,
+  Volume2,
+  VolumeX,
+  Maximize2
 } from 'lucide-react';
 import { canUserAccessContent } from '@/lib/agePolicy';
 
@@ -112,6 +115,55 @@ export default function ReaderPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const chapter = story?.chapters?.[currentChapterIndex] || story?.chapters?.[0];
+
+  const [isPlayingSpeech, setIsPlayingSpeech] = useState(false);
+  const [showImageZoom, setShowImageZoom] = useState(false);
+
+  const toggleReadAloud = (text) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('Speech narration is not supported on this device or browser.');
+      return;
+    }
+    if (isPlayingSpeech) {
+      window.speechSynthesis.cancel();
+      setIsPlayingSpeech(false);
+      return;
+    }
+    const cleanText = text || chapter?.pages?.[activePageIndex]?.text || chapter?.pages?.[activePageIndex]?.caption;
+    if (!cleanText) return;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.88;
+    utterance.pitch = 1.05;
+    utterance.onend = () => setIsPlayingSpeech(false);
+    utterance.onerror = () => setIsPlayingSpeech(false);
+    window.speechSynthesis.speak(utterance);
+    setIsPlayingSpeech(true);
+  };
+
+  const handlePicturePageChange = (newIdx, dir) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingSpeech(false);
+    handlePageChange(newIdx, dir);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!chapter?.pages || chapter.pages.length === 0) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        if (activePageIndex < chapter.pages.length - 1) {
+          handlePicturePageChange(activePageIndex + 1, 'next');
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (activePageIndex > 0) {
+          handlePicturePageChange(activePageIndex - 1, 'prev');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [chapter?.pages, activePageIndex]);
 
   const isPdfContent = Boolean(
     story?.contentType === 'pdf' || 
@@ -865,45 +917,126 @@ export default function ReaderPage() {
                 pageTurnDirection === 'next' ? 'animate-page-turn-next' : 'animate-page-turn-prev'
               }`}
             >
-              {/* Page Image */}
-              <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-                <img 
-                  src={chapter.pages[activePageIndex]?.image} 
-                  alt={`Page ${activePageIndex + 1}`}
-                  className="w-full h-full object-contain"
-                />
-                
-                {/* Floating Page Badge */}
-                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white font-bold text-xs">
-                  Page {activePageIndex + 1} of {chapter.pages.length}
+              {/* Picture Book Header Bar */}
+              <div className="px-4 sm:px-6 py-3.5 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-brand-500 text-white font-black text-xs shadow-xs">
+                    Page {activePageIndex + 1} of {chapter.pages.length}
+                  </span>
+                  {chapter.pages[activePageIndex]?.caption && (
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 hidden sm:inline">
+                      {chapter.pages[activePageIndex].caption}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Read to Me (Voice Narration) Button */}
+                  <button
+                    type="button"
+                    onClick={() => toggleReadAloud(chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption)}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                      isPlayingSpeech
+                        ? 'bg-rose-500 text-white animate-pulse'
+                        : 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 border border-brand-500/30 hover:bg-brand-50'
+                    }`}
+                    title={isPlayingSpeech ? "Stop narration" : "Listen to story out loud"}
+                  >
+                    {isPlayingSpeech ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{isPlayingSpeech ? "Stop" : "🔊 Read to Me"}</span>
+                  </button>
+
+                  {/* Fullscreen Artwork Zoom Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowImageZoom(true)}
+                    className="p-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                    title="View Fullscreen Artwork"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
-              {/* Page Text & Caption */}
+              {/* Page Image Stage */}
+              <div 
+                onClick={() => setShowImageZoom(true)}
+                className="relative w-full max-h-[720px] min-h-[350px] sm:min-h-[480px] bg-slate-950 flex items-center justify-center overflow-hidden p-2 sm:p-4 cursor-zoom-in group select-none"
+              >
+                <img 
+                  src={chapter.pages[activePageIndex]?.image} 
+                  alt={chapter.pages[activePageIndex]?.caption || `Page ${activePageIndex + 1}`}
+                  className="max-h-[680px] w-auto max-w-full object-contain mx-auto rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-[1.01]"
+                />
+                
+                {/* Floating Left/Right Touch Arrows */}
+                {activePageIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePicturePageChange(activePageIndex - 1, 'prev');
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md opacity-80 hover:opacity-100 transition-all cursor-pointer shadow-lg"
+                    title="Previous Page (or Left Arrow Key)"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                )}
+
+                {activePageIndex < chapter.pages.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePicturePageChange(activePageIndex + 1, 'next');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md opacity-80 hover:opacity-100 transition-all cursor-pointer shadow-lg"
+                    title="Next Page (or Right Arrow Key)"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+
+              {/* Page Text, Caption & Moral */}
               <div className="p-6 sm:p-8 space-y-4">
-                <p className={`text-base sm:text-lg leading-relaxed ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}>
-                  {chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption}
-                </p>
+                {(chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption) && (
+                  <p className={`text-lg sm:text-xl font-bold leading-relaxed text-slate-800 dark:text-slate-100 ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}>
+                    {chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption}
+                  </p>
+                )}
+
+                {/* Moral of the Story Badge */}
+                {chapter.pages[activePageIndex]?.moral && (
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                    <span className="text-xl">🌟</span>
+                    <div>
+                      <span className="text-slate-500 uppercase tracking-wider text-[10px] block font-black">Story Moral</span>
+                      <span>{chapter.pages[activePageIndex].moral}</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Page Navigation Controls */}
                 <div className={`flex items-center justify-between pt-4 border-t ${tStyles.divider}`}>
                   <button
-                    onClick={() => handlePageChange(Math.max(0, activePageIndex - 1), 'prev')}
+                    onClick={() => handlePicturePageChange(Math.max(0, activePageIndex - 1), 'prev')}
                     disabled={activePageIndex === 0}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl disabled:opacity-30 font-bold text-xs transition-all cursor-pointer ${tStyles.pageBtn}`}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl disabled:opacity-30 font-bold text-xs sm:text-sm transition-all cursor-pointer ${tStyles.pageBtn}`}
                   >
-                    <ChevronLeft className="w-4 h-4" /> Previous Page
+                    <ChevronLeft className="w-4 h-4" /> Previous
                   </button>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 overflow-x-auto px-2 max-w-[200px] sm:max-w-md justify-center">
                     {chapter.pages.map((_, idx) => (
                       <button
                         key={idx}
-                        onClick={() => handlePageChange(idx, idx >= activePageIndex ? 'next' : 'prev')}
-                        className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
+                        onClick={() => handlePicturePageChange(idx, idx >= activePageIndex ? 'next' : 'prev')}
+                        className={`transition-all cursor-pointer ${
                           activePageIndex === idx 
-                            ? 'bg-brand-500 scale-125' 
-                            : 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                            ? 'w-6 h-3 rounded-full bg-brand-500' 
+                            : 'w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
                         }`}
                         title={`Go to page ${idx + 1}`}
                       />
@@ -911,15 +1044,37 @@ export default function ReaderPage() {
                   </div>
 
                   <button
-                    onClick={() => handlePageChange(Math.min(chapter.pages.length - 1, activePageIndex + 1), 'next')}
+                    onClick={() => handlePicturePageChange(Math.min(chapter.pages.length - 1, activePageIndex + 1), 'next')}
                     disabled={activePageIndex === chapter.pages.length - 1}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white disabled:opacity-30 font-bold text-xs hover:bg-brand-600 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand-500 text-white disabled:opacity-30 font-bold text-xs sm:text-sm hover:bg-brand-600 transition-all cursor-pointer shadow-md shadow-brand-500/20"
                   >
-                    Next Page <ChevronRight className="w-4 h-4" />
+                    Next <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Fullscreen High-Res Image Lightbox Modal */}
+            {showImageZoom && (
+              <div 
+                onClick={() => setShowImageZoom(false)}
+                className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200"
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowImageZoom(false)}
+                  className="absolute top-5 right-5 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all cursor-pointer z-50"
+                  title="Close Fullscreen"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <img
+                  src={chapter.pages[activePageIndex]?.image}
+                  alt={`Page ${activePageIndex + 1}`}
+                  className="max-h-[92vh] max-w-[95vw] object-contain rounded-2xl shadow-2xl"
+                />
+              </div>
+            )}
           </div>
         ) : (
           /* 2B. NOVEL PARAGRAPH-LEVEL READING CANVAS */

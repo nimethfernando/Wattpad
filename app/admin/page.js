@@ -1028,6 +1028,7 @@ export default function AdminPanel() {
     { label: 'Fantasy / Magic', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80' },
     { label: 'Romance / Drama', url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80' },
     { label: 'Sci-Fi / Space', url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=800&q=80' },
+    { label: "Lola's Clean Habits (Kids)", url: '/kids-stories/lola/page-14.jpg' },
     { label: 'Kids / Illustrated', url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80' },
     { label: 'Mystery / Detective', url: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=800&q=80' },
     { label: 'Adventure / Quest', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80' },
@@ -1038,6 +1039,54 @@ export default function AdminPanel() {
     setPubTitle(val);
     const generated = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     setPubSlug(generated);
+  };
+
+  const loadLolaKidsPages = () => {
+    setPubTitle("Lola's Clean Habits: The Secret to Big Smiles");
+    setPubSlug("lolas-clean-habits");
+    setPubGenre("Kids Books");
+    setPubAgeRating("3+");
+    setPubCover("/kids-stories/lola/page-14.jpg");
+    setPubDescription("A delightful, vibrantly illustrated moral story for young children! Follow Lola on her heartwarming journey through the village as she learns how good habits, daily cleanliness, and a sparkling smile bring joy and hugs to everyone around her.");
+    setPubTags("kids, picture-book, illustrations, good-habits, cleanliness, moral-story, bedtime");
+    setPubChapterTitle("Lola Learns Her Lesson");
+    setPubPages([
+      {
+        id: 1,
+        image: "/kids-stories/lola/page-09.jpg",
+        caption: "Page 9: The Sneaky Village Surprise",
+        text: "Very quietly, the villagers lifted her cot and carried her away! Shhh...",
+        moral: "Kind guidance helps us grow."
+      },
+      {
+        id: 2,
+        image: "/kids-stories/lola/page-11.jpg",
+        caption: "Page 11: Lola's Promise",
+        text: "Lola was shocked and cried, 'What happened to me?' The villagers laughed and said, 'Now you will keep yourself clean and smell good!' Lola promised she would!",
+        moral: "Cleanliness keeps us healthy and happy!"
+      },
+      {
+        id: 3,
+        image: "/kids-stories/lola/page-12.jpg",
+        caption: "Page 12: A Warm Hug & Happy Smiles",
+        text: "Lola learned her lesson. She promised, 'I will keep myself clean and smell good every day!' Everyone smiled and hugged her. Lola was happy!",
+        moral: "Good habits make us happy and bring love to everyone!"
+      },
+      {
+        id: 4,
+        image: "/kids-stories/lola/page-13.jpg",
+        caption: "Page 13: Clean Body, Happy Mind",
+        text: "Lola kept her promise. She bathed every day, kept herself clean and smelled so good! Everyone was very proud of her.",
+        moral: "Clean body, Happy mind, Kind heart!"
+      },
+      {
+        id: 5,
+        image: "/kids-stories/lola/page-14.jpg",
+        caption: "Page 14: Happily Ever After",
+        text: "Lola learned an important lesson. She stayed clean, smelled good, and made everyone happy! The villagers loved her, and Lola lived happily ever after! Clean body, Happy mind, Kind heart! THE END.",
+        moral: "Cleanliness keeps us healthy and happy!"
+      }
+    ]);
   };
 
   const loadSampleKidsPages = () => {
@@ -1158,6 +1207,15 @@ export default function AdminPanel() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={loadLolaKidsPages}
+            className="px-3 py-2 rounded-xl bg-purple-100 dark:bg-purple-900/60 hover:bg-purple-200 text-purple-800 dark:text-purple-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
+            title="Load Lola's Clean Habits full 5-page illustrated story"
+          >
+            <span>🌟 Load Lola's Clean Habits (5 Illustrated Pages)</span>
+          </button>
+
           <button
             type="button"
             onClick={loadSampleKidsPages}
@@ -1337,6 +1395,20 @@ export default function AdminPanel() {
                       setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, text: val } : p));
                     }}
                     placeholder="Story text for this illustrated page..."
+                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-0.5">🌟 Moral / Value Lesson (Optional)</label>
+                  <input
+                    type="text"
+                    value={page.moral || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPubPages(prev => prev.map((p, i) => i === pIdx ? { ...p, moral: val } : p));
+                    }}
+                    placeholder="e.g. Cleanliness keeps us healthy and happy!"
                     className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
