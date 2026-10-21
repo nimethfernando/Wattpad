@@ -1051,41 +1051,76 @@ export default function AdminPanel() {
     setPubTags("kids, picture-book, illustrations, good-habits, cleanliness, moral-story, bedtime");
     setPubChapterTitle("Lola Learns Her Lesson");
     setPubPages([
-      {
-        id: 1,
-        image: "/kids-stories/lola/page-09.jpg",
-        caption: "Page 9: The Sneaky Village Surprise",
-        text: "Very quietly, the villagers lifted her cot and carried her away! Shhh...",
-        moral: "Kind guidance helps us grow."
-      },
-      {
-        id: 2,
-        image: "/kids-stories/lola/page-11.jpg",
-        caption: "Page 11: Lola's Promise",
-        text: "Lola was shocked and cried, 'What happened to me?' The villagers laughed and said, 'Now you will keep yourself clean and smell good!' Lola promised she would!",
-        moral: "Cleanliness keeps us healthy and happy!"
-      },
-      {
-        id: 3,
-        image: "/kids-stories/lola/page-12.jpg",
-        caption: "Page 12: A Warm Hug & Happy Smiles",
-        text: "Lola learned her lesson. She promised, 'I will keep myself clean and smell good every day!' Everyone smiled and hugged her. Lola was happy!",
-        moral: "Good habits make us happy and bring love to everyone!"
-      },
-      {
-        id: 4,
-        image: "/kids-stories/lola/page-13.jpg",
-        caption: "Page 13: Clean Body, Happy Mind",
-        text: "Lola kept her promise. She bathed every day, kept herself clean and smelled so good! Everyone was very proud of her.",
-        moral: "Clean body, Happy mind, Kind heart!"
-      },
-      {
-        id: 5,
-        image: "/kids-stories/lola/page-14.jpg",
-        caption: "Page 14: Happily Ever After",
-        text: "Lola learned an important lesson. She stayed clean, smelled good, and made everyone happy! The villagers loved her, and Lola lived happily ever after! Clean body, Happy mind, Kind heart! THE END.",
-        moral: "Cleanliness keeps us healthy and happy!"
-      }
+          {
+                "id": 1,
+                "image": "/kids-stories/lola/page-03.jpg",
+                "caption": "Page 3: No Bath Time!",
+                "text": "She never took a bath. 'Bath time, Lola!' 'No!'",
+                "moral": "Bathing washes away germs and keeps us fresh."
+          },
+          {
+                "id": 2,
+                "image": "/kids-stories/lola/page-04.jpg",
+                "caption": "Page 4: Tangled Hair",
+                "text": "She never washed her hair.",
+                "moral": "Combing and washing hair keeps us neat and tidy."
+          },
+          {
+                "id": 3,
+                "image": "/kids-stories/lola/page-05.jpg",
+                "caption": "Page 5: Dirty Clothes",
+                "text": "She didn't wash or iron her clothes.",
+                "moral": "Wearing clean clothes makes us feel confident."
+          },
+          {
+                "id": 4,
+                "image": "/kids-stories/lola/page-06.jpg",
+                "caption": "Page 6: An Awful Smell",
+                "text": "The whole village was upset with her because she always smelt awful!",
+                "moral": "Clean habits help us make good friends."
+          },
+          {
+                "id": 5,
+                "image": "/kids-stories/lola/page-08.jpg",
+                "caption": "Page 8: Waking Up Late",
+                "text": "The next morning, Lola woke up late. She was still sleepy and didn't know what was about to happen!",
+                "moral": "A bright morning begins with good habits."
+          },
+          {
+                "id": 6,
+                "image": "/kids-stories/lola/page-09.jpg",
+                "caption": "Page 9: The Sneaky Village Surprise",
+                "text": "Very quietly, the villagers lifted her cot and carried her away! Shhh...",
+                "moral": "Kind guidance helps us grow."
+          },
+          {
+                "id": 7,
+                "image": "/kids-stories/lola/page-11.jpg",
+                "caption": "Page 11: Lola's Promise",
+                "text": "Lola was shocked and cried, 'What happened to me?' The villagers laughed and said, 'Now you will keep yourself clean and smell good!' Lola promised she would!",
+                "moral": "Cleanliness keeps us healthy and happy!"
+          },
+          {
+                "id": 8,
+                "image": "/kids-stories/lola/page-12.jpg",
+                "caption": "Page 12: A Warm Hug & Happy Smiles",
+                "text": "Lola learned her lesson. She promised, 'I will keep myself clean and smell good every day!' Everyone smiled and hugged her. Lola was happy!",
+                "moral": "Good habits make us happy and bring love to everyone!"
+          },
+          {
+                "id": 9,
+                "image": "/kids-stories/lola/page-13.jpg",
+                "caption": "Page 13: Clean Body, Happy Mind",
+                "text": "Lola kept her promise. She bathed every day, kept herself clean and smelled so good! Everyone was very proud of her.",
+                "moral": "Clean body, Happy mind, Kind heart!"
+          },
+          {
+                "id": 10,
+                "image": "/kids-stories/lola/page-14.jpg",
+                "caption": "Page 14: Happily Ever After",
+                "text": "Lola learned an important lesson. She stayed clean, smelled good, and made everyone happy! The villagers loved her, and Lola lived happily ever after! Clean body, Happy mind, Kind heart! THE END.",
+                "moral": "Cleanliness keeps us healthy and happy!"
+          }
     ]);
   };
 
@@ -1211,9 +1246,9 @@ export default function AdminPanel() {
             type="button"
             onClick={loadLolaKidsPages}
             className="px-3 py-2 rounded-xl bg-purple-100 dark:bg-purple-900/60 hover:bg-purple-200 text-purple-800 dark:text-purple-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
-            title="Load Lola's Clean Habits full 5-page illustrated story"
+            title="Load Lola's Clean Habits full 10-page illustrated story"
           >
-            <span>🌟 Load Lola's Clean Habits (5 Illustrated Pages)</span>
+            <span>🌟 Load Lola's Clean Habits (10 Illustrated Pages)</span>
           </button>
 
           <button
