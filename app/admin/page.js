@@ -1020,6 +1020,28 @@ export default function AdminPanel() {
   // Initial Chapter / Pages State
   const [pubChapterTitle, setPubChapterTitle] = useState('Chapter 1: The Beginning');
   const [pubChapterBody, setPubChapterBody] = useState('');
+  // PDF Book State in Admin
+  const [pubPdfUrl, setPubPdfUrl] = useState('/assignments/montessori-level-3-assignment-oct-21-23.pdf');
+  const [pubGradeLevel, setPubGradeLevel] = useState('Montessori Level III (Ages 4-7)');
+  const [pubSchoolName, setPubSchoolName] = useState("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+  const [pubPdfPageCount, setPubPdfPageCount] = useState(8);
+  const [pubPdfFileName, setPubPdfFileName] = useState('');
+
+  const handleAdminPdfUpload = (file) => {
+    if (!file) return;
+    setPubPdfFileName(file.name);
+    if (!pubTitle || pubTitle === 'Untitled Story') {
+      const generatedTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+      setPubTitle(generatedTitle);
+      setPubSlug(generatedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPubPdfUrl(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const [pubPages, setPubPages] = useState([
     { id: 1, image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80', text: 'The chronicle begins in an era of myth and forgotten power...', caption: 'Page 1' }
   ]);
@@ -1028,6 +1050,7 @@ export default function AdminPanel() {
     { label: 'Fantasy / Magic', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80' },
     { label: 'Romance / Drama', url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80' },
     { label: 'Sci-Fi / Space', url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=800&q=80' },
+    { label: "Kids Assignment (PDF)", url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80' },
     { label: "Lola's Clean Habits (Kids)", url: '/kids-stories/lola/page-14.jpg' },
     { label: 'Kids / Illustrated', url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80' },
     { label: 'Mystery / Detective', url: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=800&q=80' },
@@ -1149,7 +1172,20 @@ export default function AdminPanel() {
 
   const handleContentTypeSelect = (type) => {
     setPubContentType(type);
-    if (type === 'picture_book') {
+    if (type === 'pdf') {
+      if (['13+', '16+', '18+'].includes(pubAgeRating)) {
+        setPubAgeRating('3+');
+      }
+      if (pubGenre === 'Fantasy' || !pubGenre) {
+        setPubGenre('Kids Assignments & Worksheets');
+      }
+      if (pubChapterTitle.includes('Chapter 1')) {
+        setPubChapterTitle('Printable Worksheet Edition');
+      }
+      if (!pubCover || pubCover.includes('photo-1518709268805')) {
+        setPubCover('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80');
+      }
+    } else if (type === 'picture_book') {
       // Suggest kid-friendly rating and category when picture book format is picked
       if (['13+', '16+', '18+'].includes(pubAgeRating)) {
         setPubAgeRating('3+');
@@ -1222,6 +1258,169 @@ export default function AdminPanel() {
       return copy;
     });
   };
+
+  const renderPdfBookManager = () => (
+    <div className="p-5 sm:p-6 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border-2 border-dashed border-emerald-300 dark:border-emerald-800/60 space-y-5 animate-in fade-in duration-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-emerald-200/60 dark:border-emerald-800/40">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📄</span>
+            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+              PDF Document &amp; Worksheet Studio
+            </h4>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+              Printable &amp; Downloadable
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Upload any educational PDF, children's assignment, or printable workbook.
+          </p>
+        </div>
+
+        {/* Quick Montessori Presets */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              setPubPdfUrl('/assignments/montessori-level-3-assignment-oct-21-23.pdf');
+              setPubTitle('Montessori Level-III: Home Assignment (Oct 21–23, 2026)');
+              setPubSlug('montessori-level-3-oct-21-23');
+              setPubGenre('Kids Assignments & Worksheets');
+              setPubAgeRating('3+');
+              setPubGradeLevel('Montessori Level III (Ages 4-7)');
+              setPubSchoolName("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+              setPubPdfPageCount(8);
+              setPubCover('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80');
+              setPubDescription("Official Level-III Montessori home assignment covering English Revision, Conjunctions ('and'), Hindi (वचन व और का प्रयोग), Arithmetic (Addition facts & Ordinals), and EVS (Body Parts).");
+              setPubTags('montessori, english, hindi, arithmetic, evs');
+            }}
+            className="px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Load Montessori Level-III Oct 21-23 assignment"
+          >
+            <span>⚡ Oct 21-23 Preset</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPubPdfUrl('/assignments/kids-phonics-reading-cards-ng-sound.pdf');
+              setPubTitle("Kids Phonics & Reading Cards: 'ng' Sound & Hindi Matras");
+              setPubSlug('kids-phonics-reading-cards-ng');
+              setPubGenre('Kids Assignments & Worksheets');
+              setPubAgeRating('3+');
+              setPubGradeLevel('Kindergarten & Early Primary (Ages 3-6)');
+              setPubSchoolName("The Loharu Montessori Children's House, Civil Lines, Jaipur");
+              setPubPdfPageCount(2);
+              setPubCover('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80');
+              setPubDescription("Illustrated early reading cards featuring the 'ng' phonics sound (ring, king, sing, wing) and Hindi word-building flashcards.");
+              setPubTags('phonics, reading-cards, hindi-matras, vocabulary');
+            }}
+            className="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/60 hover:bg-purple-200 text-purple-800 dark:text-purple-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Load Phonics Reading Cards preset"
+          >
+            <span>⚡ Phonics Cards Preset</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Device PDF Upload Area */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          Upload PDF File from Computer / Device
+        </label>
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 transition-all">
+            <Upload className="w-4 h-4" />
+            <span>Select PDF from Device</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => handleAdminPdfUpload(e.target.files?.[0])}
+            />
+          </label>
+          {pubPdfFileName && (
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/20">
+              ✓ Loaded: {pubPdfFileName}
+            </span>
+          )}
+          <span className="text-xs text-slate-400">or enter a direct PDF URL / file path below:</span>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 mb-1">PDF File URL or Path</label>
+          <input
+            type="text"
+            value={pubPdfUrl}
+            onChange={(e) => setPubPdfUrl(e.target.value)}
+            placeholder="e.g. /assignments/my-worksheet.pdf or https://..."
+            className="w-full text-xs font-mono px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        {/* Metadata: Grade Level, School Name, Total Pages */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 mb-1">Grade / Age Level</label>
+            <input
+              type="text"
+              value={pubGradeLevel}
+              onChange={(e) => setPubGradeLevel(e.target.value)}
+              placeholder="e.g. Montessori Level III (Ages 4-7)"
+              className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 mb-1">School / Organization</label>
+            <input
+              type="text"
+              value={pubSchoolName}
+              onChange={(e) => setPubSchoolName(e.target.value)}
+              placeholder="e.g. The Loharu Montessori Children's House"
+              className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 mb-1">Total Worksheet Pages</label>
+            <input
+              type="number"
+              min="1"
+              max="200"
+              value={pubPdfPageCount}
+              onChange={(e) => setPubPdfPageCount(e.target.value)}
+              className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Live Interactive PDF Preview in Admin */}
+        {pubPdfUrl && (
+          <div className="pt-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
+                Live PDF Worksheet Preview
+              </label>
+              <a
+                href={pubPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open in New Tab
+              </a>
+            </div>
+            <div className="w-full h-80 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 shadow-inner">
+              <iframe
+                src={`${pubPdfUrl}#toolbar=0&navpanes=0`}
+                className="w-full h-full border-0 bg-white"
+                title="Admin PDF Preview"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   const renderPictureBookPagesManager = () => (
     <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border-2 border-dashed border-amber-300 dark:border-amber-800/60 space-y-4 animate-in fade-in duration-200">
@@ -1530,6 +1729,26 @@ export default function AdminPanel() {
           { id: 1, image: pubCover, text: pubChapterBody || "The illustrated chronicle begins here.", caption: "Page 1" }
         ]
       };
+    } else if (pubContentType === 'pdf') {
+      initialChapterObj = {
+        id: 1,
+        number: 1,
+        title: pubChapterTitle.trim() || pubTitle.trim() || "Worksheet & Assignment",
+        reads: 0,
+        votes: 0,
+        emojis: { '🔥': 0, '❤️': 0, '😭': 0, '👏': 0, '😱': 0 },
+        contentType: 'pdf',
+        pdfUrl: pubPdfUrl,
+        pageCount: Number(pubPdfPageCount) || 8,
+        paragraphs: [
+          {
+            id: 101,
+            text: pubDescription.trim() || "Official printable assignment worksheet for kids.",
+            comments: []
+          }
+        ],
+        pages: []
+      };
     } else {
       const paragraphTexts = pubChapterBody.trim() 
         ? pubChapterBody.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
@@ -1570,6 +1789,11 @@ export default function AdminPanel() {
       minAge,
       contentType: pubContentType,
       targetAudience,
+      pdfUrl: pubContentType === 'pdf' ? pubPdfUrl : undefined,
+      gradeLevel: pubContentType === 'pdf' ? pubGradeLevel : undefined,
+      school: pubContentType === 'pdf' ? pubSchoolName : undefined,
+      pageCount: pubContentType === 'pdf' ? Number(pubPdfPageCount) || 8 : undefined,
+      subjects: pubContentType === 'pdf' ? pubTags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
       mood: pubMood,
       trope: pubTrope,
       length: "Serialized Novel",
@@ -2691,14 +2915,14 @@ export default function AdminPanel() {
                 <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
                   Content Format
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleContentTypeSelect('story')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'story'
                         ? 'bg-brand-500 text-white shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                     }`}
                   >
                     <BookOpen className="w-3.5 h-3.5" /> Serialized Text
@@ -2709,10 +2933,21 @@ export default function AdminPanel() {
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'picture_book'
                         ? 'bg-amber-500 text-white shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                     }`}
                   >
                     <ImageIcon className="w-3.5 h-3.5" /> Picture Book
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleContentTypeSelect('pdf')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'pdf'
+                        ? 'bg-emerald-600 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" /> PDF Book
                   </button>
                 </div>
               </div>
@@ -2807,6 +3042,7 @@ export default function AdminPanel() {
 
               {/* DEDICATED PICTURE BOOK UPLOAD CENTER IN SECTION 1 */}
               {pubContentType === 'picture_book' && renderPictureBookPagesManager()}
+              {pubContentType === 'pdf' && renderPdfBookManager()}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -2991,12 +3227,14 @@ export default function AdminPanel() {
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h3 className="text-lg font-black flex items-center gap-2">
                 <FileText className="w-5 h-5 text-brand-500" />
-                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : 'Illustrated Pages Manager'}
+                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : pubContentType === 'picture_book' ? 'Illustrated Pages Manager' : 'PDF Book & Worksheet Studio'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 {pubContentType === 'story'
                   ? 'Input the initial serialization chapter. Paragraphs separated by blank lines will support reader inline comments.'
-                  : 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'}
+                  : pubContentType === 'picture_book'
+                  ? 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'
+                  : 'Upload or link printable PDF homework, Montessori assignments, and children workbooks.'}
               </p>
             </div>
 
@@ -3026,7 +3264,7 @@ export default function AdminPanel() {
                   className="w-full p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
-            ) : (
+            ) : pubContentType === 'picture_book' ? (
               <div className="p-6 rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
                   <ImageIcon className="w-6 h-6" />
@@ -3037,6 +3275,20 @@ export default function AdminPanel() {
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     All {pubPages.length} illustrated story pages, device pictures, and captions are configured in the Picture Book Manager in Section 1 above. Chapter 1 will automatically publish as an interactive illustrated page-turner for children and parents.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800/60 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Printable PDF Worksheet &amp; Book Active ({pubPdfPageCount} Pages)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    The printable PDF file ({pubPdfUrl ? pubPdfUrl.slice(0, 50) + '...' : 'Loaded from device'}) will be embedded directly in the reader with 1-click Download, Print, and Fullscreen view for students and parents.
                   </p>
                 </div>
               </div>
@@ -8032,14 +8284,14 @@ export default function AdminPanel() {
                 <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
                   Content Format
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleContentTypeSelect('story')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'story'
                         ? 'bg-brand-500 text-white shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                     }`}
                   >
                     <BookOpen className="w-3.5 h-3.5" /> Serialized Text
@@ -8050,10 +8302,21 @@ export default function AdminPanel() {
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       pubContentType === 'picture_book'
                         ? 'bg-amber-500 text-white shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                     }`}
                   >
                     <ImageIcon className="w-3.5 h-3.5" /> Picture Book
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleContentTypeSelect('pdf')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      pubContentType === 'pdf'
+                        ? 'bg-emerald-600 text-white shadow-md'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" /> PDF Book
                   </button>
                 </div>
               </div>
@@ -8148,6 +8411,7 @@ export default function AdminPanel() {
 
               {/* DEDICATED PICTURE BOOK UPLOAD CENTER IN MODAL */}
               {pubContentType === 'picture_book' && renderPictureBookPagesManager()}
+              {pubContentType === 'pdf' && renderPdfBookManager()}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -8332,12 +8596,14 @@ export default function AdminPanel() {
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h3 className="text-lg font-black flex items-center gap-2">
                 <FileText className="w-5 h-5 text-brand-500" />
-                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : 'Illustrated Pages Manager'}
+                {pubContentType === 'story' ? 'Chapter 1 Manuscripts' : pubContentType === 'picture_book' ? 'Illustrated Pages Manager' : 'PDF Book & Worksheet Studio'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 {pubContentType === 'story'
                   ? 'Input the initial serialization chapter. Paragraphs separated by blank lines will support reader inline comments.'
-                  : 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'}
+                  : pubContentType === 'picture_book'
+                  ? 'Add sequential illustrated pages with captions and imagery for kids and graphic novels.'
+                  : 'Upload or link printable PDF homework, Montessori assignments, and children workbooks.'}
               </p>
             </div>
 
@@ -8367,7 +8633,7 @@ export default function AdminPanel() {
                   className="w-full p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
-            ) : (
+            ) : pubContentType === 'picture_book' ? (
               <div className="p-6 rounded-2xl bg-amber-500/10 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
                   <ImageIcon className="w-6 h-6" />
@@ -8378,6 +8644,20 @@ export default function AdminPanel() {
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     All {pubPages.length} illustrated story pages, device pictures, and captions are configured in the Picture Book Manager in Section 1 above. Chapter 1 will automatically publish as an interactive illustrated page-turner for children and parents.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800/60 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Printable PDF Worksheet &amp; Book Active ({pubPdfPageCount} Pages)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    The printable PDF file ({pubPdfUrl ? pubPdfUrl.slice(0, 50) + '...' : 'Loaded from device'}) will be embedded directly in the reader with 1-click Download, Print, and Fullscreen view for students and parents.
                   </p>
                 </div>
               </div>
