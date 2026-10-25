@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ReportModal from '@/components/ReportModal';
 import ReadingListModal from '@/components/ReadingListModal';
 import { useApp } from '@/context/AppContext';
+import TactileIcon from '@/components/TactileIcon';
 import { 
   Eye, 
   Heart, 
@@ -467,12 +468,36 @@ export default function StoryDetailPage() {
                 </button>
               </div>
 
-              {/* Story Stats */}
-              <div className="flex items-center flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600 dark:text-slate-300 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <span className="flex items-center gap-1.5 font-semibold"><Eye className="w-4 h-4 text-brand-500" /> {story.reads.toLocaleString()} {t?.reads || 'Reads'}</span>
-                <span className="flex items-center gap-1.5 font-semibold"><Heart className="w-4 h-4 text-rose-500" /> {story.votes.toLocaleString()} {t?.votes || 'Votes'}</span>
-                <span className="flex items-center gap-1.5 font-semibold"><MessageSquare className="w-4 h-4 text-indigo-500" /> {story.commentsCount.toLocaleString()} {t?.comments || 'Comments'}</span>
-                <span className="flex items-center gap-1.5 font-semibold"><BookOpen className="w-4 h-4 text-amber-500" /> {story.chapters.length} {t?.chapters || 'Chapters'}</span>
+              {/* ClawBrick-Style Tactile Story Stats Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-100/70 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <TactileIcon icon={Eye} size="xs" color="coral" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{story.reads.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400 capitalize">{t?.reads || 'Reads'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-100/70 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <TactileIcon icon={Heart} size="xs" color="coral" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{story.votes.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400 capitalize">{t?.votes || 'Votes'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-100/70 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <TactileIcon icon={MessageSquare} size="xs" color="amber" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{story.commentsCount.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400 capitalize">{t?.comments || 'Comments'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-100/70 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+                  <TactileIcon icon={BookOpen} size="xs" color="purple" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{story.chapters.length}</div>
+                    <div className="text-[10px] text-slate-400 capitalize">{t?.chapters || 'Chapters'}</div>
+                  </div>
+                </div>
               </div>
 
               {/* Description */}

@@ -23,9 +23,12 @@ import {
   Bookmark,
   Share2,
   BookOpen,
-  Film
+  Film,
+  ShieldCheck,
+  PenTool
 } from 'lucide-react';
 import { filterStoriesForUser, filterGenresForUser } from '@/lib/agePolicy';
+import TactileIcon from '@/components/TactileIcon';
 
 export default function HomePage() {
   const { 
@@ -230,6 +233,98 @@ export default function HomePage() {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </section>
+
+        {/* CLAWBRICK-STYLE TACTILE PLATFORM CAPABILITIES FEATURE GRID */}
+        <section className="py-12 bg-slate-900 text-white border-y border-slate-800 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+              <div>
+                <span className="text-xs uppercase font-extrabold tracking-widest text-[#ff7865] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#ff7865] animate-pulse" />
+                  Tactile Experience Architecture
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black mt-1 text-white">Built for Immersive Reading & Discovery</h2>
+              </div>
+              <p className="text-xs text-slate-400 max-w-sm">
+                Engineered with tactile controls, certified age boundaries, and multi-format learning media.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Feature 1 */}
+              <div className="bg-[#14161c] border border-slate-800 hover:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between transition-all group hover:-translate-y-0.5 shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <TactileIcon icon={Sparkles} size="md" color="coral" hasDots={true} />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded-full bg-slate-800/80">
+                    Gen.1 Core
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white group-hover:text-[#ff7865] transition-colors">
+                    Immersive Serialization
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Serialized chapters, real-time reader reactions, and dynamic leaderboard rankings.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="bg-[#14161c] border border-slate-800 hover:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between transition-all group hover:-translate-y-0.5 shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <TactileIcon icon={BookOpen} size="md" color="amber" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded-full bg-slate-800/80">
+                    Kids Vault
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white group-hover:text-amber-400 transition-colors">
+                    Montessori PDF Worksheets
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Interactive picture books, school homework assignments, and teacher-curated packs.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="bg-[#14161c] border border-slate-800 hover:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between transition-all group hover:-translate-y-0.5 shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <TactileIcon icon={ShieldCheck} size="md" color="purple" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded-full bg-slate-800/80">
+                    DOB Guard
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white group-hover:text-purple-400 transition-colors">
+                    Safe-Age Architecture
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Automated age protection restricting 18+ classified works away from minors.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="bg-[#14161c] border border-slate-800 hover:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between transition-all group hover:-translate-y-0.5 shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <TactileIcon icon={PenTool} size="md" color="emerald" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded-full bg-slate-800/80">
+                    Creator Suite
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white group-hover:text-emerald-400 transition-colors">
+                    Author Studio & Payouts
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    WYSIWYG chapter editor, direct book cover designer, and automated revenue ledger.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
