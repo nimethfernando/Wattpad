@@ -151,9 +151,19 @@ export default function Header() {
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-3 lg:gap-3.5 xl:gap-5 text-xs lg:text-sm font-semibold text-slate-600 dark:text-slate-300">
             {!cmsConfig?.pagesContent?.browse?.deleted && (
-              <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-                <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
-              </Link>
+              user ? (
+                <Link href="/browse" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+                  <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login', 'Sign in to explore thousands of stories in our library.')}
+                  className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                >
+                  <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.browse}
+                </button>
+              )
             )}
             {!cmsConfig?.pagesContent?.library?.deleted && (
               user ? (
@@ -176,18 +186,48 @@ export default function Header() {
               )
             )}
             {!cmsConfig?.pagesContent?.community?.deleted && (
-              <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
-                <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
-              </Link>
+              user ? (
+                <Link href="/community" className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+                  <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login', 'Sign in to join community discussions.')}
+                  className="hidden lg:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> {t.community}
+                </button>
+              )
             )}
             {!cmsConfig?.pagesContent?.contests?.deleted && (
-              <Link href="/contests" className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
-                <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
-              </Link>
+              user ? (
+                <Link href="/contests" className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0">
+                  <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login', 'Sign in to enter writing contests.')}
+                  className="hidden xl:flex hover:text-brand-500 items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-500" /> {t.contests}
+                </button>
+              )
             )}
-            <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
-              <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
-            </Link>
+            {user ? (
+              <Link href="/write" className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0">
+                <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAuthModal('login', 'Sign in to write and publish stories on Avora Library.')}
+                className="hover:text-brand-500 flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+              >
+                <PenTool className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-brand-500" /> {t.write}
+              </button>
+            )}
             {(user?.email?.toLowerCase().trim() === 'gbncircle@gmail.com') && (
               <Link href="/admin" className="hidden 2xl:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5" /> {t.adminPanel}
@@ -686,13 +726,26 @@ export default function Header() {
 
               {/* Navigation Links */}
               <nav className="py-4 space-y-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <Link 
-                  href="/browse" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Compass className="w-4 h-4 text-brand-500" /> {t.browse}
-                </Link>
+                {user ? (
+                  <Link 
+                    href="/browse" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Compass className="w-4 h-4 text-brand-500" /> {t.browse}
+                  </Link>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login', 'Sign in to explore thousands of stories in our library.');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <Compass className="w-4 h-4 text-brand-500" /> {t.browse}
+                  </button>
+                )}
                 {user ? (
                   <Link 
                     href="/library" 
@@ -722,27 +775,66 @@ export default function Header() {
                     </span>
                   </button>
                 )}
-                <Link 
-                  href="/community" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Users className="w-4 h-4 text-indigo-500" /> {t.community}
-                </Link>
-                <Link 
-                  href="/contests" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Trophy className="w-4 h-4 text-amber-500" /> {t.contests}
-                </Link>
-                <Link 
-                  href="/write" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <PenTool className="w-4 h-4 text-brand-500" /> {t.write}
-                </Link>
+                {user ? (
+                  <Link 
+                    href="/community" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Users className="w-4 h-4 text-indigo-500" /> {t.community}
+                  </Link>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login', 'Sign in to join community discussions.');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <Users className="w-4 h-4 text-indigo-500" /> {t.community}
+                  </button>
+                )}
+                {user ? (
+                  <Link 
+                    href="/contests" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Trophy className="w-4 h-4 text-amber-500" /> {t.contests}
+                  </Link>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login', 'Sign in to enter writing contests.');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <Trophy className="w-4 h-4 text-amber-500" /> {t.contests}
+                  </button>
+                )}
+                {user ? (
+                  <Link 
+                    href="/write" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <PenTool className="w-4 h-4 text-brand-500" /> {t.write}
+                  </Link>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login', 'Sign in to write and publish stories on Avora Library.');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <PenTool className="w-4 h-4 text-brand-500" /> {t.write}
+                  </button>
+                )}
 
                 {user && (
                   <>

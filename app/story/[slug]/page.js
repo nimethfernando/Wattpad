@@ -515,8 +515,25 @@ export default function StoryDetailPage() {
               )}
             </div>
 
+            {/* Guest Sign-in Prompt */}
+            {!user && (
+              <div className="w-full p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔒</span>
+                  <span><strong>Member Access:</strong> Sign in to read chapters, worksheets, and download study assignments.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login', `Sign in to read "${story.title}".`)}
+                  className="px-3.5 py-1.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                >
+                  Sign In to Read
+                </button>
+              </div>
+            )}
+
             {/* Read & Wattpad-style Library CTA Buttons */}
-            <div className="flex items-center gap-2.5 sm:gap-3 pt-3 flex-wrap">
+            <div className="flex items-center gap-2.5 sm:gap-3 pt-1 flex-wrap">
               {/* Primary Start / Continue Reading Button */}
               <Link 
                 href={`/read/${story.slug}`} 

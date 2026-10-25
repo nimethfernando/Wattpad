@@ -1222,8 +1222,54 @@ export function VisualBookEditor({
 
 export default function AuthorStudio() {
   const router = useRouter();
-  const { genres, stories, setStories, deleteStory, user, publishStory, addChapterToStory, updateStory, openBankDetailsModal, t } = useApp();
+  const { genres, stories, setStories, deleteStory, user, publishStory, addChapterToStory, updateStory, openBankDetailsModal, openAuthModal, t } = useApp();
   const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'stories' | 'analytics'
+
+  // Guest Access Guard: Require Login to Write
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-lg w-full mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-brand-500/10 text-brand-500 border border-brand-500/20 flex items-center justify-center mb-6 shadow-xl shadow-brand-500/15">
+            <PenTool className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-500/10 px-3.5 py-1 rounded-full mb-3 border border-brand-500/20">
+            Author Studio • Login Required
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black mb-3 text-slate-900 dark:text-white">
+            Sign In to Start Writing
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 text-xs sm:text-sm max-w-md leading-relaxed">
+            Create stories, serialize chapters, design custom book covers, and reach thousands of readers across the globe. Sign in or register your free author profile to get started.
+          </p>
+          <div className="w-full max-w-xs space-y-3">
+            <button
+              type="button"
+              onClick={() => openAuthModal('login', 'Sign in to access your Author Studio and write stories.')}
+              className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-brand-500/25 transition-all cursor-pointer"
+            >
+              Sign In to Author Studio
+            </button>
+            <button
+              type="button"
+              onClick={() => openAuthModal('register', 'Create an account to start publishing stories.')}
+              className="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all cursor-pointer"
+            >
+              Create Free Account
+            </button>
+            <Link 
+              href="/"
+              className="block pt-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              ← Return to Home Page
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Publishing Lockout Guard for Banned Authors
   if (user?.status === 'banned' || user?.isBanned) {

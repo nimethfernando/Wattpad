@@ -29,14 +29,16 @@ export default function MobileBottomNav() {
     },
     {
       label: t.browse || 'Browse',
-      href: '/browse',
+      href: user ? '/browse' : '#',
       icon: Compass,
+      onClick: !user ? () => openAuthModal('login', 'Sign in to browse the story catalog.') : null,
       isActive: pathname === '/browse'
     },
     {
       label: t.write || 'Write',
-      href: '/write',
+      href: user ? '/write' : '#',
       icon: PenTool,
+      onClick: !user ? () => openAuthModal('login', 'Sign in to write and publish stories on Avora Library.') : null,
       isActive: pathname === '/write'
     },
     {

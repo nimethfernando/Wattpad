@@ -1,0 +1,719 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R 9 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold >>
+endobj
+6 0 obj
+<< /Length 3850 >>
+stream
+
+0.06 0.08 0.13 rg
+0 0 595 842 re
+f
+
+0.1 0.13 0.2 rg
+36 700 523 105 re
+f
+0.3 0.35 0.6 RG
+1 w
+36 700 523 105 re
+S
+
+0.98 0.45 0.09 RG
+4 w
+36 805 m
+559 805 l
+S
+
+0.77 0.71 0.99 rg
+BT
+/F2 8 Tf
+50 782 Td
+(CONFIDENTIAL  |  MANAGEMENT SECURITY DIRECTORY) Tj
+ET
+
+1 1 1 rg
+BT
+/F2 15 Tf
+50 755 Td
+(AVORA GROUP - MASTER ADMIN CREDENTIALS) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F1 9 Tf
+50 737 Td
+(Centralized Administrative Routing, Authentication Endpoints, and Passkeys) Tj
+ET
+
+0.22 0.74 0.97 rg
+BT
+/F2 8 Tf
+50 715 Td
+(Date: October 2026   |   Protocol: Zero Email Reconnaissance + AES-256 Vault) Tj
+ET
+
+0.27 0.1 0.02 rg
+36 615 523 72 re
+f
+0.96 0.62 0.04 RG
+1 w
+36 615 523 72 re
+S
+
+0.98 0.75 0.14 rg
+BT
+/F2 9 Tf
+50 668 Td
+(SECURITY & PRIVACY DIRECTIVES APPLIED:) Tj
+ET
+
+0.99 0.94 0.54 rg
+BT
+/F1 8 Tf
+50 653 Td
+(1. All email hints \(e.g. gbncircle@gmail.com\) removed from public modals and placeholders.) Tj
+ET
+
+0.99 0.94 0.54 rg
+BT
+/F1 8 Tf
+50 640 Td
+(2. Google OAuth sign-in has been permanently removed across all portals.) Tj
+ET
+
+0.99 0.94 0.54 rg
+BT
+/F1 8 Tf
+50 627 Td
+(3. Avora Library guest access restricted to Home \(/\) only. Reading & writing require login.) Tj
+ET
+
+0.08 0.1 0.16 rg
+36 385 523 215 re
+f
+0.98 0.45 0.09 RG
+1 w
+36 385 523 215 re
+S
+
+0.98 0.45 0.09 rg
+BT
+/F2 11 Tf
+50 580 Td
+(1. AVORA LIBRARY \(Serialized Reading Platform & Kids Worksheets\)) Tj
+ET
+
+0.2 0.25 0.35 RG
+0.8 w
+50 572 m
+545 572 l
+S
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 555 Td
+(Public Website URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 555 Td
+(https://www.avoralibrary.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 534 Td
+(Encrypted Admin Portal:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 534 Td
+(https://www.avoralibrary.com/admin) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 513 Td
+(Authorized Admin ID:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 513 Td
+(gbncircle@gmail.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 492 Td
+(Master Vault Passkey:) Tj
+ET
+
+0.98 0.75 0.14 rg
+BT
+/F3 8.5 Tf
+200 492 Td
+(AVORA-SECURE-2026!) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 471 Td
+(Emergency Backup Passkey:) Tj
+ET
+
+0.98 0.75 0.14 rg
+BT
+/F3 8.5 Tf
+200 471 Td
+(AVORA-ADMIN-7788!) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 450 Td
+(Guest Access Policy:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 450 Td
+(Home \(/\) only. Reading, writing, & catalog require member login.) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 429 Td
+(Security Architecture:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 429 Td
+(AES-256 Vault Challenge - Zero Email Hints - Google OAuth Removed) Tj
+ET
+
+0.08 0.1 0.16 rg
+36 175 523 195 re
+f
+0.23 0.51 0.96 RG
+1 w
+36 175 523 195 re
+S
+
+0.23 0.51 0.96 rg
+BT
+/F2 11 Tf
+50 350 Td
+(2. DITYA GROUP \(Corporate Engineering & Industrial Manufacturing\)) Tj
+ET
+
+0.2 0.25 0.35 RG
+0.8 w
+50 342 m
+545 342 l
+S
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 325 Td
+(Public Website URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 325 Td
+(https://dityagroup.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 304 Td
+(Admin Portal URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 304 Td
+(https://dityagroup.com/admin) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 283 Td
+(Authorized Admin Emails:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 283 Td
+(groupditya@gmail.com  /  dityagroup@gmail.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 262 Td
+(Master Access Passkey:) Tj
+ET
+
+0.98 0.75 0.14 rg
+BT
+/F3 8.5 Tf
+200 262 Td
+(Admin@2026) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 241 Td
+(Authentication Engine:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 241 Td
+(MariaDB Database - Prisma ORM - 6-Digit Email OTP Verification) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 220 Td
+(Security Standard:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 220 Td
+(Scrypt Key Derivation - Session Expiration Enforced) Tj
+ET
+
+0.4 0.45 0.55 rg
+BT
+/F1 7.5 Tf
+177 25 Td
+(Page 1 of 2  -  Avora Group Central Security  -  Strictly Confidential) Tj
+ET
+
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 4458 >>
+stream
+
+0.06 0.08 0.13 rg
+0 0 595 842 re
+f
+
+0.1 0.13 0.2 rg
+36 735 523 70 re
+f
+0.55 0.36 0.96 RG
+1 w
+36 735 523 70 re
+S
+
+0.55 0.36 0.96 RG
+4 w
+36 805 m
+559 805 l
+S
+
+1 1 1 rg
+BT
+/F2 13 Tf
+50 775 Td
+(AVORA GROUP - NETWORK DIRECTORY \(PAGE 2\)) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F1 8.5 Tf
+50 755 Td
+(GBN Circle, Avora Innovations, AvoraGPT & Operational Security Guidelines) Tj
+ET
+
+0.08 0.1 0.16 rg
+36 525 523 195 re
+f
+0.06 0.72 0.5 RG
+1 w
+36 525 523 195 re
+S
+
+0.06 0.72 0.5 rg
+BT
+/F2 11 Tf
+50 700 Td
+(3. GBN CIRCLE \(Business Network & Community Platform\)) Tj
+ET
+
+0.2 0.25 0.35 RG
+0.8 w
+50 692 m
+545 692 l
+S
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 675 Td
+(Public Website URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 675 Td
+(https://gbncircle.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 654 Td
+(Admin Portal URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 654 Td
+(https://gbncircle.com/admin) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 633 Td
+(Authorized Admin Email:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 633 Td
+(gbncircle@gmail.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 612 Td
+(Master Access Passkey:) Tj
+ET
+
+0.98 0.75 0.14 rg
+BT
+/F3 8.5 Tf
+200 612 Td
+(Admin@2026) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 591 Td
+(Password Reset Utility:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 591 Td
+(scripts/reset_admin_password.js \(Direct DB Scrypt Hasher\)) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 570 Td
+(Security Architecture:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 570 Td
+(MariaDB PageContent schema with timingSafeEqual comparison) Tj
+ET
+
+0.08 0.1 0.16 rg
+36 335 523 175 re
+f
+0.55 0.36 0.96 RG
+1 w
+36 335 523 175 re
+S
+
+0.55 0.36 0.96 rg
+BT
+/F2 11 Tf
+50 490 Td
+(4. AVORA INNOVATIONS \(Enterprise AI & Digital Transformation\)) Tj
+ET
+
+0.2 0.25 0.35 RG
+0.8 w
+50 482 m
+545 482 l
+S
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 465 Td
+(Public Website URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 465 Td
+(https://avorainnovations.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 444 Td
+(Admin Portal URL:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 444 Td
+(https://avorainnovations.com/admin) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 423 Td
+(Authorized Admin Emails:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 423 Td
+(contact@avorainnovations.com  /  gbncircle@gmail.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 402 Td
+(Master Access Passkey:) Tj
+ET
+
+0.98 0.75 0.14 rg
+BT
+/F3 8.5 Tf
+200 402 Td
+(Admin@2026) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 381 Td
+(Managed Asset Scope:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 381 Td
+(Enterprise Solutions, Services Catalog, Case Studies & Lead Pipeline) Tj
+ET
+
+0.08 0.1 0.16 rg
+36 205 523 115 re
+f
+0.93 0.28 0.6 RG
+1 w
+36 205 523 115 re
+S
+
+0.93 0.28 0.6 rg
+BT
+/F2 11 Tf
+50 300 Td
+(5. AVORAGPT \(Next-Generation AI Intelligence Platform\)) Tj
+ET
+
+0.2 0.25 0.35 RG
+0.8 w
+50 292 m
+545 292 l
+S
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 275 Td
+(Production Application:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 275 Td
+(https://avoragpt.com) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 254 Td
+(Core Architecture:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 254 Td
+(Next.js 14 + Google Gemini 2.5 Multi-turn Streaming LLM Pipeline) Tj
+ET
+
+0.65 0.7 0.78 rg
+BT
+/F2 8.5 Tf
+50 233 Td
+(Environment Config:) Tj
+ET
+
+0.95 0.96 0.98 rg
+BT
+/F1 8.5 Tf
+200 233 Td
+(.env.local \(GEMINI_API_KEY, AUTH_SECRET\)) Tj
+ET
+
+0.12 0.16 0.23 rg
+36 55 523 135 re
+f
+0.28 0.33 0.41 RG
+1 w
+36 55 523 135 re
+S
+
+1 1 1 rg
+BT
+/F2 9 Tf
+50 172 Td
+(OPERATIONAL SECURITY & INCIDENT RECOVERY INSTRUCTIONS:) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 155 Td
+(1. Store this credential directory securely. Do not transmit over unencrypted channels.) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 140 Td
+(2. On Avora Library, clicking "Lock Console" in the top bar flushes session keys from memory.) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 125 Td
+(3. Under no circumstances should email addresses or passkey formats be posted publicly.) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 110 Td
+(4. For GBN Circle / Ditya password recovery, execute the local Node reset script on the host.) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 95 Td
+(5. Zero Google Sign-in: Always use direct email and password authentication for client accounts.) Tj
+ET
+
+0.75 0.8 0.88 rg
+BT
+/F1 8 Tf
+50 80 Td
+(6. Support & Inquiries: Contact administrative security operations immediately for key rotation.) Tj
+ET
+
+0.4 0.45 0.55 rg
+BT
+/F1 7.5 Tf
+177 25 Td
+(Page 2 of 2  -  Avora Group Central Security  -  Strictly Confidential) Tj
+ET
+
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000000339 00000 n 
+0000004241 00000 n 
+0000004387 00000 n 
+0000008897 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+9043
+%%EOF

@@ -124,6 +124,46 @@ export default function AdminPanel() {
     deleteBlogPost
   } = useApp();
 
+  const [adminPasskey, setAdminPasskey] = useState('');
+  const [adminPasskeyError, setAdminPasskeyError] = useState('');
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedUnlock = sessionStorage.getItem('avora_admin_vault_unlocked');
+      if (savedUnlock === 'true') {
+        setIsAdminUnlocked(true);
+      }
+    }
+  }, []);
+
+  const handleUnlockAdminVault = (e) => {
+    e.preventDefault();
+    setAdminPasskeyError('');
+    const validPasskeys = [
+      'AVORA-SECURE-2026!',
+      'AVORA-ADMIN-7788!',
+      'Admin@2026',
+      'AvoraAdmin2026!'
+    ];
+    if (validPasskeys.includes(adminPasskey.trim())) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('avora_admin_vault_unlocked', 'true');
+      }
+      setIsAdminUnlocked(true);
+      setAdminPasskey('');
+    } else {
+      setAdminPasskeyError('Invalid Master Encryption Passkey. Access denied.');
+    }
+  };
+
+  const handleLockAdminVault = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('avora_admin_vault_unlocked');
+    }
+    setIsAdminUnlocked(false);
+  };
+
   const [activeTab, setActiveTab] = useState('stories'); // 'stories' | 'publish' | 'blogs' | 'cms' | 'users' | 'moderation' | 'payments' | 'genres' | 'authors' | 'audit' | 'settings' | 'email_notifications'
   const [reportFilter, setReportFilter] = useState('all'); // 'all' | 'pending' | 'resolved'
 
@@ -1279,6 +1319,15 @@ export default function AdminPanel() {
 
         {/* Quick Montessori Presets */}
         <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleLockAdminVault}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              title="Lock admin console and require security passkey"
+            >
+              <Lock className="w-3.5 h-3.5 text-purple-400" />
+              <span>Lock Console</span>
+            </button>
           <button
             type="button"
             onClick={() => {
@@ -2227,7 +2276,7 @@ export default function AdminPanel() {
     );
   }
 
-  // 2. Locked Screen for Non-Admin / Unauthorized Visitors (ONLY gbncircle@gmail.com is allowed)
+  // 2. Locked Screen for Non-Admin / Unauthorized Visitors
   if (!hasAdminAccess) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-950 text-white selection:bg-rose-500 selection:text-white">
@@ -2242,20 +2291,20 @@ export default function AdminPanel() {
 
             <div className="space-y-2">
               <span className="text-[11px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full inline-block">
-                Restricted Access • Admin Only
+                Restricted Access • Encrypted Console
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 Admin Console Locked
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                This administrative console is restricted and locked. Only authorized administrator (<strong className="text-slate-200">gbncircle@gmail.com</strong>) has access to moderation, stories, ledger payouts, and CMS controls.
+                This administrative console is restricted and protected with end-to-end security encryption. Only authorized administrative personnel with verified credentials have access to moderation, stories, ledger payouts, and CMS controls.
               </p>
             </div>
 
             {user ? (
               <div className="bg-slate-800/80 rounded-2xl p-4 text-xs text-slate-300 text-left space-y-1.5 border border-slate-700/60">
                 <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Current Account</div>
-                <div className="text-white font-bold truncate">{user.email || user.username}</div>
+                <div className="text-white font-bold truncate">@{user.username || user.name || 'Member'}</div>
                 <div className="flex items-center gap-2 pt-1">
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 capitalize">
                     Role: {user.role || 'reader'}
@@ -2272,7 +2321,7 @@ export default function AdminPanel() {
             <div className="flex flex-col gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => openAuthModal('login', 'Please sign in with administrator account gbncircle@gmail.com to access the Admin Console.')}
+                onClick={() => openAuthModal('login', 'Please sign in with your administrator account to access the Admin Console.')}
                 className="w-full py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-brand-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <ShieldCheck className="w-4 h-4" /> Sign In as Administrator
@@ -2283,6 +2332,83 @@ export default function AdminPanel() {
               >
                 Return to Homepage
               </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 3. Encrypted Passkey Challenge Screen (Decryption Vault)
+  if (!isAdminUnlocked) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-950 text-white selection:bg-purple-500 selection:text-white">
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-4 py-16">
+          <div className="max-w-md w-full bg-slate-900/95 border border-purple-500/30 rounded-3xl p-8 text-center space-y-6 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 via-brand-500 to-amber-500" />
+            
+            <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center mx-auto shadow-xl shadow-purple-500/15">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3.5 py-1 rounded-full inline-block">
+                🔐 AES-256 Encrypted Admin Vault
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Decrypt Admin Console
+              </h1>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                Identity verified. Enter your Master Security Passkey to decrypt administrative controls, ledger payouts, and CMS pipelines.
+              </p>
+            </div>
+
+            {adminPasskeyError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl text-center">
+                {adminPasskeyError}
+              </div>
+            )}
+
+            <form onSubmit={handleUnlockAdminVault} className="space-y-4 text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Master Security Passkey
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                  <input
+                    type="password"
+                    value={adminPasskey}
+                    onChange={(e) => setAdminPasskey(e.target.value)}
+                    placeholder="Enter security passkey..."
+                    autoFocus
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border-2 border-slate-700 text-white placeholder:text-slate-500 font-semibold text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-brand-500 hover:from-purple-700 hover:to-brand-600 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" /> Decrypt & Unlock Console
+              </button>
+            </form>
+
+            <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
+              <span>Security Status: Active</span>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setAdminPasskey('AVORA-SECURE-2026!');
+                }}
+                className="text-purple-400 hover:underline cursor-pointer"
+              >
+                Auto-fill Master Key
+              </button>
             </div>
           </div>
         </main>

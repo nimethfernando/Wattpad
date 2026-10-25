@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avora Group • Master Administrative Security & Credentials Directory</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --accent: #f97316;
+      --accent-purple: #8b5cf6;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --gold: #fbbf24;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Header Bar */
+    .header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 50%, #0f172a 100%);
+      border: 1px solid #312e81;
+      border-radius: 24px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f97316, #fbbf24, #8b5cf6, #3b82f6);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #c4b5fd;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 650px;
+    }
+
+    .meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+    }
+
+    .meta-item {
+      display: flex;
+      gap: 6px;
+    }
+    .meta-label { color: #94a3b8; }
+    .meta-val { font-weight: 700; color: #f1f5f9; }
+
+    /* Security Notice */
+    .security-notice {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 32px;
+      font-size: 12px;
+      color: #fde68a;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .security-notice strong {
+      color: #fbbf24;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    /* Site Cards */
+    .grid {
+      display: grid;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    .cred-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 12px;
+    }
+
+    .cred-table tr {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .cred-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .cred-table td {
+      padding: 10px 6px;
+      vertical-align: top;
+    }
+
+    .cred-key {
+      color: #9ca3af;
+      font-weight: 600;
+      width: 170px;
+    }
+
+    .cred-val {
+      color: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0,0,0,0.4);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #38bdf8;
+      font-size: 11.5px;
+      display: inline-block;
+      user-select: all;
+    }
+
+    .mono.passkey {
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.3);
+      background: rgba(251, 191, 36, 0.08);
+      font-weight: 700;
+    }
+
+    .mono.email {
+      color: #a78bfa;
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+
+    a.link {
+      color: #f97316;
+      text-decoration: none;
+      font-weight: 700;
+      transition: color 0.15s;
+    }
+    a.link:hover {
+      text-decoration: underline;
+      color: #fb923c;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0;
+      }
+      .container {
+        max-width: 100%;
+      }
+      .header {
+        background: #f8fafc !important;
+        border: 2px solid #0f172a !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+      }
+      h1, .card-title {
+        color: #0f172a !important;
+      }
+      .header p, .meta-label {
+        color: #475569 !important;
+      }
+      .card {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        margin-bottom: 20px;
+      }
+      .mono {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1px solid #94a3b8 !important;
+      }
+      .mono.passkey {
+        color: #b45309 !important;
+      }
+      .cred-key {
+        color: #475569 !important;
+      }
+      .cred-val {
+        color: #0f172a !important;
+      }
+      .security-notice {
+        background: #fffbeb !important;
+        border: 1px solid #f59e0b !important;
+        color: #78350f !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .print-btn {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      border: none;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+      margin-bottom: 24px;
+    }
+    .print-btn:hover {
+      background: linear-gradient(135deg, #ea580c, #c2410c);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <button class="print-btn" onclick="window.print()">
+        🖨️ Print to PDF / Save Credentials
+      </button>
+      <span style="font-size: 12px; color: var(--muted);">Confidential • Management Reference Only</span>
+    </div>
+
+    <!-- Header Banner -->
+    <header class="header">
+      <div class="badge">
+        🛡️ Master Administrative Vault & Security Directory
+      </div>
+      <h1>Central Network Admin Consoles & Access Keys</h1>
+      <p>
+        Consolidated administrative routing, authentication endpoints, and cryptographic master passkeys for all deployed client portals, corporate applications, and reader platforms.
+      </p>
+
+      <div class="meta-bar">
+        <div class="meta-item">
+          <span class="meta-label">Classification:</span>
+          <span class="meta-val" style="color: #f43f5e;">CONFIDENTIAL / RESTRICTED</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Revision:</span>
+          <span class="meta-val">v2026.4.2</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Last Updated:</span>
+          <span class="meta-val">October 25, 2026</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Security Protocol:</span>
+          <span class="meta-val" style="color: #6ee7b7;">Zero-Leak Email Shield + Passkey Vault</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Security Directives -->
+    <div class="security-notice">
+      <div style="font-size: 24px; line-height: 1;">🔒</div>
+      <div>
+        <strong>Security & Privacy Directive Applied</strong>
+        Per executive security mandate:
+        1. All public email placeholders and modal hints (e.g. <em>gbncircle@gmail.com</em>) have been completely removed to prevent unauthorized reconnaissance.
+        2. Google OAuth / Social sign-in has been decommissioned across all portals in favor of dedicated authenticated credentials.
+        3. All administrative consoles are now protected with dual-layer authentication (Authorized Account + Master Passkey Challenge).
+      </div>
+    </div>
+
+    <!-- Directory Cards -->
+    <div class="grid">
+
+      <!-- 1. Avora Library -->
+      <div class="card" style="border-color: #f97316;">
+        <div class="card-top">
+          <div class="card-title">
+            <span style="font-size: 22px;">📚</span>
+            <span>Avora Library (Serialized Story & Learning Platform)</span>
+          </div>
+          <span class="status-pill">Active Production</span>
+        </div>
+
+        <table class="cred-table">
+          <tr>
+            <td class="cred-key">Primary Public URL</td>
+            <td class="cred-val"><a class="link" href="https://www.avoralibrary.com" target="_blank">https://www.avoralibrary.com</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Encrypted Admin Console</td>
+            <td class="cred-val"><a class="link" href="https://www.avoralibrary.com/admin" target="_blank">https://www.avoralibrary.com/admin</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authorized Admin ID</td>
+            <td class="cred-val"><span class="mono email">gbncircle@gmail.com</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Master Vault Passkey</td>
+            <td class="cred-val"><span class="mono passkey">AVORA-SECURE-2026!</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Backup Emergency Passkey</td>
+            <td class="cred-val"><span class="mono passkey">AVORA-ADMIN-7788!</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Guest Access Policy</td>
+            <td class="cred-val" style="color: #fbbf24;">Restricted: Home page (/) only. Browse, Write, Read, and Community strictly require member login.</td>
+          </tr>
+          <tr>
+            <td class="cred-key">Access Protection</td>
+            <td class="cred-val">AES-256 Vault Encryption Gate • Zero Email Reconnaissance • Google Sign-In Removed</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 2. Ditya Group -->
+      <div class="card" style="border-color: #3b82f6;">
+        <div class="card-top">
+          <div class="card-title">
+            <span style="font-size: 22px;">🏭</span>
+            <span>Ditya Group (Corporate Portfolio & Engineering Portal)</span>
+          </div>
+          <span class="status-pill">Active Production</span>
+        </div>
+
+        <table class="cred-table">
+          <tr>
+            <td class="cred-key">Primary Public URL</td>
+            <td class="cred-val"><a class="link" href="https://dityagroup.com" target="_blank">https://dityagroup.com</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Admin Portal URL</td>
+            <td class="cred-val"><a class="link" href="https://dityagroup.com/admin" target="_blank">https://dityagroup.com/admin</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authorized Admin Emails</td>
+            <td class="cred-val">
+              <span class="mono email">groupditya@gmail.com</span> &nbsp;
+              <span class="mono email">dityagroup@gmail.com</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="cred-key">Master Access Passkey</td>
+            <td class="cred-val"><span class="mono passkey">Admin@2026</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authentication Engine</td>
+            <td class="cred-val">Prisma ORM • MariaDB Database • 6-Digit Time-Sensitive Email OTP</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 3. GBN Circle -->
+      <div class="card" style="border-color: #10b981;">
+        <div class="card-top">
+          <div class="card-title">
+            <span style="font-size: 22px;">🌐</span>
+            <span>GBN Circle (Business Network & Community Platform)</span>
+          </div>
+          <span class="status-pill">Active Production</span>
+        </div>
+
+        <table class="cred-table">
+          <tr>
+            <td class="cred-key">Primary Public URL</td>
+            <td class="cred-val"><a class="link" href="https://gbncircle.com" target="_blank">https://gbncircle.com</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Admin Portal URL</td>
+            <td class="cred-val"><a class="link" href="https://gbncircle.com/admin" target="_blank">https://gbncircle.com/admin</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authorized Admin ID</td>
+            <td class="cred-val"><span class="mono email">gbncircle@gmail.com</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Master Access Passkey</td>
+            <td class="cred-val"><span class="mono passkey">Admin@2026</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Credential Recovery Tool</td>
+            <td class="cred-val"><span class="mono">scripts/reset_admin_password.js</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authentication Engine</td>
+            <td class="cred-val">Crypto Scrypt Salted Hash • MariaDB Dynamic PageContent Schema</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 4. Avora Innovations -->
+      <div class="card" style="border-color: #8b5cf6;">
+        <div class="card-top">
+          <div class="card-title">
+            <span style="font-size: 22px;">🚀</span>
+            <span>Avora Innovations (Enterprise AI & Technology Solutions)</span>
+          </div>
+          <span class="status-pill">Active Production</span>
+        </div>
+
+        <table class="cred-table">
+          <tr>
+            <td class="cred-key">Primary Public URL</td>
+            <td class="cred-val"><a class="link" href="https://avorainnovations.com" target="_blank">https://avorainnovations.com</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Admin Portal URL</td>
+            <td class="cred-val"><a class="link" href="https://avorainnovations.com/admin" target="_blank">https://avorainnovations.com/admin</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Authorized Admin Emails</td>
+            <td class="cred-val">
+              <span class="mono email">contact@avorainnovations.com</span> &nbsp;
+              <span class="mono email">gbncircle@gmail.com</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="cred-key">Master Access Passkey</td>
+            <td class="cred-val"><span class="mono passkey">Admin@2026</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Management Scope</td>
+            <td class="cred-val">Enterprise Service Catalog • Case Studies • Technology Stacks • Lead Routing</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 5. AvoraGPT -->
+      <div class="card" style="border-color: #ec4899;">
+        <div class="card-top">
+          <div class="card-title">
+            <span style="font-size: 22px;">🧠</span>
+            <span>AvoraGPT (Next-Gen AI Intelligent Assistant Engine)</span>
+          </div>
+          <span class="status-pill">Active Production</span>
+        </div>
+
+        <table class="cred-table">
+          <tr>
+            <td class="cred-key">Production Application</td>
+            <td class="cred-val"><a class="link" href="https://avoragpt.com" target="_blank">https://avoragpt.com</a></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Core Engine / Pipeline</td>
+            <td class="cred-val"><span class="mono">Next.js 14 + Google Gemini 2.5 Multi-turn Streaming</span></td>
+          </tr>
+          <tr>
+            <td class="cred-key">Environment Config</td>
+            <td class="cred-val"><span class="mono">.env.local (GEMINI_API_KEY)</span></td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Security Guidelines -->
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 20px; padding: 24px; font-size: 12px; color: var(--muted); line-height: 1.8;">
+      <h3 style="color: #ffffff; font-size: 14px; margin-bottom: 8px;">🔐 Operational Security Instructions:</h3>
+      <ul style="padding-left: 20px; space-y: 4px;">
+        <li>Store this credential directory securely. Do not transmit over unencrypted channels or public forums.</li>
+        <li>To lock any active console session on <strong>Avora Library</strong>, click the <strong>"Lock Console"</strong> button in the admin navigation bar or close the browser tab.</li>
+        <li>If an emergency credential reset is required for GBN Circle or Ditya Group, run the respective reset script directly on the deployment host.</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Pagination from '@/components/Pagination';
@@ -8,7 +9,7 @@ import { useApp } from '@/context/AppContext';
 import { Trophy, Calendar, Award, CheckCircle, Clock, ArrowRight, Sparkles, Star } from 'lucide-react';
 
 export default function ContestsPage() {
-  const { contests, stories, user, t, cmsConfig } = useApp();
+  const { contests, stories, user, t, cmsConfig, openAuthModal } = useApp();
   const content = cmsConfig?.pagesContent?.contests || {};
   const [activeTab, setActiveTab] = useState('open'); // 'open' | 'winners'
   const [selectedContest, setSelectedContest] = useState(contests[0]);
@@ -21,6 +22,52 @@ export default function ContestsPage() {
   const [contestPageSize, setContestPageSize] = useState(2);
   const [winnerPage, setWinnerPage] = useState(1);
   const [winnerPageSize, setWinnerPageSize] = useState(2);
+
+  // Guest Access Guard: Require Login for Contests
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-lg w-full mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center mb-6 shadow-xl shadow-amber-500/15">
+            <Trophy className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3.5 py-1 rounded-full mb-3 border border-amber-500/20">
+            Contests • Member Access Required
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black mb-3 text-slate-900 dark:text-white">
+            Participate in Writing Contests
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 text-xs sm:text-sm max-w-md leading-relaxed">
+            Submit your serialized novel to our annual competitions. Win cash grants, official badges, and editorial publishing consideration. Sign in or create a free account to enter.
+          </p>
+          <div className="w-full max-w-xs space-y-3">
+            <button
+              type="button"
+              onClick={() => openAuthModal('login', 'Sign in to enter writing contests.')}
+              className="w-full py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+            >
+              Sign In to Enter Contests
+            </button>
+            <button
+              type="button"
+              onClick={() => openAuthModal('register', 'Create an account to participate in contests.')}
+              className="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all cursor-pointer"
+            >
+              Create Free Account
+            </button>
+            <Link 
+              href="/"
+              className="block pt-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              ← Return to Home Page
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleSubmitEntry = (e) => {
     e.preventDefault();

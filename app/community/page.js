@@ -25,8 +25,54 @@ import {
 } from 'lucide-react';
 
 export default function CommunityPage() {
-  const { communitySpaces, readingLists, setReadingLists, createReadingList, stories, user, t, cmsConfig } = useApp();
+  const { communitySpaces, readingLists, setReadingLists, createReadingList, stories, user, t, cmsConfig, openAuthModal } = useApp();
   const content = cmsConfig?.pagesContent?.community || {};
+
+  // Guest Access Guard: Require Login for Community Discussions
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <Header />
+        <main className="flex-1 max-w-lg w-full mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
+          <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/15">
+            <Users className="w-10 h-10" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3.5 py-1 rounded-full mb-3 border border-indigo-500/20">
+            Community • Member Access Required
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black mb-3 text-slate-900 dark:text-white">
+            Join the Avora Reader Community
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 text-xs sm:text-sm max-w-md leading-relaxed">
+            Participate in fandom spaces, discuss worldbuilding with serial authors, and share custom reading lists with passionate book lovers. Sign in or create a free account to join.
+          </p>
+          <div className="w-full max-w-xs space-y-3">
+            <button
+              type="button"
+              onClick={() => openAuthModal('login', 'Sign in to join community discussions.')}
+              className="w-full py-3.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all cursor-pointer"
+            >
+              Sign In to Community
+            </button>
+            <button
+              type="button"
+              onClick={() => openAuthModal('register', 'Create an account to join the community.')}
+              className="w-full py-3 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all cursor-pointer"
+            >
+              Create Free Account
+            </button>
+            <Link 
+              href="/"
+              className="block pt-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              ← Return to Home Page
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState('spaces'); // 'spaces' | 'lists' | 'badges'
 
   // Pagination states
