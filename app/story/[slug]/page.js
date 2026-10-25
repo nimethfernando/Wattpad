@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -59,12 +59,22 @@ export default function StoryDetailPage() {
     translateGenre
   } = useApp();
 
+  const router = useRouter();
   const [copiedShare, setCopiedShare] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [showListDropdown, setShowListDropdown] = useState(false);
   const [showReadingListModal, setShowReadingListModal] = useState(false);
   const [localCustomFallback, setLocalCustomFallback] = useState(null);
   const listDropdownRef = useRef(null);
+
+  const handleReadClick = (e, targetUrl = `/read/${slug}`) => {
+    if (!user) {
+      e.preventDefault();
+      openAuthModal('login', `Sign in to read "${story?.title || 'this story'}" on Avora Library.`, () => {
+        router.push(targetUrl);
+      });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -510,6 +520,7 @@ export default function StoryDetailPage() {
               {/* Primary Start / Continue Reading Button */}
               <Link 
                 href={`/read/${story.slug}`} 
+                onClick={(e) => handleReadClick(e, `/read/${story.slug}`)}
                 className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
               >
                 {story.contentType === 'pdf' ? <FileText className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
@@ -525,6 +536,12 @@ export default function StoryDetailPage() {
                 <a
                   href={story.pdfUrl || story.chapters?.[0]?.pdfUrl}
                   download
+                  onClick={(e) => {
+                    if (!user) {
+                      e.preventDefault();
+                      openAuthModal('login', `Sign in to download and study "${story.title}".`);
+                    }
+                  }}
                   className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
                   title="Download printable assignment PDF"
                 >
@@ -657,6 +674,7 @@ export default function StoryDetailPage() {
               <Link
                 key={chapter.id}
                 href={`/read/${story.slug}?chapter=${chapter.number}`}
+                onClick={(e) => handleReadClick(e, `/read/${story.slug}?chapter=${chapter.number}`)}
                 className="flex items-center justify-between py-4 group hover:bg-slate-50 dark:hover:bg-slate-800/40 px-3 rounded-xl transition-colors"
               >
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-2">

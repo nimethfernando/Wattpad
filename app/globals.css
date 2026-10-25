@@ -340,6 +340,61 @@ html.dark .light-reader .chapter-drawer {
   color: #ffffff !important;
 }
 
+/* Picture Book & Worksheet Strict High-Contrast Rules */
+.picture-book-card {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sepia-reader .picture-book-card,
+html.dark .sepia-reader .picture-book-card {
+  background-color: #fffaf0 !important;
+  border-color: #ebdcb9 !important;
+  color: #2b1d0c !important;
+}
+
+.sepia-reader .picture-book-card p,
+.sepia-reader .picture-book-card p.picture-story-text,
+html.dark .sepia-reader .picture-book-card p,
+html.dark .sepia-reader .picture-book-card p.picture-story-text {
+  color: #2b1d0c !important;
+}
+
+.dark-reader .picture-book-card,
+html.dark .dark-reader .picture-book-card {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.dark-reader .picture-book-card p,
+.dark-reader .picture-book-card p.picture-story-text,
+html.dark .dark-reader .picture-book-card p,
+html.dark .dark-reader .picture-book-card p.picture-story-text {
+  color: #f8fafc !important;
+}
+
+.light-reader .picture-book-card,
+html.dark .light-reader .picture-book-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.light-reader .picture-book-card p,
+.light-reader .picture-book-card p.picture-story-text,
+html.dark .light-reader .picture-book-card p,
+html.dark .light-reader .picture-book-card p.picture-story-text {
+  color: #0f172a !important;
+}
+
+/* Reader Top Navbar Button Contrast Protection */
+.sepia-reader nav button,
+.sepia-reader nav a,
+html.dark .sepia-reader nav button,
+html.dark .sepia-reader nav a {
+  color: inherit;
+}
+
 /* Light reader theme overrides */
 .light-reader,
 html.dark .light-reader,

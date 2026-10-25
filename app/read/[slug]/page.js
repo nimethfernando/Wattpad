@@ -6,6 +6,7 @@ import ReportModal from '@/components/ReportModal';
 import InlineCommentDrawer from '@/components/InlineCommentDrawer';
 import { useApp } from '@/context/AppContext';
 import { 
+  Lock,
   Type, 
   Sun, 
   Moon, 
@@ -493,6 +494,82 @@ export default function ReaderPage() {
     );
   }
 
+  // Core Platform Rule: Guest Restriction - Require Login to Read
+  const requireLoginToRead = featureFlags?.requireLoginToRead !== false;
+  if (!user && requireLoginToRead) {
+    return (
+      <div className={`min-h-screen flex flex-col justify-center items-center px-4 py-16 transition-colors duration-200 ${
+        readerTheme === 'dark' ? 'bg-slate-950 text-slate-100' :
+        readerTheme === 'sepia' ? 'bg-[#faf5eb] text-[#2b1d0c]' : 'bg-slate-50 text-slate-900'
+      }`}>
+        <div className={`max-w-md w-full p-6 sm:p-8 rounded-3xl border shadow-2xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-200 ${
+          readerTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-100' :
+          readerTheme === 'sepia' ? 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          {/* Story Cover Thumbnail */}
+          <div className="relative w-28 h-40 mx-auto rounded-2xl overflow-hidden shadow-xl border-2 border-brand-500/30">
+            <img src={story.cover} alt={story.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end justify-center p-2">
+              <span className="text-[10px] font-black uppercase text-white bg-brand-500 px-2 py-0.5 rounded-full">
+                {story.ageRating || 'Everyone'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 text-xs font-black">
+              <Lock className="w-3.5 h-3.5" /> Member Login Required
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              Sign In to Read "{story.title}"
+            </h2>
+            <p className={`text-xs sm:text-sm leading-relaxed ${
+              readerTheme === 'dark' ? 'text-slate-400' : readerTheme === 'sepia' ? 'text-[#5c4326]' : 'text-slate-500'
+            }`}>
+              Reading serialized books, picture stories, and study worksheets on Avora Library is restricted to registered members. Please sign in or create a free account to continue.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => openAuthModal('login', `Sign in to read "${story.title}" and enjoy unlimited access to Avora Library.`)}
+              className="w-full py-3.5 px-6 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+            >
+              Sign In to Start Reading
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openAuthModal('register', `Create a free account to read "${story.title}" and save your reading progress.`)}
+              className={`w-full py-3 px-6 rounded-full font-bold text-xs border transition-all cursor-pointer ${
+                readerTheme === 'dark' ? 'border-slate-700 text-slate-200 hover:bg-slate-800' :
+                readerTheme === 'sepia' ? 'border-[#ebdcb9] text-[#2b1d0c] hover:bg-[#ebdcb9]/40' :
+                'border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Create Free Account (30 seconds)
+            </button>
+          </div>
+
+          <div className={`pt-3 border-t flex items-center justify-between text-xs ${
+            readerTheme === 'dark' ? 'border-slate-800 text-slate-400' :
+            readerTheme === 'sepia' ? 'border-[#ebdcb9] text-[#5c4326]' :
+            'border-slate-100 text-slate-400'
+          }`}>
+            <Link href={`/story/${story.slug}`} className="hover:text-brand-500 transition-colors font-bold">
+              ← Story Overview
+            </Link>
+            <Link href="/browse" className="hover:text-brand-500 transition-colors font-bold">
+              Browse Library →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Core Platform-Level Rule: DOB Age Access Enforcement
   const accessCheck = canUserAccessContent(user, story);
   if (!accessCheck.canAccess) {
@@ -563,6 +640,7 @@ export default function ReaderPage() {
       chapterPill: 'bg-brand-500/15 text-brand-400 border border-brand-500/30 font-black',
       rankingPill: 'bg-amber-950/80 text-amber-200 border border-amber-700 font-black',
       readsPill: 'bg-slate-800 text-slate-200 border border-slate-700 font-bold',
+      gradePill: 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black',
       h1: 'text-white',
       meta: 'text-slate-300',
       author: 'text-white font-extrabold',
@@ -574,15 +652,42 @@ export default function ReaderPage() {
       reactionBtn: 'bg-white/10 text-slate-200 border-white/10',
       divider: 'border-white/10',
       prevBtn: 'text-slate-200 hover:text-brand-400',
-      topNav: 'border-white/10 bg-slate-900/90 text-slate-100',
+      topNav: 'border-slate-800 bg-slate-900/95 text-slate-100',
+      navButton: 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold',
+      navChBtn: 'text-brand-400 font-extrabold',
+      navProgressBadge: 'bg-brand-500/20 text-brand-300 border-brand-500/40',
+      navLibBtn: inLib ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold',
+      navGroup: 'bg-slate-800 border border-slate-700 text-slate-100',
+      navText: 'text-slate-100 font-bold',
+      navIconBtn: 'text-slate-400 hover:text-rose-400',
       activeThemePill: 'bg-white/20 text-white font-bold',
       drawerCard: 'bg-slate-900 border-white/10 text-slate-100',
       pageBtn: 'bg-slate-800 hover:bg-slate-750 text-slate-100 border border-slate-700',
+      assignmentCard: 'bg-slate-900 border-slate-800 text-slate-100',
+      assignmentPagesPill: 'bg-slate-800 text-slate-200 border border-slate-700 font-bold',
+      assignmentCurriculum: 'text-amber-400 font-black',
+      assignmentSubjectTag: 'bg-slate-800 text-slate-200 border-slate-700 font-bold',
+      printBtn: 'bg-white hover:bg-slate-100 text-slate-900',
+      pdfNote: 'bg-amber-500/15 border border-amber-500/30 text-amber-200',
+      pdfNoteLink: 'text-amber-300 font-bold underline',
+      studyGuideCard: 'bg-slate-900 border-slate-800 text-slate-100',
+      studyGuideItem: 'bg-slate-800/60 border-slate-700 text-slate-100',
+      pictureCard: 'bg-slate-900 border-slate-800 text-slate-100',
+      pictureCardHeader: 'bg-slate-800 border-slate-700 text-slate-100',
+      pictureText: 'text-slate-100',
+      pictureCaption: 'text-slate-300',
+      moralCard: 'bg-amber-500/15 border border-amber-500/30 text-amber-200',
+      moralTitle: 'text-amber-300 font-black',
+      moralText: 'text-amber-100',
+      speechBtn: 'bg-slate-700 text-brand-300 border border-brand-500/30 hover:bg-slate-600',
+      zoomBtn: 'bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600',
+      pageDot: 'bg-slate-700 hover:bg-slate-600',
     },
     sepia: {
       chapterPill: 'bg-brand-500/15 text-brand-700 border border-brand-600/30 font-black',
       rankingPill: 'bg-[#edd9af] text-[#4a2e0e] border border-[#d6be8c] font-black',
       readsPill: 'bg-[#ebdcb9] text-[#2b1d0c] border border-[#d6be8c] font-black',
+      gradePill: 'bg-[#edd9af] text-[#4a2e0e] border border-[#d6be8c] font-black',
       h1: 'text-[#2b1d0c]',
       meta: 'text-[#5c4326]',
       author: 'text-[#2b1d0c] font-extrabold',
@@ -595,14 +700,41 @@ export default function ReaderPage() {
       divider: 'border-[#ebdcb9]',
       prevBtn: 'text-[#2b1d0c] hover:text-brand-600',
       topNav: 'border-[#e5dac2] bg-[#f2ebd9]/95 text-[#2b1d0c]',
+      navButton: 'bg-[#e6d8ba] hover:bg-[#deceaa] text-[#2b1d0c] border border-[#d6be8c] font-bold',
+      navChBtn: 'text-brand-700 font-extrabold',
+      navProgressBadge: 'bg-brand-500/15 text-brand-800 border-brand-500/30',
+      navLibBtn: inLib ? 'bg-emerald-500/20 text-emerald-800 border border-emerald-500/40 font-bold' : 'bg-[#e6d8ba] hover:bg-[#deceaa] text-[#2b1d0c] border border-[#d6be8c] font-bold',
+      navGroup: 'bg-[#e6d8ba]/80 border border-[#d6be8c] text-[#2b1d0c]',
+      navText: 'text-[#2b1d0c] font-bold',
+      navIconBtn: 'text-[#5c4326] hover:text-rose-600',
       activeThemePill: 'bg-[#edd9af] text-[#2b1d0c] font-black shadow-xs',
       drawerCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
       pageBtn: 'bg-[#ebdcb9] hover:bg-[#edd9af] text-[#2b1d0c] border border-[#d6be8c]',
+      assignmentCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
+      assignmentPagesPill: 'bg-[#ebdcb9] text-[#2b1d0c] font-bold',
+      assignmentCurriculum: 'text-[#5c4326] font-black',
+      assignmentSubjectTag: 'bg-[#f4ecd8] text-[#2b1d0c] border border-[#ebdcb9] font-bold',
+      printBtn: 'bg-[#2b1d0c] hover:bg-[#1a1005] text-[#faf5eb]',
+      pdfNote: 'bg-[#fef3c7] border border-[#fde68a] text-[#78350f]',
+      pdfNoteLink: 'text-[#92400e] font-bold underline',
+      studyGuideCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
+      studyGuideItem: 'bg-[#f7f0e1] border-[#ebdcb9] text-[#2b1d0c]',
+      pictureCard: 'bg-[#fffaf0] border-[#ebdcb9] text-[#2b1d0c]',
+      pictureCardHeader: 'bg-[#f5eedc] border-[#ebdcb9] text-[#2b1d0c]',
+      pictureText: 'text-[#2b1d0c]',
+      pictureCaption: 'text-[#5c4326]',
+      moralCard: 'bg-[#fef3c7] border border-[#fde68a] text-[#78350f]',
+      moralTitle: 'text-[#92400e] font-black',
+      moralText: 'text-[#451a03]',
+      speechBtn: 'bg-[#fffaf0] text-brand-700 border border-brand-600/30 hover:bg-[#f4ecd8]',
+      zoomBtn: 'bg-[#ebdcb9] hover:bg-[#edd9af] text-[#2b1d0c] border border-[#d6be8c]',
+      pageDot: 'bg-[#d6be8c] hover:bg-[#bfa268]',
     },
     light: {
       chapterPill: 'bg-brand-500/10 text-brand-600 border border-brand-500/30 font-black',
       rankingPill: 'bg-amber-100 text-amber-900 border border-amber-300 font-black',
       readsPill: 'bg-slate-100 text-slate-800 border border-slate-300 font-bold',
+      gradePill: 'bg-amber-100 text-amber-950 border border-amber-300 font-black',
       h1: 'text-slate-900',
       meta: 'text-slate-600',
       author: 'text-slate-900 font-extrabold',
@@ -615,9 +747,35 @@ export default function ReaderPage() {
       divider: 'border-slate-200',
       prevBtn: 'text-slate-800 hover:text-brand-600',
       topNav: 'border-slate-200 bg-white/95 text-slate-900',
+      navButton: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold',
+      navChBtn: 'text-brand-600 font-extrabold',
+      navProgressBadge: 'bg-brand-500/10 text-brand-700 border-brand-500/20',
+      navLibBtn: inLib ? 'bg-emerald-500/15 text-emerald-800 border border-emerald-500/30 font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold',
+      navGroup: 'bg-slate-100 border border-slate-200 text-slate-800',
+      navText: 'text-slate-800 font-bold',
+      navIconBtn: 'text-slate-400 hover:text-rose-500',
       activeThemePill: 'bg-slate-200 text-slate-900 font-bold',
       drawerCard: 'bg-white border-slate-200 text-slate-900',
       pageBtn: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200',
+      assignmentCard: 'bg-white border-slate-200 text-slate-900 shadow-md',
+      assignmentPagesPill: 'bg-slate-100 text-slate-800 font-bold border border-slate-200',
+      assignmentCurriculum: 'text-slate-600 font-black',
+      assignmentSubjectTag: 'bg-slate-50 text-slate-800 border border-slate-200 font-bold',
+      printBtn: 'bg-slate-900 hover:bg-slate-800 text-white',
+      pdfNote: 'bg-amber-50 border border-amber-200 text-amber-950',
+      pdfNoteLink: 'text-amber-800 font-bold underline',
+      studyGuideCard: 'bg-white border-slate-200 text-slate-900',
+      studyGuideItem: 'bg-slate-50 border-slate-100 text-slate-900',
+      pictureCard: 'bg-white border-slate-200 text-slate-900',
+      pictureCardHeader: 'bg-slate-100 border-slate-200 text-slate-800',
+      pictureText: 'text-slate-900',
+      pictureCaption: 'text-slate-700',
+      moralCard: 'bg-amber-50 border border-amber-200 text-amber-950',
+      moralTitle: 'text-amber-800 font-black',
+      moralText: 'text-amber-950',
+      speechBtn: 'bg-white text-brand-600 border border-brand-500/30 hover:bg-brand-50',
+      zoomBtn: 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200',
+      pageDot: 'bg-slate-300 hover:bg-slate-400',
     }
   };
   const tStyles = themeStyles[readerTheme] || themeStyles.sepia;
@@ -641,19 +799,19 @@ export default function ReaderPage() {
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link 
             href={`/story/${story.slug}`} 
-            className="text-xs font-bold px-2 sm:px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 hover:opacity-80 transition-opacity truncate max-w-[95px] sm:max-w-xs shrink-0"
+            className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all truncate max-w-[95px] sm:max-w-xs shrink-0 ${tStyles.navButton}`}
           >
             ← {story.title}
           </Link>
           <button 
             onClick={() => setShowChapterDrawer(true)}
-            className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline shrink-0"
+            className={`flex items-center gap-1 sm:gap-1.5 text-xs font-bold hover:underline shrink-0 ${tStyles.navChBtn}`}
           >
             <ListFilter className="w-3.5 h-3.5" /> Ch. {chapter.number} / {story.chapters.length}
           </button>
 
           {/* Reading Progress Percentage Badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-700 dark:text-brand-300 text-[11px] font-extrabold border border-brand-500/20 shrink-0">
+          <div className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold border shrink-0 ${tStyles.navProgressBadge}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
             <span>{Math.round(scrollProgress)}% read</span>
           </div>
@@ -661,14 +819,10 @@ export default function ReaderPage() {
           {/* Add to Library Toggle in Reader Navbar (Wattpad UX) */}
           <button
             onClick={() => inLib ? removeFromLibrary(story.id) : addToLibrary(story.id)}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
-              inLib
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 text-slate-700 dark:text-slate-200'
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${tStyles.navLibBtn}`}
             title="Save to Library"
           >
-            {inLib ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <BookMarked className="w-3.5 h-3.5" />}
+            {inLib ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <BookMarked className="w-3.5 h-3.5" />}
             <span className="hidden md:inline">{inLib ? 'In Library' : 'Add to Library'}</span>
           </button>
         </div>
@@ -678,25 +832,25 @@ export default function ReaderPage() {
           {/* Mobile "Aa" Appearance Button */}
           <button
             onClick={() => setShowAppearanceModal(true)}
-            className="sm:hidden flex items-center justify-center px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 text-xs font-black cursor-pointer"
+            className={`sm:hidden flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-black cursor-pointer ${tStyles.navButton}`}
             title="Appearance Settings"
           >
             Aa
           </button>
 
           {/* Quick Font Size (Desktop) */}
-          <div className="hidden sm:flex items-center bg-black/5 dark:bg-white/10 rounded-lg p-0.5">
+          <div className={`hidden sm:flex items-center rounded-lg p-0.5 ${tStyles.navGroup}`}>
             <button 
               onClick={() => setFontSize(Math.max(14, fontSize - 2))}
-              className="px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer"
+              className={`px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer ${tStyles.navText}`}
               title="Decrease Font Size"
             >
               A-
             </button>
-            <span className="text-[11px] font-mono px-1">{fontSize}px</span>
+            <span className={`text-[11px] font-mono px-1 font-bold ${tStyles.navText}`}>{fontSize}px</span>
             <button 
               onClick={() => setFontSize(Math.min(26, fontSize + 2))}
-              className="px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer"
+              className={`px-2 py-1 text-xs font-bold hover:text-brand-500 cursor-pointer ${tStyles.navText}`}
               title="Increase Font Size"
             >
               A+
@@ -704,24 +858,24 @@ export default function ReaderPage() {
           </div>
 
           {/* Theme Mode Buttons (Desktop) */}
-          <div className="hidden sm:flex items-center bg-black/5 dark:bg-white/10 rounded-lg p-0.5">
+          <div className={`hidden sm:flex items-center rounded-lg p-0.5 ${tStyles.navGroup}`}>
             <button 
               onClick={() => setReaderTheme('light')} 
-              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'light' ? 'bg-white shadow text-slate-900 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'light' ? 'bg-white shadow text-slate-900 font-bold' : tStyles.navText}`}
               title="Light Theme"
             >
               <Sun className="w-3.5 h-3.5" />
             </button>
             <button 
               onClick={() => setReaderTheme('sepia')} 
-              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'sepia' ? 'bg-[#f4ecd8] shadow text-amber-900 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'sepia' ? 'bg-[#ebdcb9] shadow text-[#2b1d0c] font-black' : tStyles.navText}`}
               title="Sepia Paper Theme"
             >
               ☕
             </button>
             <button 
               onClick={() => setReaderTheme('dark')} 
-              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'dark' ? 'bg-slate-800 shadow text-amber-400 font-bold' : ''}`}
+              className={`p-1.5 rounded-md text-xs cursor-pointer ${readerTheme === 'dark' ? 'bg-slate-700 shadow text-amber-400 font-bold' : tStyles.navText}`}
               title="Dark Theme"
             >
               <Moon className="w-3.5 h-3.5" />
@@ -731,7 +885,7 @@ export default function ReaderPage() {
           {/* Font Family Toggle (Desktop) */}
           <button 
             onClick={() => setFontFamily(fontFamily === 'serif' ? 'sans' : 'serif')}
-            className="hidden sm:inline-block px-2.5 py-1 text-xs font-bold rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 cursor-pointer"
+            className={`hidden sm:inline-block px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer ${tStyles.navButton}`}
             title="Toggle Font Family"
           >
             {fontFamily === 'serif' ? 'Serif' : 'Sans'}
@@ -740,7 +894,7 @@ export default function ReaderPage() {
           {/* Report Button */}
           <button 
             onClick={() => setReportModalOpen(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 cursor-pointer"
+            className={`p-1.5 rounded-lg cursor-pointer transition-colors ${tStyles.navIconBtn}`}
             title="Report Chapter"
           >
             <Flag className="w-3.5 h-3.5" />
@@ -756,8 +910,8 @@ export default function ReaderPage() {
               {isPdfContent ? '📄 Kids PDF Assignment' : `Chapter ${chapter.number}`}
             </span>
             {isPdfContent && story.gradeLevel && (
-              <span className="text-xs sm:text-sm font-extrabold px-3.5 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 flex items-center gap-1">
-                <GraduationCap className="w-3.5 h-3.5 text-amber-500" /> {story.gradeLevel}
+              <span className={`text-xs sm:text-sm font-extrabold px-3.5 py-1 rounded-full border flex items-center gap-1.5 shadow-xs ${tStyles.gradePill}`}>
+                <GraduationCap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> {story.gradeLevel}
               </span>
             )}
             {story.ranking && (
@@ -782,7 +936,7 @@ export default function ReaderPage() {
         {isPdfContent ? (
           <div className="space-y-6">
             {/* Assignment Information & Action Toolbar Card */}
-            <div className="bg-gradient-to-br from-brand-500/10 via-amber-500/5 to-emerald-500/10 dark:from-brand-950/40 dark:via-slate-900 dark:to-emerald-950/40 border border-brand-500/20 dark:border-brand-500/30 rounded-3xl p-5 sm:p-7 shadow-lg">
+            <div className={`border rounded-3xl p-5 sm:p-7 shadow-lg ${tStyles.assignmentCard}`}>
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -790,26 +944,26 @@ export default function ReaderPage() {
                       <FileText className="w-3.5 h-3.5" /> Printable Kids Assignment
                     </span>
                     {story.gradeLevel && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-200 font-bold text-xs border border-amber-500/30">
-                        <GraduationCap className="w-3.5 h-3.5 text-amber-500" /> {story.gradeLevel}
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold text-xs border ${tStyles.gradePill}`}>
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> {story.gradeLevel}
                       </span>
                     )}
-                    <span className="px-2.5 py-1 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
+                    <span className={`px-2.5 py-1 rounded-full font-bold text-xs ${tStyles.assignmentPagesPill}`}>
                       {story.pageCount || chapter.pageCount || 8} Pages Worksheet
                     </span>
                   </div>
 
                   {story.school && (
-                    <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      🏫 {story.school}
+                    <p className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${tStyles.h1}`}>
+                      <span>🏫</span> {story.school}
                     </p>
                   )}
 
                   {story.subjects && story.subjects.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Curriculum:</span>
+                      <span className={`text-[11px] font-black uppercase tracking-wider ${tStyles.assignmentCurriculum}`}>Curriculum:</span>
                       {story.subjects.map((sub, i) => (
-                        <span key={i} className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
+                        <span key={i} className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-md border shadow-xs ${tStyles.assignmentSubjectTag}`}>
                           {sub}
                         </span>
                       ))}
@@ -840,7 +994,7 @@ export default function ReaderPage() {
                         }
                       }
                     }}
-                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+                    className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer ${tStyles.printBtn}`}
                     title="Print assignment worksheet"
                   >
                     <Printer className="w-4 h-4" />
@@ -851,7 +1005,7 @@ export default function ReaderPage() {
                     href={currentPdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-2xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
+                    className={`p-3 rounded-2xl transition-all cursor-pointer ${tStyles.navButton}`}
                     title="Open PDF in Fullscreen / New Tab"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -871,13 +1025,13 @@ export default function ReaderPage() {
               </div>
 
               {/* Mobile View Assistance Note */}
-              <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3">
+              <div className={`mt-3 px-3.5 py-2.5 rounded-xl border text-xs flex items-center justify-between gap-3 ${tStyles.pdfNote}`}>
                 <span>💡 <strong>Tip for Parents:</strong> If preview doesn't fit on your mobile screen, tap <strong>Download PDF</strong> or <strong>Open Fullscreen</strong> to zoom & print freely.</span>
                 <a
                   href={currentPdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline font-bold shrink-0 text-amber-800 dark:text-amber-300"
+                  className={`shrink-0 ${tStyles.pdfNoteLink}`}
                 >
                   Open Fullscreen ↗
                 </a>
@@ -885,26 +1039,26 @@ export default function ReaderPage() {
             </div>
 
             {/* Parent & Teacher Study Guide Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <div className={`rounded-3xl p-6 sm:p-7 border shadow-sm space-y-4 ${tStyles.studyGuideCard}`}>
+              <h3 className={`text-base sm:text-lg font-black flex items-center gap-2 ${tStyles.h1}`}>
                 <span>📘</span> Parent & Teacher Study Guide
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <p className="font-bold text-slate-900 dark:text-white mb-1">✍️ English Revision & Phonics</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Practice Singular/Plural, Antonyms, and 'and' conjunctions. Read phonics flashcards aloud.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                <div className={`p-3.5 rounded-2xl border ${tStyles.studyGuideItem}`}>
+                  <p className={`font-bold mb-1 ${tStyles.h1}`}>✍️ English Revision & Phonics</p>
+                  <p className={`text-xs ${tStyles.meta}`}>Practice Singular/Plural, Antonyms, and 'and' conjunctions. Read phonics flashcards aloud.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <p className="font-bold text-slate-900 dark:text-white mb-1">🇮🇳 Hindi वचन व मात्रा अभ्यास</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">एक/अनेक (वचन बदलो), 'और' का प्रयोग तथा हिंदी वाचन कार्ड का शुद्ध उच्चारण के साथ अभ्यास करें।</p>
+                <div className={`p-3.5 rounded-2xl border ${tStyles.studyGuideItem}`}>
+                  <p className={`font-bold mb-1 ${tStyles.h1}`}>🇮🇳 Hindi वचन व मात्रा अभ्यास</p>
+                  <p className={`text-xs ${tStyles.meta}`}>एक/अनेक (वचन बदलो), 'और' का प्रयोग तथा हिंदी वाचन कार्ड का शुद्ध उच्चारण के साथ अभ्यास करें।</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <p className="font-bold text-slate-900 dark:text-white mb-1">🔢 Arithmetic Addition & Ordinals</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Addition facts to 10 and ordinal numbers (1st to 10th). Encourage kids to solve step-by-step.</p>
+                <div className={`p-3.5 rounded-2xl border ${tStyles.studyGuideItem}`}>
+                  <p className={`font-bold mb-1 ${tStyles.h1}`}>🔢 Arithmetic Addition & Ordinals</p>
+                  <p className={`text-xs ${tStyles.meta}`}>Addition facts to 10 and ordinal numbers (1st to 10th). Encourage kids to solve step-by-step.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                  <p className="font-bold text-slate-900 dark:text-white mb-1">🌿 EVS & Body Parts</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Learn body parts, senses, and write short self-check answers to reinforce real-world awareness.</p>
+                <div className={`p-3.5 rounded-2xl border ${tStyles.studyGuideItem}`}>
+                  <p className={`font-bold mb-1 ${tStyles.h1}`}>🌿 EVS & Body Parts</p>
+                  <p className={`text-xs ${tStyles.meta}`}>Learn body parts, senses, and write short self-check answers to reinforce real-world awareness.</p>
                 </div>
               </div>
             </div>
@@ -913,18 +1067,18 @@ export default function ReaderPage() {
           <div className="space-y-6">
             <div 
               key={pageFlipKey}
-              className={`bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 ${
+              className={`picture-book-card rounded-3xl overflow-hidden shadow-2xl border ${tStyles.pictureCard} ${
                 pageTurnDirection === 'next' ? 'animate-page-turn-next' : 'animate-page-turn-prev'
               }`}
             >
               {/* Picture Book Header Bar */}
-              <div className="px-4 sm:px-6 py-3.5 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+              <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between flex-wrap gap-2 ${tStyles.pictureCardHeader}`}>
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full bg-brand-500 text-white font-black text-xs shadow-xs">
                     Page {activePageIndex + 1} of {chapter.pages.length}
                   </span>
                   {chapter.pages[activePageIndex]?.caption && (
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 hidden sm:inline">
+                    <span className={`text-xs font-bold hidden sm:inline ${tStyles.pictureCaption}`}>
                       {chapter.pages[activePageIndex].caption}
                     </span>
                   )}
@@ -938,7 +1092,7 @@ export default function ReaderPage() {
                     className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
                       isPlayingSpeech
                         ? 'bg-rose-500 text-white animate-pulse'
-                        : 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 border border-brand-500/30 hover:bg-brand-50'
+                        : tStyles.speechBtn
                     }`}
                     title={isPlayingSpeech ? "Stop narration" : "Listen to story out loud"}
                   >
@@ -950,7 +1104,7 @@ export default function ReaderPage() {
                   <button
                     type="button"
                     onClick={() => setShowImageZoom(true)}
-                    className="p-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${tStyles.zoomBtn}`}
                     title="View Fullscreen Artwork"
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
@@ -1002,18 +1156,18 @@ export default function ReaderPage() {
               {/* Page Text, Caption & Moral */}
               <div className="p-6 sm:p-8 space-y-4">
                 {(chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption) && (
-                  <p className={`text-lg sm:text-xl font-bold leading-relaxed text-slate-800 dark:text-slate-100 ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}>
+                  <p className={`text-lg sm:text-2xl font-bold leading-relaxed picture-story-text ${tStyles.pictureText} ${fontFamily === 'serif' ? 'font-serif' : 'font-sans'}`}>
                     {chapter.pages[activePageIndex]?.text || chapter.pages[activePageIndex]?.caption}
                   </p>
                 )}
 
                 {/* Moral of the Story Badge */}
                 {chapter.pages[activePageIndex]?.moral && (
-                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                  <div className={`p-4 rounded-2xl flex items-center gap-3 text-xs sm:text-sm font-bold ${tStyles.moralCard}`}>
                     <span className="text-xl">🌟</span>
                     <div>
-                      <span className="text-slate-500 uppercase tracking-wider text-[10px] block font-black">Story Moral</span>
-                      <span>{chapter.pages[activePageIndex].moral}</span>
+                      <span className={`uppercase tracking-wider text-[10px] block font-black ${tStyles.moralTitle}`}>Story Moral</span>
+                      <span className={tStyles.moralText}>{chapter.pages[activePageIndex].moral}</span>
                     </div>
                   </div>
                 )}
@@ -1036,7 +1190,7 @@ export default function ReaderPage() {
                         className={`transition-all cursor-pointer ${
                           activePageIndex === idx 
                             ? 'w-6 h-3 rounded-full bg-brand-500' 
-                            : 'w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                            : tStyles.pageDot
                         }`}
                         title={`Go to page ${idx + 1}`}
                       />
