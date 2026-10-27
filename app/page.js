@@ -1,4 +1,18 @@
 'use client';
+
+// Compact number formatter for stats
+function formatCompactNumber(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const n = Number(num);
+  if (n < 1000) return n.toLocaleString();
+  if (n < 1000000) {
+    const k = n / 1000;
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  const m = n / 1000000;
+  return m % 1 === 0 ? `${m}M` : `${m.toFixed(1).replace(/\.0$/, '')}M`;
+}
+
 import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -404,8 +418,8 @@ export default function HomePage() {
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t?.by || 'By'} {locStory.author}</p>
                     </div>
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
-                      <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
+                      <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300" title={`${(story.reads || 0).toLocaleString()} reads`}><Eye className="w-3.5 h-3.5 text-brand-500" /> {formatCompactNumber(story.reads || 0)}</span>
+                      <span className="flex items-center gap-1" title={`${(story.votes || 0).toLocaleString()} votes`}><Heart className="w-3.5 h-3.5 text-rose-500" /> {formatCompactNumber(story.votes || 0)}</span>
                     </div>
                   </div>
                 </Link>

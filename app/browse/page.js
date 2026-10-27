@@ -1,4 +1,17 @@
 'use client';
+
+// Compact number formatter for stats
+function formatCompactNumber(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const n = Number(num);
+  if (n < 1000) return n.toLocaleString();
+  if (n < 1000000) {
+    const k = n / 1000;
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  const m = n / 1000000;
+  return m % 1 === 0 ? `${m}M` : `${m.toFixed(1).replace(/\.0$/, '')}M`;
+}
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -738,10 +751,20 @@ export default function BrowsePage() {
                       <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{story.description}</p>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold border-t border-slate-100 dark:border-slate-800 mt-2">
-                      <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-500" /> {story.reads.toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {story.votes.toLocaleString()}</span>
-                      <span className="font-bold text-brand-600 dark:text-brand-400">{story.chapters.length} {t?.chapterShort || 'Ch.'}</span>
+                    <div className="pt-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-semibold border-t border-slate-100 dark:border-slate-800 mt-2">
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                        <span className="flex items-center gap-1 shrink-0" title={`${(story.reads || 0).toLocaleString()} reads`}>
+                          <Eye className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                          <span>{formatCompactNumber(story.reads || 0)}</span>
+                        </span>
+                        <span className="flex items-center gap-1 shrink-0" title={`${(story.votes || 0).toLocaleString()} votes`}>
+                          <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formatCompactNumber(story.votes || 0)}</span>
+                        </span>
+                      </div>
+                      <span className="font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap shrink-0 ml-1">
+                        {story.chapters?.length || 1} {t?.chapterShort || 'Ch.'}
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -562,7 +562,7 @@ export default function HomeFeedView() {
                   </div>
 
                   <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                    <span>{story.chapters?.length || 1} {t.chapterShort || t.chapters || 'Ch.'}</span>
+                    <span className="whitespace-nowrap shrink-0">{story.chapters?.length || 1} {t.chapterShort || t.chapters || 'Ch.'}</span>
                     <Link href={`/read/${story.slug}`} className="font-extrabold text-brand-600 dark:text-brand-400 hover:underline">
                       {t.readNow || 'Read'} →
                     </Link>
@@ -661,6 +661,19 @@ export default function HomeFeedView() {
   );
 }
 
+// Compact number formatter for stats (e.g. 245K, 18.9K, 1.2M)
+function formatCompactNumber(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const n = Number(num);
+  if (n < 1000) return n.toLocaleString();
+  if (n < 1000000) {
+    const k = n / 1000;
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  const m = n / 1000000;
+  return m % 1 === 0 ? `${m}M` : `${m.toFixed(1).replace(/\.0$/, '')}M`;
+}
+
 // Reusable Wattpad-style Card Component with 3-Dot Quick Actions
 function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideStory }) {
   const { isInWishlist, toggleWishlist, t, translateGenre, translateStory } = useApp();
@@ -694,20 +707,125 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
           />
 
-          {/* Dynamic Ranking Badge if present */}
-          {story.ranking && (
-            <div className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs font-black backdrop-blur-md border flex items-center gap-1 z-10 shadow-sm ${
-              story.ranking.rank === 1
-                ? 'bg-amber-950/90 text-amber-300 border-amber-400/50 ring-1 ring-amber-400/30'
-                : story.ranking.rank === 2
-                ? 'bg-slate-900/90 text-slate-200 border-slate-400/40'
-                : story.ranking.rank === 3
-                ? 'bg-amber-950/80 text-amber-200 border-amber-600/40'
-                : 'bg-slate-950/80 text-slate-300 border-slate-700/50'
-            }`}>
-              <span>{story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag}`}</span>
+          {/* Top Bar Overlay: Dynamic Ranking Badge (Left) + Quick Actions (Right) - Zero Overlap Guaranteed */}
+          <div className="absolute top-2 inset-x-2 flex items-center justify-between gap-1.5 z-20 pointer-events-none">
+            {story.ranking ? (
+              <div 
+                title={`${story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`} in ${translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag}`}
+                className={`px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-black backdrop-blur-md border flex items-center gap-1 shadow-sm shrink min-w-0 max-w-[calc(100%-88px)] pointer-events-auto ${
+                  story.ranking.rank === 1
+                    ? 'bg-amber-950/90 text-amber-300 border-amber-400/50 ring-1 ring-amber-400/30'
+                    : story.ranking.rank === 2
+                    ? 'bg-slate-900/90 text-slate-200 border-slate-400/40'
+                    : story.ranking.rank === 3
+                    ? 'bg-amber-950/80 text-amber-200 border-amber-600/40'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-700/50'
+                }`}
+              >
+                <span className="shrink-0">
+                  {story.ranking.rank === 1 ? '🥇 #1' : story.ranking.rank === 2 ? '🥈 #2' : story.ranking.rank === 3 ? '🥉 #3' : `#${story.ranking.rank}`}
+                </span>
+                <span className="hidden xl:inline truncate">
+                  {t?.inRankingTag ? t.inRankingTag.replace('{tag}', translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag) : `in ${translateGenre ? translateGenre(story.ranking.tag) : story.ranking.tag}`}
+                </span>
+              </div>
+            ) : <div />}
+
+            {/* Top Right Actions: Quick Wishlist + Quick Add + 3-Dot Menu */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pointer-events-auto">
+              {/* Quick Wish List Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (toggleWishlist) toggleWishlist(story.id);
+                }}
+                className={`p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                  isWish
+                    ? 'bg-rose-500 text-white shadow-md'
+                    : 'bg-black/50 hover:bg-black/80 text-white'
+                }`}
+                title={isWish ? (t?.removeFromWishlist || "Remove from Wish List") : (t?.addToWishlist || "Add to Wish List")}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isWish ? 'fill-current text-white' : 'text-white'}`} />
+              </button>
+
+              {/* Quick Add to Library Button */}
+              <button
+                onClick={onToggleLib}
+                className={`p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                  isInLib
+                    ? 'bg-emerald-500 text-white shadow-md'
+                    : 'bg-black/50 hover:bg-black/80 text-white'
+                }`}
+                title={isInLib ? (t?.savedInLibrary || "Saved in Library") : (t?.addToLibrary || "Add to Library")}
+              >
+                {isInLib ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+              </button>
+
+              {/* 3-Dot Quick Action Dropdown Trigger */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(!menuOpen);
+                  }}
+                  className="p-1.5 sm:p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all cursor-pointer"
+                  title={t?.moreStoryOptions || t?.moreOptions || "More story options"}
+                >
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </button>
+
+                {/* 3-Dot Menu Popover */}
+                {menuOpen && (
+                  <div className="absolute right-0 top-9 sm:top-10 w-44 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenReadingList(story);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                    >
+                      <BookMarked className="w-3.5 h-3.5 text-brand-500" />
+                      <span>{t.saveToReadingList || 'Save to Reading List'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onToggleLib();
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                    >
+                      {isInLib ? (
+                        <>
+                          <BookmarkCheck className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{t.inOfflineShelf || 'In Offline Shelf'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <BookmarkPlus className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{t.addToShelf || 'Add to Shelf'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onHideStory(story.id);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
+                    >
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>{t.hideStory || 'Hide / Not Interested'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
 
           {/* Age Rating & Content Format Badges */}
           <div className="absolute bottom-2 left-2 flex items-center gap-1.5 z-10 flex-wrap">
@@ -728,101 +846,6 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
               </span>
             )}
           </div>
-
-          {/* Top Right Actions: Quick Wishlist + Quick Add + 3-Dot Menu */}
-          <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
-            {/* Quick Wish List Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (toggleWishlist) toggleWishlist(story.id);
-              }}
-              className={`p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
-                isWish
-                  ? 'bg-rose-500 text-white shadow-md'
-                  : 'bg-black/50 hover:bg-black/80 text-white'
-              }`}
-              title={isWish ? (t?.removeFromWishlist || "Remove from Wish List") : (t?.addToWishlist || "Add to Wish List")}
-            >
-              <Heart className={`w-3.5 h-3.5 ${isWish ? 'fill-current text-white' : 'text-white'}`} />
-            </button>
-
-            {/* Quick Add to Library Button */}
-            <button
-              onClick={onToggleLib}
-              className={`p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
-                isInLib
-                  ? 'bg-emerald-500 text-white shadow-md'
-                  : 'bg-black/50 hover:bg-black/80 text-white'
-              }`}
-              title={isInLib ? (t?.savedInLibrary || "Saved in Library") : (t?.addToLibrary || "Add to Library")}
-            >
-              {isInLib ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-            </button>
-
-            {/* 3-Dot Quick Action Dropdown Trigger */}
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen(!menuOpen);
-                }}
-                className="p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all cursor-pointer"
-                title={t?.moreStoryOptions || t?.moreOptions || "More story options"}
-              >
-                <MoreVertical className="w-3.5 h-3.5" />
-              </button>
-
-              {/* 3-Dot Menu Popover */}
-              {menuOpen && (
-                <div className="absolute right-0 top-10 w-44 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenReadingList(story);
-                    }}
-                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
-                  >
-                    <BookMarked className="w-3.5 h-3.5 text-brand-500" />
-                    <span>{t.saveToReadingList || 'Save to Reading List'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onToggleLib();
-                    }}
-                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-left font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
-                  >
-                    {isInLib ? (
-                      <>
-                        <BookmarkCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>{t.inOfflineShelf || 'In Offline Shelf'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <BookmarkPlus className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{t.addToShelf || 'Add to Shelf'}</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onHideStory(story.id);
-                    }}
-                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left font-semibold text-rose-600 dark:text-rose-400 cursor-pointer"
-                  >
-                    <EyeOff className="w-3.5 h-3.5" />
-                    <span>{t.hideStory || 'Hide / Not Interested'}</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         <Link href={`/story/${story.slug}`}>
@@ -836,12 +859,18 @@ function StoryFeedCard({ story, isInLib, onToggleLib, onOpenReadingList, onHideS
         </p>
       </div>
 
-      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold">
-        <div className="flex items-center gap-2.5">
-          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-brand-500" /> {(story.reads || 0).toLocaleString()}</span>
-          <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500" /> {(story.votes || 0).toLocaleString()}</span>
+      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-semibold">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <span className="flex items-center gap-1 shrink-0" title={`${(story.reads || 0).toLocaleString()} ${t?.reads || 'reads'}`}>
+            <Eye className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+            <span>{formatCompactNumber(story.reads || 0)}</span>
+          </span>
+          <span className="flex items-center gap-1 shrink-0" title={`${(story.votes || 0).toLocaleString()} ${t?.votes || 'votes'}`}>
+            <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            <span>{formatCompactNumber(story.votes || 0)}</span>
+          </span>
         </div>
-        <span className="font-bold text-brand-600 dark:text-brand-400">
+        <span className="font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap shrink-0 ml-1">
           {story.chapters?.length || 1} {t?.chapterShort || 'Ch.'}
         </span>
       </div>
